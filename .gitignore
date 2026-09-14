@@ -1,0 +1,81 @@
+# ==============================
+# Environment Variables
+# ==============================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==============================
+# IDEs and Editors
+# ==============================
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+.project
+.classpath
+.settings/
+.springBeans
+
+# ==============================
+# OS Generated Files
+# ==============================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==============================
+# Backend (Java / Maven / Spring Boot)
+# ==============================
+backend/target/
+backend/bin/
+*.jar
+*.war
+*.ear
+*.class
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Application logs
+*.log
+
+# ==============================
+# Frontend (Node / React / Vite)
+# ==============================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/dist-ssr/
+frontend/*.local
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Editor directories and files
+frontend/.idea
+frontend/.vscode
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
