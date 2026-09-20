@@ -6,6 +6,7 @@ import com.aegis.core.task.exception.InvalidTaskStateException;
 import com.aegis.core.task.repository.EventRepository;
 import com.aegis.core.task.repository.ExecutionRepository;
 import com.aegis.core.task.repository.TaskRepository;
+import com.aegis.core.task.websocket.TaskEventPublisher;
 import com.aegis.core.user.UserRepository;
 import com.aegis.core.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,8 @@ class TaskLifecycleTest {
     private EventRepository eventRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private TaskEventPublisher eventPublisher;
 
     private TaskLifecycleValidator lifecycleValidator;
     private TaskService taskService;
@@ -40,8 +43,21 @@ class TaskLifecycleTest {
     @BeforeEach
     void setUp() {
         lifecycleValidator = new TaskLifecycleValidator();
-        taskService = new TaskService(taskRepository, executionRepository, eventRepository, userRepository, lifecycleValidator);
+        taskService = new TaskService(taskRepository, executionRepository, eventRepository, userRepository, lifecycleValidator, eventPublisher);
         
+        lenient().when(executionRepository.save(any())).thenAnswer(i -> {
+            com.aegis.core.task.entity.Execution e = i.getArgument(0);
+            if (e.getId() == null) e.setId(System.currentTimeMillis());
+            return e;
+        });
+        
+        lenient().when(eventRepository.save(any())).thenAnswer(i -> {
+            com.aegis.core.task.entity.Event e = i.getArgument(0);
+            if (e.getId() == null) e.setId(System.currentTimeMillis());
+            if (e.getTimestamp() == null) e.setTimestamp(java.time.LocalDateTime.now());
+            return e;
+        });
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");

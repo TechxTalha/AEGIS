@@ -5,7 +5,10 @@ import com.aegis.core.task.dto.TaskDto;
 import com.aegis.core.task.entity.Task;
 import com.aegis.core.task.entity.TaskPriority;
 import com.aegis.core.task.entity.TaskStatus;
+import com.aegis.core.task.repository.EventRepository;
+import com.aegis.core.task.repository.ExecutionRepository;
 import com.aegis.core.task.repository.TaskRepository;
+import com.aegis.core.task.websocket.TaskEventPublisher;
 import com.aegis.core.user.UserRepository;
 import com.aegis.core.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,13 +33,25 @@ class TaskServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
+    @Mock
+    private TaskEventPublisher eventPublisher;
+
+    @Mock
+    private ExecutionRepository executionRepository;
+
+    @Mock
+    private EventRepository eventRepository;
+
     private TaskService taskService;
+    private TaskLifecycleValidator lifecycleValidator;
 
     private User testUser;
 
     @BeforeEach
     void setUp() {
+        lifecycleValidator = new TaskLifecycleValidator();
+        taskService = new TaskService(taskRepository, executionRepository, eventRepository, userRepository, lifecycleValidator, eventPublisher);
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");

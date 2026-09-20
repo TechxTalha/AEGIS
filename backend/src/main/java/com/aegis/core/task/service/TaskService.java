@@ -7,6 +7,7 @@ import com.aegis.core.task.repository.EventRepository;
 import com.aegis.core.task.exception.InvalidTaskStateException;
 import com.aegis.core.task.repository.ExecutionRepository;
 import com.aegis.core.task.repository.TaskRepository;
+import com.aegis.core.task.websocket.TaskEventPublisher;
 import com.aegis.core.user.UserRepository;
 import com.aegis.core.user.entity.User;
 import org.springframework.stereotype.Service;
@@ -24,17 +25,20 @@ public class TaskService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final TaskLifecycleValidator lifecycleValidator;
+    private final TaskEventPublisher eventPublisher;
 
     public TaskService(TaskRepository taskRepository,
                        ExecutionRepository executionRepository,
                        EventRepository eventRepository,
                        UserRepository userRepository,
-                       TaskLifecycleValidator lifecycleValidator) {
+                       TaskLifecycleValidator lifecycleValidator,
+                       TaskEventPublisher eventPublisher) {
         this.taskRepository = taskRepository;
         this.executionRepository = executionRepository;
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.lifecycleValidator = lifecycleValidator;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -221,7 +225,14 @@ public class TaskService {
         event.setExecution(execution);
         event.setEventType(eventType);
         event.setDetails(details);
-        eventRepository.save(event);
+        Event saved = eventRepository.save(event);
+        
+        com.aegis.core.task.dto.EventDto dto = new com.aegis.core.task.dto.EventDto();
+        dto.setId(saved.getId());
+        dto.setEventType(saved.getEventType());
+        dto.setDetails(saved.getDetails());
+        dto.setTimestamp(saved.getTimestamp());
+        eventPublisher.publishEvent(execution.getTask().getId(), dto);
     }
 
     private TaskDto mapToDto(Task task) {
