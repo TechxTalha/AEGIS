@@ -5,6 +5,8 @@ import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import LoginPage from './features/auth/LoginPage';
 import DashboardPage from './features/dashboard/DashboardPage';
+import TasksDashboard from './features/tasks/TasksDashboard';
+import TaskDetail from './features/tasks/TaskDetail';
 import './assets/index.css';
 
 function App() {
@@ -26,7 +28,8 @@ function App() {
 
                         <Route element={<MainLayout />}>
                             <Route path="/" element={<DashboardPage />} />
-                            {/* Add future authenticated routes here */}
+                            <Route path="/tasks" element={<TasksDashboard />} />
+                            <Route path="/tasks/:id" element={<TaskDetail />} />
                         </Route>
 
                         <Route path="*" element={<Navigate to="/" replace />} />

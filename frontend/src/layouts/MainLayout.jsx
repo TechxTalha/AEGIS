@@ -1,12 +1,14 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import { Layout, Menu, Button, theme } from 'antd';
-import { LogoutOutlined, DashboardOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, DashboardOutlined, UserOutlined, UnorderedListOutlined } from '@ant-design/icons';
 
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = () => {
     const { isAuthenticated, isLoading, logout } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
     const {
         token: { colorBgContainer, borderRadiusLG },
     } = theme.useToken();
@@ -32,15 +34,24 @@ const MainLayout = () => {
                 <Menu
                     theme="light"
                     mode="inline"
-                    defaultSelectedKeys={['1']}
+                    selectedKeys={[location.pathname.startsWith('/tasks') ? 'tasks' : 'dashboard']}
+                    onClick={({ key }) => {
+                        if (key === 'dashboard') navigate('/');
+                        if (key === 'tasks') navigate('/tasks');
+                    }}
                     items={[
                         {
-                            key: '1',
+                            key: 'dashboard',
                             icon: <DashboardOutlined />,
                             label: 'Dashboard',
                         },
                         {
-                            key: '2',
+                            key: 'tasks',
+                            icon: <UnorderedListOutlined />,
+                            label: 'Tasks',
+                        },
+                        {
+                            key: 'profile',
                             icon: <UserOutlined />,
                             label: 'Profile',
                         },
