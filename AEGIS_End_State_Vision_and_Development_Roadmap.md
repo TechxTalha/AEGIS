@@ -1118,7 +1118,7 @@ The coding agent should not silently jump ahead into future stages.
 
 ## Stage 01 --- Architecture & Foundation Review
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 
@@ -1153,7 +1153,7 @@ development without implementing autonomous behavior.
 
 ## Stage 02 --- AEGIS Domain Model
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 
@@ -1193,7 +1193,7 @@ autonomously execute tasks yet.
 
 ## Stage 03 --- Task Lifecycle
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 
@@ -2204,3 +2204,20 @@ commands.
 The objective is to create a **safe, observable, extensible personal AI
 operations system that can understand objectives and coordinate the
 user's computing environment on their behalf.**
+
+------------------------------------------------------------------------
+
+# 30. Self-Upgrading / Self-Modifying Capability
+
+An ultimate objective for AEGIS is the ability to recursively expand its own capabilities. 
+
+If the user gives AEGIS a task for which it currently lacks the appropriate tool or capability, AEGIS should not simply fail. Instead, it should:
+
+1. **Identify the Gap**: Recognize that it does not have the necessary built-in capability to achieve the objective.
+2. **Formulate an Upgrade Plan**: Determine what new tool, API integration, or script is required.
+3. **Delegate to the Coding Agent**: Pass the requirements to the external agentic IDE (Google Antigravity) to write the code for the new tool and integrate it into AEGIS's own codebase.
+4. **Test and Verify**: Have the coding agent write tests and verify that the new capability compiles and functions securely.
+5. **Hot-Reload / Deploy**: Automatically deploy or hot-reload the updated AEGIS instance with the newly acquired capability.
+6. **Resume the Original Task**: Finally, use the newly minted tool to successfully complete the user's original request.
+
+This enables AEGIS to be a truly unbounded, self-improving operational system.
