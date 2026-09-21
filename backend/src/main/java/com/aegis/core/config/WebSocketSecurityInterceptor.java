@@ -64,7 +64,12 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                 }
             } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
                 String destination = accessor.getDestination();
-                if (destination != null && destination.startsWith("/topic/tasks/")) {
+                if (destination != null && destination.startsWith("/user/queue/agent/")) {
+                    if (accessor.getUser() == null || !(accessor.getUser() instanceof org.springframework.security.core.Authentication) || 
+                        ((org.springframework.security.core.Authentication) accessor.getUser()).getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_AGENT"))) {
+                        throw new IllegalArgumentException("Access denied: Only agents can subscribe to agent queues");
+                    }
+                } else if (destination != null && destination.startsWith("/topic/tasks/")) {
                     try {
                         Long taskId = Long.parseLong(destination.substring("/topic/tasks/".length()));
                         if (accessor.getUser() == null || accessor.getUser().getName() == null) {

@@ -33,6 +33,10 @@ public class ToolExecutionEngine {
         }
     }
 
+    public void registerDynamicExecutor(String toolId, ToolExecutor executor) {
+        executors.put(toolId, executor);
+    }
+
     public ToolResult execute(ToolInvocation invocation) {
         if (invocation == null || invocation.getToolId() == null) {
             return ToolResult.failure("ToolInvocation or toolId cannot be null", 0);

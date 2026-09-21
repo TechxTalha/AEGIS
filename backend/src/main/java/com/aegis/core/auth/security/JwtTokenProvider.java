@@ -42,7 +42,7 @@ public class JwtTokenProvider {
         return generateToken(username, refreshExpirationMs);
     }
 
-    private String generateToken(String username, long expirationMs) {
+    public String generateToken(String username, long expirationMs) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
 

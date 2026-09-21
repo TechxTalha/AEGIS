@@ -1,0 +1,8 @@
+CREATE TABLE agent_audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    agent_id VARCHAR(100) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    details TEXT,
+    outcome VARCHAR(50) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
