@@ -1497,7 +1497,7 @@ AEGIS can perform controlled web research as a tool.
 
 ## Stage 13 --- Model Gateway
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 
