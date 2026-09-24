@@ -1554,7 +1554,7 @@ stored information into every model request.
 
 ## Stage 15 --- Planner
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 
