@@ -14,6 +14,9 @@ public class SystemLogReader {
     }
 
     public String readLogLines(String agentId, String logPath, int tailLines) {
+        if (logPath == null) {
+            return "Error: logPath cannot be null";
+        }
         if (tailLines <= 0) {
             tailLines = 100;
         }
@@ -28,6 +31,11 @@ public class SystemLogReader {
             if (lowerPath.contains(".ssh") || lowerPath.contains("shadow") || lowerPath.endsWith(".pem") || lowerPath.endsWith(".key")) {
                 auditLogger.log(agentId, "sys.logs.read", "Attempt to read sensitive file: " + logPath, "REJECTED");
                 return "Access denied: Path appears to contain sensitive material, not a standard log file.";
+            }
+            
+            if (Files.size(path) > 10 * 1024 * 1024) {
+                auditLogger.log(agentId, "sys.logs.read", "Log file too large: " + logPath, "REJECTED");
+                return "Access denied: Log file is larger than 10MB. Please use sys.execute with native tail/grep instead.";
             }
             
             List<String> allLines = Files.readAllLines(path);

@@ -53,8 +53,13 @@ public class AgentManager {
 
         String commonOutSchema = "{ \"type\": \"object\", \"properties\": { \"stdout\": { \"type\": \"string\" }, \"stderr\": { \"type\": \"string\" }, \"exitCode\": { \"type\": \"integer\" } } }";
 
+        java.util.List<String> capabilities = request.getCapabilities();
+        if (capabilities == null) {
+            capabilities = new java.util.ArrayList<>();
+        }
+
         // Register System Info capabilities if supported
-        if (request.getCapabilities().contains("sys.info")) {
+        if (capabilities.contains("sys.info")) {
             registerAgentTool(agentId, "sys.info.memory", "Memory Info on " + request.getHostname(), "Get system memory statistics JSON string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
             registerAgentTool(agentId, "sys.info.cpu", "CPU Info on " + request.getHostname(), "Get system CPU statistics JSON string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
             registerAgentTool(agentId, "sys.info.processes", "Process List on " + request.getHostname(), "Get top running processes JSON array string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
@@ -63,12 +68,27 @@ public class AgentManager {
             registerAgentTool(agentId, "sys.info.services", "Services Info on " + request.getHostname(), "Get system services state JSON array string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
         }
 
-        if (request.getCapabilities().contains("sys.logs")) {
+        if (capabilities.contains("sys.logs")) {
             registerAgentTool(agentId, "sys.logs.read", "Read Logs on " + request.getHostname(), 
                 "Read tail lines from a system log file into stdout", 
                 "{ \"type\": \"object\", \"properties\": { \"path\": { \"type\": \"string\" }, \"lines\": { \"type\": \"integer\" } }, \"required\": [\"path\"] }", 
                 commonOutSchema, 
                 RiskLevel.MEDIUM);
+        }
+
+        if (capabilities.contains("sys.fs")) {
+            registerAgentTool(agentId, "sys.fs.read", "Read File on " + request.getHostname(), 
+                "Read content of a file into stdout", 
+                "{ \"type\": \"object\", \"properties\": { \"path\": { \"type\": \"string\" } }, \"required\": [\"path\"] }", 
+                commonOutSchema, RiskLevel.LOW);
+            registerAgentTool(agentId, "sys.fs.write", "Write File on " + request.getHostname(), 
+                "Write content to a file", 
+                "{ \"type\": \"object\", \"properties\": { \"path\": { \"type\": \"string\" }, \"content\": { \"type\": \"string\" } }, \"required\": [\"path\", \"content\"] }", 
+                commonOutSchema, RiskLevel.HIGH);
+            registerAgentTool(agentId, "sys.fs.list", "List Directory on " + request.getHostname(), 
+                "List contents of a directory in stdout", 
+                "{ \"type\": \"object\", \"properties\": { \"path\": { \"type\": \"string\" } }, \"required\": [\"path\"] }", 
+                commonOutSchema, RiskLevel.LOW);
         }
     }
 

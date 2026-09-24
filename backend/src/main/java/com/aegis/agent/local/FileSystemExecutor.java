@@ -22,6 +22,9 @@ public class FileSystemExecutor {
     }
 
     private Path resolveAndValidatePath(String relativePath) {
+        if (relativePath == null) {
+            throw new IllegalArgumentException("Path cannot be null");
+        }
         Path target = rootWorkspace.resolve(relativePath).toAbsolutePath().normalize();
         if (!target.startsWith(rootWorkspace)) {
             throw new SecurityException("Path Traversal Attempt Detected! Access denied to: " + relativePath);
@@ -32,6 +35,9 @@ public class FileSystemExecutor {
     public String readFile(String agentId, String pathStr) {
         try {
             Path target = resolveAndValidatePath(pathStr);
+            if (Files.size(target) > 5 * 1024 * 1024) { // 5MB limit
+                throw new SecurityException("File is too large to read into memory (> 5MB). Use sys.execute with tail/grep instead.");
+            }
             String content = Files.readString(target);
             auditLogger.log(agentId, "readFile", "Read file: " + target.toString(), "SUCCESS");
             return content;
@@ -45,6 +51,9 @@ public class FileSystemExecutor {
     }
 
     public void writeFile(String agentId, String pathStr, String content) {
+        if (content == null) {
+            content = "";
+        }
         try {
             Path target = resolveAndValidatePath(pathStr);
             // Ensure parent directory exists
@@ -63,10 +72,13 @@ public class FileSystemExecutor {
     public List<String> listDirectory(String agentId, String pathStr) {
         try {
             Path target = resolveAndValidatePath(pathStr);
-            List<String> list = Files.list(target)
-                    .map(Path::getFileName)
-                    .map(Path::toString)
-                    .collect(Collectors.toList());
+            List<String> list;
+            try (java.util.stream.Stream<Path> stream = Files.list(target)) {
+                list = stream
+                        .map(Path::getFileName)
+                        .map(Path::toString)
+                        .collect(Collectors.toList());
+            }
             auditLogger.log(agentId, "listDirectory", "Listed dir: " + target.toString(), "SUCCESS");
             return list;
         } catch (SecurityException se) {

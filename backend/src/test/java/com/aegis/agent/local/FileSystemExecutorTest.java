@@ -40,4 +40,20 @@ class FileSystemExecutorTest {
             executor.readFile("agent-1", "../../windows/system32/cmd.exe");
         });
     }
+
+    @Test
+    void testNullPathThrowsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            executor.readFile("agent-1", null);
+        });
+    }
+
+    @Test
+    void testNullContentDefaultsToEmpty() throws Exception {
+        String path = "target/test-null-content.txt";
+        executor.writeFile("agent-1", path, null);
+        String readContent = executor.readFile("agent-1", path);
+        assertEquals("", readContent);
+        Files.deleteIfExists(Path.of(path));
+    }
 }

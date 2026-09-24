@@ -87,7 +87,7 @@ public class LocalMachineAgent {
         AgentRegisterRequest request = new AgentRegisterRequest();
         request.setHostname(System.getProperty("user.name") + "-local");
         request.setOs(System.getProperty("os.name"));
-        request.setCapabilities(Arrays.asList("sys.execute", "sys.fs.read", "sys.fs.write", "sys.info", "sys.logs"));
+        request.setCapabilities(Arrays.asList("sys.execute", "sys.fs", "sys.info", "sys.logs"));
 
         session.send("/app/agent/register", request);
     }
@@ -124,6 +124,9 @@ public class LocalMachineAgent {
 
                         try {
                             String toolId = invocation.getToolId();
+                            if (invocation.getParameters() == null) {
+                                invocation.setParameters(new java.util.HashMap<>());
+                            }
                             if (toolId.startsWith("sys.execute")) {
                                 List<String> args = (List<String>) invocation.getParameters().get("args");
                                 String command = (String) invocation.getParameters().get("command");
@@ -148,6 +151,17 @@ public class LocalMachineAgent {
                                 Integer lines = (Integer) invocation.getParameters().get("lines");
                                 if (lines == null) lines = 100;
                                 result.setStdout(systemLogReader.readLogLines(identityService.getAgentUsername(), path, lines));
+                            } else if (toolId.startsWith("sys.fs.read")) {
+                                String path = (String) invocation.getParameters().get("path");
+                                result.setStdout(fileSystemExecutor.readFile(identityService.getAgentUsername(), path));
+                            } else if (toolId.startsWith("sys.fs.write")) {
+                                String path = (String) invocation.getParameters().get("path");
+                                String content = (String) invocation.getParameters().get("content");
+                                fileSystemExecutor.writeFile(identityService.getAgentUsername(), path, content);
+                                result.setStdout("File written successfully.");
+                            } else if (toolId.startsWith("sys.fs.list")) {
+                                String path = (String) invocation.getParameters().get("path");
+                                result.setStdout(String.join("\n", fileSystemExecutor.listDirectory(identityService.getAgentUsername(), path)));
                             } else {
                                 result.setSuccess(false);
                                 result.setExitCode(1);
@@ -156,7 +170,7 @@ public class LocalMachineAgent {
                         } catch (Exception e) {
                             result.setSuccess(false);
                             result.setExitCode(1);
-                            result.setErrorMessage(e.getMessage());
+                            result.setErrorMessage("Error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
                         }
                         
                         session.send("/app/agent/result", result);
