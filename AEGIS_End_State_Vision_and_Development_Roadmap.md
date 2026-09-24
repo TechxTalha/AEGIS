@@ -1349,7 +1349,7 @@ The planner still does not need to be autonomous yet.
 
 ## Stage 08 --- Filesystem Tooling
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 
@@ -1386,7 +1386,7 @@ Filesystem access is controlled and exposed through the tool framework.
 
 ## Stage 09 --- SSH and Remote Machines
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 

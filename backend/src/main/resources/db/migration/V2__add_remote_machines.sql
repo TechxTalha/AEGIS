@@ -1,0 +1,12 @@
+CREATE TABLE remote_machines (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    hostname VARCHAR(255) NOT NULL,
+    port INT NOT NULL DEFAULT 22,
+    username VARCHAR(100) NOT NULL,
+    auth_type VARCHAR(20) NOT NULL,
+    encrypted_credential TEXT,
+    encrypted_passphrase TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

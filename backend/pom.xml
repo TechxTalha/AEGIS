@@ -76,6 +76,13 @@
             <version>6.6.5</version>
         </dependency>
 
+        <!-- SSH (JSch modern fork) -->
+        <dependency>
+            <groupId>com.github.mwiede</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.2.21</version>
+        </dependency>
+
         <!-- JWT Token Management -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
