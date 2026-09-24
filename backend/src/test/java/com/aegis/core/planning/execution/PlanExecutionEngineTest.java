@@ -28,6 +28,7 @@ class PlanExecutionEngineTest {
     private PlanRepository planRepository;
     private com.aegis.core.safety.service.ExecutionSafetyService safetyService;
     private com.aegis.core.tool.registry.ToolRegistry toolRegistry;
+    private com.aegis.core.planning.recovery.FailureClassifierService failureClassifierService;
     private PlanExecutionEngine planExecutionEngine;
 
     @BeforeEach
@@ -37,7 +38,8 @@ class PlanExecutionEngineTest {
         planRepository = mock(PlanRepository.class);
         safetyService = mock(com.aegis.core.safety.service.ExecutionSafetyService.class);
         toolRegistry = mock(com.aegis.core.tool.registry.ToolRegistry.class);
-        planExecutionEngine = new PlanExecutionEngine(reasoningService, executionEngine, planRepository, safetyService, toolRegistry);
+        failureClassifierService = new com.aegis.core.planning.recovery.FailureClassifierService();
+        planExecutionEngine = new PlanExecutionEngine(reasoningService, executionEngine, planRepository, safetyService, toolRegistry, failureClassifierService);
     }
 
     @Test
@@ -56,7 +58,7 @@ class PlanExecutionEngineTest {
         step2.setStatus(PlanStatus.PENDING);
         step2.setDependencies(List.of("step-1"));
 
-        plan.setSteps(List.of(step1, step2));
+        plan.setSteps(new java.util.ArrayList<>(List.of(step1, step2)));
 
         // Mock reasoning and execution for step 1
         ToolSelectionResponse selection1 = new ToolSelectionResponse();
@@ -109,7 +111,7 @@ class PlanExecutionEngineTest {
         PlanStep step1 = new PlanStep();
         step1.setId("step-1");
         step1.setStatus(PlanStatus.PENDING);
-        plan.setSteps(List.of(step1));
+        plan.setSteps(new java.util.ArrayList<>(List.of(step1)));
 
         ToolSelectionResponse selection = new ToolSelectionResponse();
         selection.setSelectedToolId("tool-high-risk");
@@ -137,7 +139,7 @@ class PlanExecutionEngineTest {
         PlanStep step1 = new PlanStep();
         step1.setId("step-1");
         step1.setStatus(PlanStatus.PENDING);
-        plan.setSteps(List.of(step1));
+        plan.setSteps(new java.util.ArrayList<>(List.of(step1)));
 
         when(reasoningService.selectTool(eq(step1), any())).thenReturn(null);
 

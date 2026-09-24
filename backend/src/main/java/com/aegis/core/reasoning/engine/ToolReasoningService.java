@@ -99,6 +99,21 @@ public class ToolReasoningService {
         return objectMapper.readValue(jsonContent, ToolInterpretationResponse.class);
     }
 
+    public com.aegis.core.planning.model.Plan replan(com.aegis.core.planning.model.Plan currentPlan, PlanStep failedStep, String failureContext) {
+        // Real implementation would invoke LLM to mutate the plan.
+        // For now, we simulate adding a retry/fallback step.
+        logger.info("Replanning due to failure in step: {}. Context: {}", failedStep.getId(), failureContext);
+
+        PlanStep fallbackStep = new PlanStep();
+        fallbackStep.setId(java.util.UUID.randomUUID().toString());
+        fallbackStep.setDescription("Fallback strategy for: " + failedStep.getDescription());
+        fallbackStep.setStatus(com.aegis.core.planning.model.PlanStatus.PENDING);
+        
+        // We will just append it for simplicity in simulation.
+        currentPlan.getSteps().add(fallbackStep);
+        return currentPlan;
+    }
+
     private String extractJson(String text) {
         if (text == null) return "{}";
         String trimmed = text.trim();

@@ -11,6 +11,7 @@ public class Plan {
     private String objective;
     private PlanStatus status = PlanStatus.PENDING;
     private List<PlanStep> steps = new ArrayList<>();
+    private String failureSummary;
 
     public Plan() {}
 
@@ -27,4 +28,6 @@ public class Plan {
     public void setStatus(PlanStatus status) { this.status = status; }
     public List<PlanStep> getSteps() { return steps; }
     public void setSteps(List<PlanStep> steps) { this.steps = steps != null ? steps : new ArrayList<>(); }
+    public String getFailureSummary() { return failureSummary; }
+    public void setFailureSummary(String failureSummary) { this.failureSummary = failureSummary; }
 }
