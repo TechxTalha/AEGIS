@@ -4,5 +4,6 @@ public enum PlanStatus {
     PENDING,
     IN_PROGRESS,
     COMPLETED,
-    FAILED
+    FAILED,
+    AWAITING_APPROVAL
 }

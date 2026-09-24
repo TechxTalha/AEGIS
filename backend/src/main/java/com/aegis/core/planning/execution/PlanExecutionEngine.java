@@ -24,11 +24,15 @@ public class PlanExecutionEngine {
     private final ToolReasoningService reasoningService;
     private final ToolExecutionEngine executionEngine;
     private final PlanRepository planRepository;
+    private final com.aegis.core.safety.service.ExecutionSafetyService safetyService;
+    private final com.aegis.core.tool.registry.ToolRegistry toolRegistry;
 
-    public PlanExecutionEngine(ToolReasoningService reasoningService, ToolExecutionEngine executionEngine, PlanRepository planRepository) {
+    public PlanExecutionEngine(ToolReasoningService reasoningService, ToolExecutionEngine executionEngine, PlanRepository planRepository, com.aegis.core.safety.service.ExecutionSafetyService safetyService, com.aegis.core.tool.registry.ToolRegistry toolRegistry) {
         this.reasoningService = reasoningService;
         this.executionEngine = executionEngine;
         this.planRepository = planRepository;
+        this.safetyService = safetyService;
+        this.toolRegistry = toolRegistry;
     }
 
     public void executePlan(Plan plan) {
@@ -52,7 +56,16 @@ public class PlanExecutionEngine {
                 return;
             }
 
-            boolean stepSuccess = executeStepWithRetries(step);
+            boolean stepSuccess = false;
+            try {
+                stepSuccess = executeStepWithRetries(step);
+            } catch (com.aegis.core.safety.exception.RequiresApprovalException e) {
+                logger.info("Plan execution paused. Awaiting approval for plan: {}", plan.getId());
+                step.setStatus(PlanStatus.AWAITING_APPROVAL);
+                plan.setStatus(PlanStatus.AWAITING_APPROVAL);
+                planRepository.save(plan);
+                return;
+            }
 
             if (!stepSuccess) {
                 logger.error("Step {} failed after max retries. Halting plan execution.", step.getId());
@@ -91,6 +104,11 @@ public class PlanExecutionEngine {
                 invocation.setToolId(selection.getSelectedToolId());
                 invocation.setParameters(selection.getParameters());
 
+                java.util.Optional<com.aegis.core.tool.model.ToolDefinition> defOpt = toolRegistry.getTool(invocation.getToolId());
+                if (defOpt.isPresent()) {
+                    safetyService.evaluateInvocation(step.getId(), invocation, defOpt.get());
+                }
+
                 ToolResult result = executionEngine.execute(invocation);
 
                 // 3. Reasoning (Interpretation)
@@ -103,6 +121,12 @@ public class PlanExecutionEngine {
                 } else {
                     logger.warn("Step {} failed interpretation. Insights: {}", step.getId(), interpretation != null ? interpretation.getInsights() : "null");
                 }
+            } catch (com.aegis.core.safety.exception.RequiresApprovalException e) {
+                logger.warn("Step {} requires approval: {}", step.getId(), e.getMessage());
+                throw e;
+            } catch (SecurityException e) {
+                logger.error("Security violation for step {}: {}", step.getId(), e.getMessage());
+                break; // Do not retry on security rejection
             } catch (Exception e) {
                 logger.error("Exception occurred while executing step: {}", step.getId(), e);
             }

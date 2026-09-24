@@ -26,6 +26,8 @@ class PlanExecutionEngineTest {
     private ToolReasoningService reasoningService;
     private ToolExecutionEngine executionEngine;
     private PlanRepository planRepository;
+    private com.aegis.core.safety.service.ExecutionSafetyService safetyService;
+    private com.aegis.core.tool.registry.ToolRegistry toolRegistry;
     private PlanExecutionEngine planExecutionEngine;
 
     @BeforeEach
@@ -33,7 +35,9 @@ class PlanExecutionEngineTest {
         reasoningService = mock(ToolReasoningService.class);
         executionEngine = mock(ToolExecutionEngine.class);
         planRepository = mock(PlanRepository.class);
-        planExecutionEngine = new PlanExecutionEngine(reasoningService, executionEngine, planRepository);
+        safetyService = mock(com.aegis.core.safety.service.ExecutionSafetyService.class);
+        toolRegistry = mock(com.aegis.core.tool.registry.ToolRegistry.class);
+        planExecutionEngine = new PlanExecutionEngine(reasoningService, executionEngine, planRepository, safetyService, toolRegistry);
     }
 
     @Test
@@ -94,6 +98,34 @@ class PlanExecutionEngineTest {
         assertEquals(PlanStatus.COMPLETED, step2.getStatus());
         assertEquals("Step 2 completed", step2.getResult());
 
+        verify(planRepository, atLeastOnce()).save(plan);
+    }
+
+    @Test
+    void testExecutePlanAwaitingApproval() throws Exception {
+        Plan plan = new Plan();
+        plan.setId("plan-3");
+
+        PlanStep step1 = new PlanStep();
+        step1.setId("step-1");
+        step1.setStatus(PlanStatus.PENDING);
+        plan.setSteps(List.of(step1));
+
+        ToolSelectionResponse selection = new ToolSelectionResponse();
+        selection.setSelectedToolId("tool-high-risk");
+        when(reasoningService.selectTool(eq(step1), any())).thenReturn(selection);
+
+        com.aegis.core.tool.model.ToolDefinition def = new com.aegis.core.tool.model.ToolDefinition();
+        def.setId("tool-high-risk");
+        when(toolRegistry.getTool("tool-high-risk")).thenReturn(java.util.Optional.of(def));
+
+        doThrow(new com.aegis.core.safety.exception.RequiresApprovalException("Requires Approval", new com.aegis.core.safety.model.ApprovalRequest()))
+            .when(safetyService).evaluateInvocation(eq("step-1"), any(), eq(def));
+
+        planExecutionEngine.executePlan(plan);
+
+        assertEquals(PlanStatus.AWAITING_APPROVAL, plan.getStatus());
+        assertEquals(PlanStatus.AWAITING_APPROVAL, step1.getStatus());
         verify(planRepository, atLeastOnce()).save(plan);
     }
 
