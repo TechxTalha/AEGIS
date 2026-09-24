@@ -22,7 +22,9 @@ public class CommandExecutor {
     private final Map<String, Process> activeProcesses = new ConcurrentHashMap<>();
     
     private static final List<String> ALLOWED_COMMANDS = Arrays.asList(
-        "ls", "pwd", "echo", "mvn", "npm", "git", "node", "java", "javac", "dir", "cd"
+        "ls", "pwd", "echo", "mvn", "npm", "git", "node", "java", "javac", "dir", "cd",
+        "cat", "tail", "head", "grep", "awk", "sed", "systemctl", "journalctl", "docker",
+        "powershell", "cmd", "bash", "sh", "ps", "top", "htop", "df", "du", "free"
     );
 
     public CommandExecutor(AgentAuditLogger auditLogger) {
@@ -58,6 +60,7 @@ public class CommandExecutor {
 
             boolean finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
             if (!finished) {
+                process.descendants().forEach(ProcessHandle::destroyForcibly);
                 process.destroyForcibly();
                 result.setSuccess(false);
                 result.setErrorMessage("Process timed out after " + timeoutMs + "ms");
@@ -88,6 +91,7 @@ public class CommandExecutor {
     public void cancelCommand(String taskId, String agentId) {
         Process process = activeProcesses.get(taskId);
         if (process != null && process.isAlive()) {
+            process.descendants().forEach(ProcessHandle::destroyForcibly);
             process.destroyForcibly();
             auditLogger.log(agentId, "cancelCommand", "Cancelled task: " + taskId, "CANCELLED");
         }

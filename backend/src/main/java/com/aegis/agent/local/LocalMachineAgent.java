@@ -33,15 +33,23 @@ public class LocalMachineAgent {
     private final AgentIdentityService identityService;
     private final CommandExecutor commandExecutor;
     private final FileSystemExecutor fileSystemExecutor;
+    private final SystemInfoProvider systemInfoProvider;
+    private final SystemLogReader systemLogReader;
+    
+    private final java.util.concurrent.ExecutorService agentExecutor = java.util.concurrent.Executors.newCachedThreadPool();
 
     private StompSession session;
 
     public LocalMachineAgent(AgentIdentityService identityService, 
                              CommandExecutor commandExecutor,
-                             FileSystemExecutor fileSystemExecutor) {
+                             FileSystemExecutor fileSystemExecutor,
+                             SystemInfoProvider systemInfoProvider,
+                             SystemLogReader systemLogReader) {
         this.identityService = identityService;
         this.commandExecutor = commandExecutor;
         this.fileSystemExecutor = fileSystemExecutor;
+        this.systemInfoProvider = systemInfoProvider;
+        this.systemLogReader = systemLogReader;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -79,7 +87,7 @@ public class LocalMachineAgent {
         AgentRegisterRequest request = new AgentRegisterRequest();
         request.setHostname(System.getProperty("user.name") + "-local");
         request.setOs(System.getProperty("os.name"));
-        request.setCapabilities(Arrays.asList("sys.execute", "sys.fs.read", "sys.fs.write"));
+        request.setCapabilities(Arrays.asList("sys.execute", "sys.fs.read", "sys.fs.write", "sys.info", "sys.logs"));
 
         session.send("/app/agent/register", request);
     }
@@ -108,18 +116,48 @@ public class LocalMachineAgent {
                     ToolInvocation invocation = (ToolInvocation) payload;
                     logger.info("Agent received execute command for task: {}", invocation.getTaskId());
                     
-                    // Execute asynchronously to not block the STOMP connection
-                    Executors.newSingleThreadExecutor().submit(() -> {
-                        List<String> args = (List<String>) invocation.getParameters().get("args");
-                        String command = (String) invocation.getParameters().get("command");
-                        args.add(0, command);
-                        
-                        AgentResult result = commandExecutor.executeCommand(
-                            invocation.getTaskId(), 
-                            identityService.getAgentUsername(), 
-                            args, 
-                            30000L
-                        );
+                    agentExecutor.submit(() -> {
+                        AgentResult result = new AgentResult();
+                        result.setTaskId(invocation.getTaskId());
+                        result.setSuccess(true);
+                        result.setExitCode(0);
+
+                        try {
+                            String toolId = invocation.getToolId();
+                            if (toolId.startsWith("sys.execute")) {
+                                List<String> args = (List<String>) invocation.getParameters().get("args");
+                                String command = (String) invocation.getParameters().get("command");
+                                List<String> mutableArgs = new java.util.ArrayList<>();
+                                mutableArgs.add(command);
+                                if (args != null) mutableArgs.addAll(args);
+                                result = commandExecutor.executeCommand(invocation.getTaskId(), identityService.getAgentUsername(), mutableArgs, 30000L);
+                            } else if (toolId.startsWith("sys.info.memory")) {
+                                result.setStdout(systemInfoProvider.getMemoryInfo(identityService.getAgentUsername()));
+                            } else if (toolId.startsWith("sys.info.cpu")) {
+                                result.setStdout(systemInfoProvider.getCpuInfo(identityService.getAgentUsername()));
+                            } else if (toolId.startsWith("sys.info.processes")) {
+                                result.setStdout(systemInfoProvider.getProcessesInfo(identityService.getAgentUsername()));
+                            } else if (toolId.startsWith("sys.info.disk")) {
+                                result.setStdout(systemInfoProvider.getDiskInfo(identityService.getAgentUsername()));
+                            } else if (toolId.startsWith("sys.info.network")) {
+                                result.setStdout(systemInfoProvider.getNetworkInfo(identityService.getAgentUsername()));
+                            } else if (toolId.startsWith("sys.info.services")) {
+                                result.setStdout(systemInfoProvider.getServicesInfo(identityService.getAgentUsername()));
+                            } else if (toolId.startsWith("sys.logs.read")) {
+                                String path = (String) invocation.getParameters().get("path");
+                                Integer lines = (Integer) invocation.getParameters().get("lines");
+                                if (lines == null) lines = 100;
+                                result.setStdout(systemLogReader.readLogLines(identityService.getAgentUsername(), path, lines));
+                            } else {
+                                result.setSuccess(false);
+                                result.setExitCode(1);
+                                result.setErrorMessage("Unknown tool: " + toolId);
+                            }
+                        } catch (Exception e) {
+                            result.setSuccess(false);
+                            result.setExitCode(1);
+                            result.setErrorMessage(e.getMessage());
+                        }
                         
                         session.send("/app/agent/result", result);
                     });
@@ -151,5 +189,10 @@ public class LocalMachineAgent {
         public void handleTransportError(StompSession session, Throwable exception) {
             logger.error("STOMP transport error: {}", exception.getMessage(), exception);
         }
+    }
+
+    @jakarta.annotation.PreDestroy
+    public void cleanup() {
+        agentExecutor.shutdownNow();
     }
 }

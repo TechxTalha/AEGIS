@@ -44,40 +44,60 @@ public class AgentManager {
         info.setLastHeartbeat(System.currentTimeMillis());
         connectedAgents.put(agentId, info);
 
-        // Register the tool capability for this agent
-        ToolDefinition sysExecute = new ToolDefinition();
-        sysExecute.setId("sys.execute." + agentId);
-        sysExecute.setName("System Execute on " + request.getHostname());
-        sysExecute.setDescription("Execute a terminal command on the agent host");
-        sysExecute.setInputSchema("{ \"type\": \"object\", \"properties\": { \"command\": { \"type\": \"string\" }, \"args\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } } }, \"required\": [\"command\"] }");
-        sysExecute.setOutputSchema("{ \"type\": \"object\", \"properties\": { \"stdout\": { \"type\": \"string\" }, \"stderr\": { \"type\": \"string\" }, \"exitCode\": { \"type\": \"integer\" } } }");
-        sysExecute.setRiskLevel(RiskLevel.HIGH);
-        sysExecute.setStatus(ToolStatus.ACTIVE);
-        sysExecute.setExecutionConstraints(new ExecutionConstraints(30000L, 0, false));
-        
-        toolRegistry.registerTool(sysExecute);
-        
-        // Register a dynamic executor that proxies the invocation to the agent over STOMP
-        toolExecutionEngine.registerDynamicExecutor(sysExecute.getId(), new ToolExecutor() {
-            @Override
-            public ToolDefinition getDefinition() {
-                return sysExecute;
-            }
+        // Register the sys.execute capability
+        registerAgentTool(agentId, "sys.execute", "System Execute on " + request.getHostname(), 
+            "Execute a terminal command on the agent host",
+            "{ \"type\": \"object\", \"properties\": { \"command\": { \"type\": \"string\" }, \"args\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } } }, \"required\": [\"command\"] }",
+            "{ \"type\": \"object\", \"properties\": { \"stdout\": { \"type\": \"string\" }, \"stderr\": { \"type\": \"string\" }, \"exitCode\": { \"type\": \"integer\" } } }",
+            RiskLevel.HIGH);
 
+        String commonOutSchema = "{ \"type\": \"object\", \"properties\": { \"stdout\": { \"type\": \"string\" }, \"stderr\": { \"type\": \"string\" }, \"exitCode\": { \"type\": \"integer\" } } }";
+
+        // Register System Info capabilities if supported
+        if (request.getCapabilities().contains("sys.info")) {
+            registerAgentTool(agentId, "sys.info.memory", "Memory Info on " + request.getHostname(), "Get system memory statistics JSON string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
+            registerAgentTool(agentId, "sys.info.cpu", "CPU Info on " + request.getHostname(), "Get system CPU statistics JSON string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
+            registerAgentTool(agentId, "sys.info.processes", "Process List on " + request.getHostname(), "Get top running processes JSON array string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
+            registerAgentTool(agentId, "sys.info.disk", "Disk Info on " + request.getHostname(), "Get system disk statistics JSON array string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
+            registerAgentTool(agentId, "sys.info.network", "Network Info on " + request.getHostname(), "Get system network statistics JSON array string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
+            registerAgentTool(agentId, "sys.info.services", "Services Info on " + request.getHostname(), "Get system services state JSON array string in stdout", "{}", commonOutSchema, RiskLevel.LOW);
+        }
+
+        if (request.getCapabilities().contains("sys.logs")) {
+            registerAgentTool(agentId, "sys.logs.read", "Read Logs on " + request.getHostname(), 
+                "Read tail lines from a system log file into stdout", 
+                "{ \"type\": \"object\", \"properties\": { \"path\": { \"type\": \"string\" }, \"lines\": { \"type\": \"integer\" } }, \"required\": [\"path\"] }", 
+                commonOutSchema, 
+                RiskLevel.MEDIUM);
+        }
+    }
+
+    private void registerAgentTool(String agentId, String baseToolId, String name, String description, String inSchema, String outSchema, RiskLevel riskLevel) {
+        ToolDefinition tool = new ToolDefinition();
+        tool.setId(baseToolId + "." + agentId);
+        tool.setName(name);
+        tool.setDescription(description);
+        tool.setInputSchema(inSchema);
+        tool.setOutputSchema(outSchema);
+        tool.setRiskLevel(riskLevel);
+        tool.setStatus(ToolStatus.ACTIVE);
+        tool.setExecutionConstraints(new ExecutionConstraints(30000L, 0, false));
+        
+        toolRegistry.registerTool(tool);
+        
+        toolExecutionEngine.registerDynamicExecutor(tool.getId(), new ToolExecutor() {
+            @Override
+            public ToolDefinition getDefinition() { return tool; }
             @Override
             public ToolResult execute(ToolInvocation invocation) {
                 CompletableFuture<ToolResult> future = new CompletableFuture<>();
                 pendingTasks.put(invocation.getTaskId(), future);
-                
-                // Send to the agent's private queue
                 messagingTemplate.convertAndSendToUser(agentId, "/queue/agent/execute", invocation);
-                
                 try {
-                    // Block and wait for result up to constraint timeout + buffer
                     return future.get(35000L, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
                     pendingTasks.remove(invocation.getTaskId());
-                    return ToolResult.failure("Agent execution timed out or failed: " + e.getMessage(), 500);
+                    return ToolResult.failure("Agent execution timed out: " + e.getMessage(), 500);
                 }
             }
         });
@@ -119,6 +139,11 @@ public class AgentManager {
     public void unregisterAgent(String agentId) {
         logger.info("Unregistering agent: {}", agentId);
         connectedAgents.remove(agentId);
-        // We might want to mark the tool as INACTIVE in ToolRegistry here
+        
+        for (com.aegis.core.tool.model.ToolDefinition tool : toolRegistry.getAllTools()) {
+            if (tool.getId().endsWith("." + agentId)) {
+                tool.setStatus(com.aegis.core.tool.model.ToolStatus.INACTIVE);
+            }
+        }
     }
 }
