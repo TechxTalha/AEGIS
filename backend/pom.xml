@@ -76,6 +76,13 @@
             <version>6.6.5</version>
         </dependency>
 
+        <!-- HTML Parsing (Jsoup) -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.17.2</version>
+        </dependency>
+
         <!-- SSH (JSch modern fork) -->
         <dependency>
             <groupId>com.github.mwiede</groupId>
