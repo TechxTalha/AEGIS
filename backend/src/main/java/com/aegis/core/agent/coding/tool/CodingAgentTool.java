@@ -1,9 +1,9 @@
 package com.aegis.core.agent.coding.tool;
 
-import com.aegis.core.agent.coding.model.CodingJobRequest;
-import com.aegis.core.agent.coding.model.CodingJobResult;
-import com.aegis.core.agent.coding.model.CodingJobStatus;
-import com.aegis.core.agent.coding.service.CodingAgentProtocol;
+import com.aegis.core.agent.orchestration.model.AgentJobRequest;
+import com.aegis.core.agent.orchestration.model.AgentJobResult;
+import com.aegis.core.agent.orchestration.model.AgentJobStatus;
+import com.aegis.core.agent.orchestration.service.SpecializedAgentProtocol;
 import com.aegis.core.tool.executor.ToolExecutor;
 import com.aegis.core.tool.model.RiskLevel;
 import com.aegis.core.tool.model.ToolDefinition;
@@ -18,9 +18,9 @@ public class CodingAgentTool implements ToolExecutor {
 
     public static final String TOOL_ID = "agentic-ide-delegate";
     
-    private final CodingAgentProtocol codingAgentProtocol;
+    private final SpecializedAgentProtocol codingAgentProtocol;
 
-    public CodingAgentTool(CodingAgentProtocol codingAgentProtocol) {
+    public CodingAgentTool(@org.springframework.beans.factory.annotation.Qualifier("antigravityAgentAdapter") SpecializedAgentProtocol codingAgentProtocol) {
         this.codingAgentProtocol = codingAgentProtocol;
     }
 
@@ -46,20 +46,21 @@ public class CodingAgentTool implements ToolExecutor {
             String objective = (String) params.get("objective");
             String repositoryPath = (String) params.get("repositoryPath");
 
-            CodingJobRequest request = new CodingJobRequest(java.util.UUID.randomUUID().toString(), objective, repositoryPath);
+            AgentJobRequest request = new AgentJobRequest(java.util.UUID.randomUUID().toString(), objective, Map.of("repositoryPath", repositoryPath));
             String jobId = codingAgentProtocol.submitJob(request);
 
             // Synchronously wait for completion in this thread for simplicity (up to a timeout)
             int maxWaitSeconds = 300;
             int waited = 0;
             while (waited < maxWaitSeconds) {
-                CodingJobStatus status = codingAgentProtocol.getJobStatus(jobId);
-                if (status == CodingJobStatus.COMPLETED) {
-                    CodingJobResult jobResult = codingAgentProtocol.getJobResult(jobId);
+                AgentJobStatus status = codingAgentProtocol.getJobStatus(jobId);
+                if (status == AgentJobStatus.COMPLETED) {
+                    AgentJobResult jobResult = codingAgentProtocol.getJobResult(jobId);
                     result.setSuccess(true);
-                    result.setPayload(jobResult.getMessage() + "\nFiles changed: " + String.join(", ", jobResult.getChangedFiles()));
+                    java.util.List<String> changedFiles = (java.util.List<String>) jobResult.getPayload().get("changedFiles");
+                    result.setPayload(jobResult.getMessage() + "\nFiles changed: " + String.join(", ", changedFiles));
                     return result;
-                } else if (status == CodingJobStatus.FAILED || status == CodingJobStatus.CANCELLED) {
+                } else if (status == AgentJobStatus.FAILED || status == AgentJobStatus.CANCELLED) {
                     result.setSuccess(false);
                     result.setErrorMessage("Coding job " + status);
                     return result;
