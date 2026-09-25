@@ -1778,7 +1778,7 @@ supervision, safety, and verification.
 
 ## Stage 23 --- Scheduling and Background Tasks
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 ### Objective
 
