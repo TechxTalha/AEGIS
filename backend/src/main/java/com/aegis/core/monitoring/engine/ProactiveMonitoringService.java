@@ -57,7 +57,7 @@ public class ProactiveMonitoringService {
                         LocalDateTime.now()
                 );
                 
-                notificationService.notify(alert.getAlertId(), "ALERT: " + condition.getMetric() + " is currently at " + currentValue);
+                notificationService.notify(alert.getAlertId(), "ALERT: " + condition.getMetric() + " is currently at " + currentValue, com.aegis.core.notification.model.NotificationPriority.HIGH, com.aegis.core.notification.model.NotificationCategory.MONITORING_ALERT);
 
                 if (condition.getActionObjective() != null && !condition.getActionObjective().isEmpty()) {
                     executeProactiveAction(condition);

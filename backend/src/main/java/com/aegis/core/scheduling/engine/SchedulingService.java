@@ -68,15 +68,15 @@ public class SchedulingService {
                 
                 if (success) {
                     task.setStatus("COMPLETED");
-                    notificationService.notify(task.getTaskId(), "Task completed successfully: " + task.getObjective());
+                    notificationService.notify(task.getTaskId(), "Task completed successfully: " + task.getObjective(), com.aegis.core.notification.model.NotificationPriority.LOW, com.aegis.core.notification.model.NotificationCategory.BACKGROUND_TASK);
                 } else {
                     task.setStatus("FAILED");
-                    notificationService.notify(task.getTaskId(), "Task failed: " + task.getObjective());
+                    notificationService.notify(task.getTaskId(), "Task failed: " + task.getObjective(), com.aegis.core.notification.model.NotificationPriority.MEDIUM, com.aegis.core.notification.model.NotificationCategory.BACKGROUND_TASK);
                 }
             } catch (Exception e) {
                 logger.error("Exception while executing scheduled task", e);
                 task.setStatus("FAILED");
-                notificationService.notify(task.getTaskId(), "Task failed with exception: " + e.getMessage());
+                notificationService.notify(task.getTaskId(), "Task failed with exception: " + e.getMessage(), com.aegis.core.notification.model.NotificationPriority.HIGH, com.aegis.core.notification.model.NotificationCategory.BACKGROUND_TASK);
             }
         }).start();
     }
