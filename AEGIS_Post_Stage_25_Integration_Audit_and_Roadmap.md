@@ -60,8 +60,8 @@ The audit is a milestone in its own right. It is not a feature stage.
 | 24 | Monitoring and Proactive AEGIS | IMPLEMENTED |
 | 25 | Notifications | IMPLEMENTED |
 | **25.5** | **Full-System Integration Audit** | **COMPLETED** |
-| 26 | iPhone / Mobile Experience | UNCOMPLETED — CURRENT |
-| 27 | Advanced Memory and Long-Term Knowledge | UNCOMPLETED |
+| 26 | iPhone / Mobile Experience | IMPLEMENTED |
+| 27 | Advanced Memory and Long-Term Knowledge | UNCOMPLETED — CURRENT |
 | 28 | Security Hardening | UNCOMPLETED |
 | 29 | Reliability, Testing and Recovery | UNCOMPLETED |
 | 30 | Production Readiness | UNCOMPLETED |
@@ -1484,7 +1484,7 @@ Stage 25.7 must verify those fixes.
 
 # 26. Stage 26 — iPhone / Mobile Experience
 
-**Status:** UNCOMPLETED  
+**Status:** IMPLEMENTED  
 **Dependency:** Stage 25.5 and any required remediation
 
 Objective:

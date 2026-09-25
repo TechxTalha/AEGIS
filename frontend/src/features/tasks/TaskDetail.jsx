@@ -79,55 +79,54 @@ const TaskDetail = () => {
     };
 
     return (
-        <div className="animate-fade-in">
-            <div className="mb-6">
-                <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => navigate('/tasks')} className="px-0 mb-4">
-                    Back to Tasks
+        <div className="animate-fade-in pb-4">
+            <div className="mb-4">
+                <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => navigate('/tasks')} className="px-0 mb-2">
+                    Back
                 </Button>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <Title level={2} className="!mt-0 !mb-2">{task.title}</Title>
-                        <Space>
-                            <Tag color={getStatusColor(task.status)} className="text-sm px-3 py-1">
-                                {task.status}
-                            </Tag>
-                            <Tag className="text-sm px-3 py-1">
-                                Priority: {task.priority}
-                            </Tag>
-                            {isConnected ? (
-                                <Tag color="green">Live Updates Active</Tag>
-                            ) : (
-                                <Tag color="default">Disconnected</Tag>
-                            )}
-                        </Space>
-                    </div>
-                    <Space>
+                <div className="flex flex-col">
+                    <Title level={3} className="!mt-0 !mb-2 break-words">{task.title}</Title>
+                    <Space wrap className="mb-4">
+                        <Tag color={getStatusColor(task.status)} className="text-xs">
+                            {task.status}
+                        </Tag>
+                        <Tag className="text-xs">
+                            Priority: {task.priority}
+                        </Tag>
+                        {isConnected ? (
+                            <Tag color="green" className="text-xs">Live</Tag>
+                        ) : (
+                            <Tag color="default" className="text-xs">Disconnected</Tag>
+                        )}
+                    </Space>
+                    
+                    <div className="grid grid-cols-2 gap-2 mb-2">
                         {task.status === 'CREATED' && (
-                            <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleAction('started', taskApi.startTask)}>
-                                Start Task
+                            <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleAction('started', taskApi.startTask)} block>
+                                Start
                             </Button>
                         )}
                         {task.status === 'EXECUTING' && (
-                            <Button icon={<PauseCircleOutlined />} onClick={() => handleAction('paused', taskApi.pauseTask)}>
+                            <Button icon={<PauseCircleOutlined />} onClick={() => handleAction('paused', taskApi.pauseTask)} block>
                                 Pause
                             </Button>
                         )}
                         {(task.status === 'WAITING' || task.status === 'BLOCKED') && (
-                            <Button type="primary" icon={<StepForwardOutlined />} onClick={() => handleAction('resumed', taskApi.resumeTask)}>
+                            <Button type="primary" icon={<StepForwardOutlined />} onClick={() => handleAction('resumed', taskApi.resumeTask)} block>
                                 Resume
                             </Button>
                         )}
                         {['CREATED', 'EXECUTING', 'WAITING', 'BLOCKED'].includes(task.status) && (
-                            <Button danger icon={<CloseCircleOutlined />} onClick={() => handleAction('cancelled', taskApi.cancelTask)}>
+                            <Button danger icon={<CloseCircleOutlined />} onClick={() => handleAction('cancelled', taskApi.cancelTask)} block>
                                 Cancel
                             </Button>
                         )}
                         {['EXECUTING'].includes(task.status) && (
-                            <Button type="primary" className="bg-green-600 hover:bg-green-700" icon={<CheckCircleOutlined />} onClick={() => handleAction('completed', taskApi.completeTask)}>
-                                Complete
+                            <Button type="primary" className="bg-green-600 hover:bg-green-700 border-none" icon={<CheckCircleOutlined />} onClick={() => handleAction('completed', taskApi.completeTask)} block>
+                                Finish
                             </Button>
                         )}
-                    </Space>
+                    </div>
                 </div>
             </div>
 

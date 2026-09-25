@@ -4,8 +4,64 @@
 
 @layer base {
   body {
-    @apply antialiased text-gray-900 bg-gray-50;
+    @apply antialiased text-white bg-[#0B0F19];
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(0, 210, 255, 0.05), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(58, 123, 213, 0.05), transparent 25%);
   }
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(11, 15, 25, 0.5);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 210, 255, 0.3);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 210, 255, 0.5);
+}
+
+::selection {
+    background: rgba(0, 210, 255, 0.3);
+    color: #fff;
+}
+
+/* Ant Design Dark Mode Menu Overrides */
+.ant-menu-horizontal {
+    border-bottom: none !important;
+}
+.ant-menu-light.ant-menu-horizontal > .ant-menu-item-selected::after, 
+.ant-menu-light.ant-menu-horizontal > .ant-menu-submenu-selected::after {
+    border-bottom-color: transparent !important;
+}
+.ant-menu-item {
+    color: #9CA3AF !important;
+}
+.ant-menu-item-selected {
+    color: #00d2ff !important;
+}
+.ant-menu-item-selected .ant-menu-title-content {
+    color: #00d2ff !important;
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+}
+.ant-card {
+    background: rgba(21, 26, 45, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+}
+.ant-card-head {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+.ant-typography {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+h1.ant-typography, h2.ant-typography, h3.ant-typography, h4.ant-typography, h5.ant-typography {
+    color: white !important;
 }
 
 @layer utilities {

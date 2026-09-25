@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Button, Table, Modal, Form, Input, Select, Tag, Space, notification } from 'antd';
-import { PlusOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Typography, Card, Button, Modal, Form, Input, Select, Tag, Space, notification } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { taskApi } from '../../api/taskApi';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,75 +42,58 @@ const TasksDashboard = () => {
         }
     };
 
-    const columns = [
-        {
-            title: 'Title',
-            dataIndex: 'title',
-            key: 'title',
-            render: (text, record) => <a onClick={() => navigate(`/tasks/${record.id}`)}>{text}</a>,
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status) => {
-                let color = 'default';
-                if (status === 'CREATED') color = 'blue';
-                if (status === 'EXECUTING') color = 'processing';
-                if (status === 'COMPLETED') color = 'success';
-                if (status === 'FAILED') color = 'error';
-                if (status === 'CANCELLED') color = 'warning';
-                return <Tag color={color}>{status}</Tag>;
-            },
-        },
-        {
-            title: 'Priority',
-            dataIndex: 'priority',
-            key: 'priority',
-        },
-        {
-            title: 'Created At',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date) => new Date(date).toLocaleString(),
-        },
-        {
-            title: 'Action',
-            key: 'action',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button 
-                        type="primary" 
-                        size="small" 
-                        icon={<PlayCircleOutlined />} 
-                        onClick={() => navigate(`/tasks/${record.id}`)}
-                    >
-                        View Details
-                    </Button>
-                </Space>
-            ),
-        },
-    ];
 
     return (
-        <div className="animate-fade-in">
-            <div className="flex justify-between items-center mb-8">
+        <div className="animate-fade-in pb-4 px-2 pt-2">
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <Title level={2} className="!mt-0 !mb-2 text-gray-800">Task Manager</Title>
+                    <Title level={2} className="!mt-0 !mb-0 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold tracking-tight">Tasks</Title>
                 </div>
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>
-                    New Task
+                <Button type="primary" shape="round" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)} className="shadow-neon border-none">
+                    New
                 </Button>
             </div>
 
-            <Card bordered={false} className="shadow-sm">
-                <Table 
-                    columns={columns} 
-                    dataSource={tasks} 
-                    rowKey="id" 
-                    loading={loading} 
-                />
-            </Card>
+            <div className="space-y-3">
+                {loading ? (
+                    <Card className="w-full flex justify-center py-8 shadow-sm">
+                        <div className="text-gray-400">Loading tasks...</div>
+                    </Card>
+                ) : tasks.length === 0 ? (
+                    <Card className="w-full flex justify-center py-8 shadow-sm">
+                        <div className="text-gray-400">No tasks found.</div>
+                    </Card>
+                ) : (
+                    tasks.map((task) => (
+                        <Card 
+                            key={task.id} 
+                            bordered={false} 
+                            className="shadow-glass cursor-pointer hover:border-primary/50 transition-colors"
+                            styles={{ body: { padding: '16px' } }}
+                            onClick={() => navigate(`/tasks/${task.id}`)}
+                        >
+                            <div className="flex justify-between items-start">
+                                <div className="flex-1 pr-2">
+                                    <div className="font-semibold text-gray-200 text-base mb-1 truncate">{task.title}</div>
+                                    <div className="text-xs text-gray-400 mb-2">
+                                        {new Date(task.createdAt).toLocaleString()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <Tag color={
+                                        task.status === 'CREATED' ? 'blue' : 
+                                        task.status === 'EXECUTING' ? 'processing' : 
+                                        task.status === 'COMPLETED' ? 'success' : 
+                                        task.status === 'FAILED' ? 'error' : 'default'
+                                    }>
+                                        {task.status}
+                                    </Tag>
+                                </div>
+                            </div>
+                        </Card>
+                    ))
+                )}
+            </div>
 
             <Modal
                 title="Create New Task"

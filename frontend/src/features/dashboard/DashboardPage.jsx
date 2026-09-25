@@ -5,68 +5,78 @@ const { Title, Text, Paragraph } = Typography;
 
 const DashboardPage = () => {
     return (
-        <div className="animate-fade-in">
-            <div className="mb-8">
-                <Title level={2} className="!mt-0 !mb-2 text-gray-800">Dashboard</Title>
-                <Text className="text-gray-500">Welcome to the AEGIS Foundation. Your boilerplate is ready.</Text>
+        <div className="animate-fade-in pb-4 px-2">
+            <div className="mb-6 pt-2">
+                <Title level={2} className="!mt-0 !mb-1 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold tracking-tight">Command Center</Title>
+                <Text className="text-gray-400">System status and high-level overview.</Text>
             </div>
 
-            <Row gutter={[24, 24]} className="mb-8">
-                <Col xs={24} sm={12} lg={6}>
+            <Row gutter={[16, 16]} className="mb-8">
+                <Col xs={12} sm={12} lg={6}>
                     <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
                         <Statistic
-                            title="System Status"
-                            value="Online"
-                            valueStyle={{ color: '#52c41a' }}
-                            prefix={<SecurityScanOutlined />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
-                        <Statistic
-                            title="API Version"
-                            value="v1.0"
+                            title="Active Tasks"
+                            value={2}
+                            valueStyle={{ color: '#1677ff' }}
                             prefix={<ApiOutlined />}
                         />
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={12} sm={12} lg={6}>
                     <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
                         <Statistic
-                            title="Database"
-                            value="Connected"
-                            valueStyle={{ color: '#1677ff' }}
-                            prefix={<DatabaseOutlined />}
+                            title="Online Agents"
+                            value={3}
+                            valueStyle={{ color: '#52c41a' }}
+                            prefix={<UserOutlined />}
                         />
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={12} sm={12} lg={6}>
                     <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
                         <Statistic
-                            title="Active Sessions"
+                            title="Pending Approvals"
                             value={1}
-                            prefix={<UserOutlined />}
+                            valueStyle={{ color: '#faad14' }}
+                            prefix={<SecurityScanOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={12} sm={12} lg={6}>
+                    <Card bordered={false} className="shadow-sm hover:shadow-md transition-shadow">
+                        <Statistic
+                            title="Failed Tasks"
+                            value={0}
+                            valueStyle={{ color: '#ff4d4f' }}
+                            prefix={<DatabaseOutlined />}
                         />
                     </Card>
                 </Col>
             </Row>
 
-            <Card bordered={false} className="shadow-sm">
-                <Title level={4} className="!mt-0 !mb-4">Getting Started</Title>
-                <Paragraph className="text-gray-600 text-base">
-                    This is the foundational boilerplate for AEGIS. It includes a complete setup for:
-                </Paragraph>
-                <ul className="list-disc pl-5 text-gray-600 space-y-2 mb-6">
-                    <li><strong>Spring Boot 3.5.16</strong> backend with modular monolith architecture</li>
-                    <li><strong>React 19 + Vite</strong> frontend with TailwindCSS and Ant Design</li>
-                    <li><strong>Secure Authentication</strong> using HTTP-only cookies and stateless JWTs</li>
-                    <li><strong>Flyway Migrations</strong> for strict database versioning</li>
-                    <li><strong>WebSocket Foundation</strong> for future real-time capabilities</li>
-                </ul>
-                <Paragraph className="text-gray-600 text-base italic">
-                    Build your domain-specific features on top of this clean baseline!
-                </Paragraph>
+            <Card bordered={false} className="shadow-glass mb-4">
+                <Title level={4} className="!mt-0 !mb-4 text-white font-semibold">Recent Activity</Title>
+                <div className="flex justify-between items-center py-3 border-b border-white/10">
+                    <div>
+                        <div className="font-medium text-gray-200">Deploy application to prod</div>
+                        <div className="text-xs text-gray-400">Just now</div>
+                    </div>
+                    <span className="px-2 py-1 bg-blue-500/20 text-primary rounded text-xs font-medium border border-primary/30 shadow-neon">IN PROGRESS</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-white/10">
+                    <div>
+                        <div className="font-medium text-gray-200">sys.execute requires approval</div>
+                        <div className="text-xs text-gray-400">5 mins ago</div>
+                    </div>
+                    <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium border border-yellow-500/30">WAITING</span>
+                </div>
+                <div className="flex justify-between items-center py-3">
+                    <div>
+                        <div className="font-medium text-gray-200">Research "Agent Patterns"</div>
+                        <div className="text-xs text-gray-400">1 hour ago</div>
+                    </div>
+                    <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-medium border border-green-500/30">COMPLETED</span>
+                </div>
             </Card>
         </div>
     );

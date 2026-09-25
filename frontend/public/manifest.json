@@ -1,0 +1,15 @@
+{
+  "short_name": "AEGIS",
+  "name": "AEGIS Command Center",
+  "icons": [
+    {
+      "src": "favicon.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#f9fafb"
+}

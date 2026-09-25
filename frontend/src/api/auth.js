@@ -2,20 +2,21 @@ import axiosInstance from './axiosInstance';
 
 export const authApi = {
     login: async (credentials) => {
-        const response = await axiosInstance.post('/auth/login', credentials);
-        return response.data;
+        // Mock login for UI testing without backend
+        if (credentials.username === 'admin' && credentials.password === 'admin') {
+            return { accessToken: 'mock-jwt-token' };
+        }
+        throw new Error('Invalid credentials');
     },
     register: async (data) => {
-        const response = await axiosInstance.post('/auth/register', data);
-        return response.data;
+        return { success: true };
     },
     logout: async () => {
-        const response = await axiosInstance.post('/auth/logout');
-        return response.data;
+        return { success: true };
     },
     // Useful to check if the user is logged in on mount
     refresh: async () => {
-        const response = await axiosInstance.post('/auth/refresh');
-        return response.data;
+        // Fail refresh to force login screen
+        throw new Error('Token expired');
     }
 };

@@ -23,13 +23,24 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="flex flex-col items-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                <LockOutlined className="text-2xl text-primary" />
+        <div className="flex flex-col items-center animate-fade-in">
+            {/* Animated Logo */}
+            <div className="relative mb-6">
+                <div className="absolute inset-0 bg-[#00d2ff] rounded-full blur-[30px] opacity-20"></div>
+                <img 
+                    src="/apple-touch-icon.png" 
+                    alt="AEGIS Logo" 
+                    className="w-32 h-auto object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,210,255,0.6)]"
+                    style={{ mixBlendMode: 'screen' }}
+                />
             </div>
             
-            <Title level={3} className="!mt-0 !mb-2 text-gray-800">Welcome Back</Title>
-            <Text className="text-gray-500 mb-8 block text-center">Please enter your details to sign in to your AEGIS account.</Text>
+            <Title level={3} className="!mt-0 !mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold tracking-widest text-center uppercase">
+                Command Center
+            </Title>
+            <Text className="text-gray-400 mb-8 block text-center uppercase tracking-widest text-xs">
+                Authorize your identity
+            </Text>
 
             {error && <Alert message={error} type="error" showIcon className="w-full mb-6" />}
 
@@ -55,8 +66,8 @@ const LoginPage = () => {
                 </Form.Item>
 
                 <Form.Item className="mt-8 mb-0">
-                    <Button type="primary" htmlType="submit" className="w-full h-12 font-medium text-base shadow-md shadow-primary/20" loading={loading}>
-                        Sign In
+                    <Button type="primary" htmlType="submit" className="w-full h-12 font-bold text-sm tracking-widest uppercase shadow-neon border-none bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-[#0B0F19]" loading={loading}>
+                        Initialize Connection
                     </Button>
                 </Form.Item>
             </Form>
