@@ -1,43 +1,48 @@
+import axiosInstance from './axiosInstance';
+
 export const taskApi = {
     createTask: async (taskData) => {
-        return { id: 'mock-id-123', ...taskData, status: 'CREATED', createdAt: new Date().toISOString() };
+        const response = await axiosInstance.post('/tasks', taskData);
+        return response.data;
     },
 
     getUserTasks: async () => {
-        return [
-            { id: 'task-1', title: 'Deploy application to prod', status: 'EXECUTING', priority: 'HIGH', createdAt: new Date(Date.now() - 3600000).toISOString() },
-            { id: 'task-2', title: 'sys.execute requires approval', status: 'WAITING', priority: 'NORMAL', createdAt: new Date(Date.now() - 7200000).toISOString() },
-            { id: 'task-3', title: 'Research "Agent Patterns"', status: 'COMPLETED', priority: 'LOW', createdAt: new Date(Date.now() - 86400000).toISOString() }
-        ];
+        const response = await axiosInstance.get('/tasks');
+        return response.data;
     },
 
     getTask: async (taskId) => {
-        return {
-            id: taskId,
-            title: 'Mocked Task ' + taskId,
-            description: 'This is a mocked task for UI testing without the backend.',
-            status: 'EXECUTING',
-            priority: 'HIGH',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
+        const response = await axiosInstance.get(`/tasks/${taskId}`);
+        return response.data;
     },
 
     getTaskExecutions: async (taskId) => {
-        return [
-            {
-                id: 'exec-1',
-                events: [
-                    { eventType: 'STARTED', details: 'Task execution started', timestamp: new Date().toISOString() }
-                ]
-            }
-        ];
+        const response = await axiosInstance.get(`/tasks/${taskId}/executions`);
+        return response.data;
     },
 
-    startTask: async (taskId) => { },
-    pauseTask: async (taskId) => { },
-    resumeTask: async (taskId) => { },
-    cancelTask: async (taskId) => { },
-    completeTask: async (taskId) => { },
-    failTask: async (taskId, reason) => { }
+    startTask: async (taskId) => {
+        const response = await axiosInstance.post(`/tasks/${taskId}/start`);
+        return response.data;
+    },
+    pauseTask: async (taskId) => {
+        const response = await axiosInstance.post(`/tasks/${taskId}/pause`);
+        return response.data;
+    },
+    resumeTask: async (taskId) => {
+        const response = await axiosInstance.post(`/tasks/${taskId}/resume`);
+        return response.data;
+    },
+    cancelTask: async (taskId) => {
+        const response = await axiosInstance.post(`/tasks/${taskId}/cancel`);
+        return response.data;
+    },
+    completeTask: async (taskId) => {
+        const response = await axiosInstance.post(`/tasks/${taskId}/complete`);
+        return response.data;
+    },
+    failTask: async (taskId, reason) => {
+        const response = await axiosInstance.post(`/tasks/${taskId}/fail`, { reason });
+        return response.data;
+    }
 };
