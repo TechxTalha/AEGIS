@@ -64,7 +64,7 @@ The audit is a milestone in its own right. It is not a feature stage.
 | 27 | Advanced Memory and Long-Term Knowledge | COMPLETED |
 | 28 | Security Hardening | COMPLETED |
 | 29 | Reliability, Testing and Recovery | COMPLETED |
-| 30 | Production Readiness | UNCOMPLETED — CURRENT |
+| 30 | Production Readiness | COMPLETED |
 
 > IMPLEMENTED means the stages have reportedly been developed. Stage 25.5 independently verifies whether they are actually complete.
 
@@ -1618,7 +1618,7 @@ Implement recovery mechanisms only where test evidence justifies them.
 
 # 30. Stage 30 — Production Readiness
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 Objective:
 
@@ -1809,7 +1809,7 @@ The goal is to establish the real technical state of AEGIS before expanding it f
 | 27 | Advanced Memory and Long-Term Knowledge | COMPLETED |
 | 28 | Security Hardening | COMPLETED |
 | 29 | Reliability, Testing and Recovery | COMPLETED |
-| 30 | Production Readiness | UNCOMPLETED — CURRENT |
+| 30 | Production Readiness | COMPLETED |
 
 ---
 
