@@ -62,8 +62,8 @@ The audit is a milestone in its own right. It is not a feature stage.
 | **25.5** | **Full-System Integration Audit** | **COMPLETED** |
 | 26 | iPhone / Mobile Experience | IMPLEMENTED |
 | 27 | Advanced Memory and Long-Term Knowledge | COMPLETED |
-| 28 | Security Hardening | UNCOMPLETED — CURRENT |
-| 29 | Reliability, Testing and Recovery | UNCOMPLETED |
+| 28 | Security Hardening | COMPLETED |
+| 29 | Reliability, Testing and Recovery | UNCOMPLETED — CURRENT |
 | 30 | Production Readiness | UNCOMPLETED |
 
 > IMPLEMENTED means the stages have reportedly been developed. Stage 25.5 independently verifies whether they are actually complete.
@@ -1554,7 +1554,7 @@ Task Context
 
 # 28. Stage 28 — Security Hardening
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 Objective:
 
@@ -1806,8 +1806,8 @@ The goal is to establish the real technical state of AEGIS before expanding it f
 | 25.6 | Audit Remediation | CONDITIONAL |
 | 25.7 | Audit Re-validation | CONDITIONAL |
 | 26 | iPhone / Mobile Experience | UNCOMPLETED |
-| 27 | Advanced Memory and Long-Term Knowledge | UNCOMPLETED |
-| 28 | Security Hardening | UNCOMPLETED |
+| 27 | Advanced Memory and Long-Term Knowledge | COMPLETED |
+| 28 | Security Hardening | COMPLETED |
 | 29 | Reliability, Testing and Recovery | UNCOMPLETED |
 | 30 | Production Readiness | UNCOMPLETED |
 

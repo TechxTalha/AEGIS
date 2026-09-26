@@ -19,9 +19,12 @@ public class ResearchAgentTool implements ToolExecutor {
 
     public static final String TOOL_ID = "agentic-research-delegate";
     private final SpecializedAgentProtocol agentProtocol;
+    private final com.aegis.core.security.LLMSecurityFilter securityFilter;
 
-    public ResearchAgentTool(@Qualifier("researchAgentAdapter") SpecializedAgentProtocol agentProtocol) {
+    public ResearchAgentTool(@Qualifier("researchAgentAdapter") SpecializedAgentProtocol agentProtocol,
+                             com.aegis.core.security.LLMSecurityFilter securityFilter) {
         this.agentProtocol = agentProtocol;
+        this.securityFilter = securityFilter;
     }
 
     @Override
@@ -54,7 +57,8 @@ public class ResearchAgentTool implements ToolExecutor {
                 if (status == AgentJobStatus.COMPLETED) {
                     AgentJobResult jobResult = agentProtocol.getJobResult(jobId);
                     result.setSuccess(true);
-                    result.setPayload(jobResult.getMessage() + "\nSummary: " + jobResult.getPayload().get("summary"));
+                    String rawPayload = jobResult.getMessage() + "\nSummary: " + jobResult.getPayload().get("summary");
+                    result.setPayload(securityFilter.sanitizeInput(rawPayload));
                     return result;
                 } else if (status == AgentJobStatus.FAILED || status == AgentJobStatus.CANCELLED) {
                     result.setSuccess(false);

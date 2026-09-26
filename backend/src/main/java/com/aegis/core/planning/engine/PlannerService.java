@@ -45,7 +45,7 @@ public class PlannerService {
 
     public Plan generatePlan(String objective) throws Exception {
         String memoriesText = memoryService.getAllMemories().stream()
-                .map(m -> "- [" + m.getCategory().name() + "] " + m.getContent())
+                .map(m -> "- [" + m.getCategory() + "] " + m.getContent())
                 .collect(Collectors.joining("\n"));
         if (memoriesText.isEmpty()) {
             memoriesText = "No relevant memories found.";

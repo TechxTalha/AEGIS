@@ -21,7 +21,8 @@ class PlannerServiceTest {
     @BeforeEach
     void setUp() {
         modelGatewayService = mock(ModelGatewayService.class);
-        plannerService = new PlannerService(modelGatewayService, new ObjectMapper());
+        com.aegis.core.memory.longterm.service.LongTermMemoryService memoryService = mock(com.aegis.core.memory.longterm.service.LongTermMemoryService.class);
+        plannerService = new PlannerService(modelGatewayService, new ObjectMapper(), memoryService);
     }
 
     @Test
