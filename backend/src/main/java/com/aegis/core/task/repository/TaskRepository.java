@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<Task> findByStatus(com.aegis.core.task.entity.TaskStatus status);
 }

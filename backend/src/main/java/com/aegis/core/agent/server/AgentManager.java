@@ -166,4 +166,19 @@ public class AgentManager {
             }
         }
     }
+
+    public java.util.List<AgentInfo> getActiveAgents() {
+        return new java.util.ArrayList<>(connectedAgents.values());
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 30000)
+    public void checkAgentHealth() {
+        long now = System.currentTimeMillis();
+        for (AgentInfo agent : connectedAgents.values()) {
+            if (now - agent.getLastHeartbeat() > 60000) {
+                logger.warn("Agent {} missed heartbeat. Marking as OFFLINE.", agent.getId());
+                unregisterAgent(agent.getId());
+            }
+        }
+    }
 }

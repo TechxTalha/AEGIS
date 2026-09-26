@@ -79,4 +79,42 @@ class ToolExecutionEngineTest {
         assertFalse(result.isSuccess());
         assertTrue(result.getErrorMessage().contains("Tool not found in registry"));
     }
+
+    @Test
+    void testExecuteTimeout() {
+        ToolExecutor sleepExecutor = new ToolExecutor() {
+            @Override
+            public ToolDefinition getDefinition() {
+                ToolDefinition def = new ToolDefinition();
+                def.setId("sleep.tool");
+                def.setName("Sleep Tool");
+                def.setRiskLevel(com.aegis.core.tool.model.RiskLevel.LOW);
+                def.setStatus(com.aegis.core.tool.model.ToolStatus.ACTIVE);
+                def.setExecutionConstraints(new com.aegis.core.tool.model.ExecutionConstraints(100L, 0, false));
+                return def;
+            }
+            @Override
+            public ToolResult execute(ToolInvocation request) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return ToolResult.success("Woke up", 500);
+            }
+        };
+        engine.registerDynamicExecutor("sleep.tool", sleepExecutor);
+        registry.registerTool(sleepExecutor.getDefinition());
+
+        ToolInvocation invocation = new ToolInvocation();
+        invocation.setToolId("sleep.tool");
+
+        long start = System.currentTimeMillis();
+        ToolResult result = engine.execute(invocation);
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.getErrorMessage().contains("timed out"));
+        assertTrue(elapsed >= 100 && elapsed < 2000, "Execution should timeout around 100 ms");
+    }
 }

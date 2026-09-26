@@ -63,8 +63,8 @@ The audit is a milestone in its own right. It is not a feature stage.
 | 26 | iPhone / Mobile Experience | IMPLEMENTED |
 | 27 | Advanced Memory and Long-Term Knowledge | COMPLETED |
 | 28 | Security Hardening | COMPLETED |
-| 29 | Reliability, Testing and Recovery | UNCOMPLETED — CURRENT |
-| 30 | Production Readiness | UNCOMPLETED |
+| 29 | Reliability, Testing and Recovery | COMPLETED |
+| 30 | Production Readiness | UNCOMPLETED — CURRENT |
 
 > IMPLEMENTED means the stages have reportedly been developed. Stage 25.5 independently verifies whether they are actually complete.
 
@@ -1587,7 +1587,7 @@ Areas:
 
 # 29. Stage 29 — Reliability, Testing and Recovery
 
-**Status:** UNCOMPLETED
+**Status:** COMPLETED
 
 Objective:
 
@@ -1808,8 +1808,8 @@ The goal is to establish the real technical state of AEGIS before expanding it f
 | 26 | iPhone / Mobile Experience | UNCOMPLETED |
 | 27 | Advanced Memory and Long-Term Knowledge | COMPLETED |
 | 28 | Security Hardening | COMPLETED |
-| 29 | Reliability, Testing and Recovery | UNCOMPLETED |
-| 30 | Production Readiness | UNCOMPLETED |
+| 29 | Reliability, Testing and Recovery | COMPLETED |
+| 30 | Production Readiness | UNCOMPLETED — CURRENT |
 
 ---
 

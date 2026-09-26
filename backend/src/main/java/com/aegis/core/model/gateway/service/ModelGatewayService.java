@@ -47,6 +47,11 @@ public class ModelGatewayService {
         logger.info("Initialized Model Gateway with provider: {}", activeProvider.getProviderName());
     }
 
+    @org.springframework.retry.annotation.Retryable(
+        retryFor = {ModelGatewayException.class, RateLimitException.class},
+        maxAttempts = 3,
+        backoff = @org.springframework.retry.annotation.Backoff(delay = 1000, multiplier = 2.0)
+    )
     public ModelResponse generate(ModelRequest request) throws ModelGatewayException {
         if (activeProvider == null) {
             throw new ModelGatewayException("No model provider configured");

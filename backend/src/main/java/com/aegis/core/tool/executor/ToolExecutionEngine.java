@@ -63,11 +63,28 @@ public class ToolExecutionEngine {
 
         long startTime = System.currentTimeMillis();
         try {
-            ToolResult result = executor.execute(invocation);
+            long timeoutMs = 60000L;
+            if (toolDef.getExecutionConstraints() != null && toolDef.getExecutionConstraints().getTimeoutMs() != null) {
+                timeoutMs = toolDef.getExecutionConstraints().getTimeoutMs();
+            }
+
+            // Wrap execution in a CompletableFuture with a strict timeout
+            java.util.concurrent.CompletableFuture<ToolResult> future = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                try {
+                    return executor.execute(invocation);
+                } catch (Exception e) {
+                    throw new java.util.concurrent.CompletionException(e);
+                }
+            });
+
+            ToolResult result = future.get(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+            
             if (result.getExecutionTimeMs() == 0) {
                 result.setExecutionTimeMs(System.currentTimeMillis() - startTime);
             }
             return result;
+        } catch (java.util.concurrent.TimeoutException e) {
+            return ToolResult.failure("Tool execution timed out", System.currentTimeMillis() - startTime);
         } catch (Exception e) {
             return ToolResult.failure("Tool execution failed with exception: " + e.getMessage(), System.currentTimeMillis() - startTime);
         }
