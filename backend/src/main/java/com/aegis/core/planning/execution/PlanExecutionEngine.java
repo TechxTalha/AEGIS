@@ -28,7 +28,7 @@ public class PlanExecutionEngine {
     private final com.aegis.core.tool.registry.ToolRegistry toolRegistry;
     private final com.aegis.core.planning.recovery.FailureClassifierService failureClassifierService;
 
-    public PlanExecutionEngine(ToolReasoningService reasoningService, ToolExecutionEngine executionEngine, PlanRepository planRepository, com.aegis.core.safety.service.ExecutionSafetyService safetyService, com.aegis.core.tool.registry.ToolRegistry toolRegistry, com.aegis.core.planning.recovery.FailureClassifierService failureClassifierService) {
+    public PlanExecutionEngine(ToolReasoningService reasoningService, @org.springframework.context.annotation.Lazy ToolExecutionEngine executionEngine, PlanRepository planRepository, com.aegis.core.safety.service.ExecutionSafetyService safetyService, com.aegis.core.tool.registry.ToolRegistry toolRegistry, com.aegis.core.planning.recovery.FailureClassifierService failureClassifierService) {
         this.reasoningService = reasoningService;
         this.executionEngine = executionEngine;
         this.planRepository = planRepository;

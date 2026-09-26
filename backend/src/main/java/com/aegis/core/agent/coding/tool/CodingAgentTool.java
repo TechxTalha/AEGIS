@@ -32,6 +32,7 @@ public class CodingAgentTool implements ToolExecutor {
         definition.setDescription("Delegates a complex coding objective to the external agentic IDE. Use this when source code modifications are required.");
         definition.setRiskLevel(RiskLevel.HIGH);
         definition.setRequiredPermissions(java.util.List.of("aegis.coding.delegate"));
+        definition.setStatus(com.aegis.core.tool.model.ToolStatus.ACTIVE);
         
         definition.setInputSchema("{\"type\": \"object\", \"properties\": {\"objective\": {\"type\": \"string\", \"description\": \"The detailed coding objective\"}, \"repositoryPath\": {\"type\": \"string\", \"description\": \"The path to the source code repository\"}}, \"required\": [\"objective\", \"repositoryPath\"]}");
 

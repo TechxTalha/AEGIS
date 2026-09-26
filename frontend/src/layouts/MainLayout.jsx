@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import { Layout, Menu, Button, theme } from 'antd';
-import { LogoutOutlined, DashboardOutlined, UserOutlined, UnorderedListOutlined, RobotOutlined, CheckSquareOutlined } from '@ant-design/icons';
+import { LogoutOutlined, DashboardOutlined, UserOutlined, UnorderedListOutlined, RobotOutlined, CheckSquareOutlined, DatabaseOutlined } from '@ant-design/icons';
 
 const { Header, Content } = Layout;
 
@@ -29,6 +29,7 @@ const MainLayout = () => {
         if (location.pathname.startsWith('/tasks')) return 'tasks';
         if (location.pathname.startsWith('/approvals')) return 'approvals';
         if (location.pathname.startsWith('/agents')) return 'agents';
+        if (location.pathname.startsWith('/memory')) return 'memory';
         return 'dashboard';
     };
 
@@ -43,13 +44,14 @@ const MainLayout = () => {
                 <div className="w-10"></div>
 
                 {/* Centered Logo */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
-                    <img
-                        src="/apple-touch-icon.png"
-                        alt="AEGIS Logo"
-                        className="h-28 mt-4 w-auto object-contain drop-shadow-[0_0_15px_rgba(0,210,255,0.6)]"
-                        style={{ mixBlendMode: 'screen' }}
-                    />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center mt-2">
+                    <div className="w-16 h-16 rounded-full overflow-hidden relative drop-shadow-[0_0_15px_rgba(0,210,255,0.8)] border border-[#00d2ff]/30 bg-black">
+                        <img
+                            src="/apple-touch-icon.png"
+                            alt="AEGIS Logo"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                 </div>
 
                 <Button
@@ -67,43 +69,52 @@ const MainLayout = () => {
 
             {/* Bottom Navigation Bar (Mobile PWA) - Floating Pill Design */}
             <div className="fixed bottom-6 w-full z-50 px-4 flex justify-center pointer-events-none">
-                <div className="rounded-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,210,255,0.15)] overflow-hidden backdrop-blur-xl w-full max-w-[400px] pointer-events-auto"
-                    style={{ background: 'rgba(15, 20, 35, 0.85)' }}>
-                    <div className="flex justify-around items-center h-16 w-full">
+                <div className="rounded-3xl border border-[#00d2ff]/30 shadow-[0_8px_32px_rgba(0,210,255,0.2)] overflow-hidden backdrop-blur-xl w-full max-w-[420px] pointer-events-auto"
+                    style={{ background: 'rgba(10, 15, 25, 0.95)' }}>
+                    <div className="flex justify-between items-center h-[70px] w-full px-4">
                         <div 
                             onClick={() => navigate('/')} 
-                            className={`flex-1 h-full flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'dashboard' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
+                            className={`h-full px-2 flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'dashboard' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
                         >
-                            <DashboardOutlined className="text-xl mb-1" />
-                            <span className="text-[10px] uppercase font-bold tracking-widest">Home</span>
-                            {getSelectedKey() === 'dashboard' && <div className="absolute bottom-0 w-1/2 h-[3px] bg-primary rounded-t-md shadow-[0_0_8px_rgba(0,210,255,0.8)]"></div>}
+                            <DashboardOutlined className={`text-xl mb-1 transition-transform ${getSelectedKey() === 'dashboard' ? 'scale-110 drop-shadow-[0_0_8px_rgba(0,210,255,0.8)]' : ''}`} />
+                            <span className="text-[9px] uppercase font-bold tracking-widest">Home</span>
+                            {getSelectedKey() === 'dashboard' && <div className="absolute bottom-0 w-[80%] h-[3px] bg-primary rounded-t-md shadow-[0_0_10px_rgba(0,210,255,1)] left-1/2 -translate-x-1/2"></div>}
                         </div>
                         
                         <div 
                             onClick={() => navigate('/tasks')} 
-                            className={`flex-1 h-full flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'tasks' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
+                            className={`h-full px-2 flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'tasks' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
                         >
-                            <UnorderedListOutlined className="text-xl mb-1" />
-                            <span className="text-[10px] uppercase font-bold tracking-widest">Tasks</span>
-                            {getSelectedKey() === 'tasks' && <div className="absolute bottom-0 w-1/2 h-[3px] bg-primary rounded-t-md shadow-[0_0_8px_rgba(0,210,255,0.8)]"></div>}
+                            <UnorderedListOutlined className={`text-xl mb-1 transition-transform ${getSelectedKey() === 'tasks' ? 'scale-110 drop-shadow-[0_0_8px_rgba(0,210,255,0.8)]' : ''}`} />
+                            <span className="text-[9px] uppercase font-bold tracking-widest">Tasks</span>
+                            {getSelectedKey() === 'tasks' && <div className="absolute bottom-0 w-[80%] h-[3px] bg-primary rounded-t-md shadow-[0_0_10px_rgba(0,210,255,1)] left-1/2 -translate-x-1/2"></div>}
                         </div>
 
                         <div 
                             onClick={() => navigate('/approvals')} 
-                            className={`flex-1 h-full flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'approvals' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
+                            className={`h-full px-2 flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'approvals' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
                         >
-                            <CheckSquareOutlined className="text-xl mb-1" />
-                            <span className="text-[10px] uppercase font-bold tracking-widest">Alerts</span>
-                            {getSelectedKey() === 'approvals' && <div className="absolute bottom-0 w-1/2 h-[3px] bg-primary rounded-t-md shadow-[0_0_8px_rgba(0,210,255,0.8)]"></div>}
+                            <CheckSquareOutlined className={`text-xl mb-1 transition-transform ${getSelectedKey() === 'approvals' ? 'scale-110 drop-shadow-[0_0_8px_rgba(0,210,255,0.8)]' : ''}`} />
+                            <span className="text-[9px] uppercase font-bold tracking-widest">Alerts</span>
+                            {getSelectedKey() === 'approvals' && <div className="absolute bottom-0 w-[80%] h-[3px] bg-primary rounded-t-md shadow-[0_0_10px_rgba(0,210,255,1)] left-1/2 -translate-x-1/2"></div>}
                         </div>
 
                         <div 
                             onClick={() => navigate('/agents')} 
-                            className={`flex-1 h-full flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'agents' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
+                            className={`h-full px-2 flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'agents' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
                         >
-                            <RobotOutlined className="text-xl mb-1" />
-                            <span className="text-[10px] uppercase font-bold tracking-widest">Agents</span>
-                            {getSelectedKey() === 'agents' && <div className="absolute bottom-0 w-1/2 h-[3px] bg-primary rounded-t-md shadow-[0_0_8px_rgba(0,210,255,0.8)]"></div>}
+                            <RobotOutlined className={`text-xl mb-1 transition-transform ${getSelectedKey() === 'agents' ? 'scale-110 drop-shadow-[0_0_8px_rgba(0,210,255,0.8)]' : ''}`} />
+                            <span className="text-[9px] uppercase font-bold tracking-widest">Agents</span>
+                            {getSelectedKey() === 'agents' && <div className="absolute bottom-0 w-[80%] h-[3px] bg-primary rounded-t-md shadow-[0_0_10px_rgba(0,210,255,1)] left-1/2 -translate-x-1/2"></div>}
+                        </div>
+
+                        <div 
+                            onClick={() => navigate('/memory')} 
+                            className={`h-full px-2 flex flex-col justify-center items-center cursor-pointer transition-all duration-300 relative ${getSelectedKey() === 'memory' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
+                        >
+                            <DatabaseOutlined className={`text-xl mb-1 transition-transform ${getSelectedKey() === 'memory' ? 'scale-110 drop-shadow-[0_0_8px_rgba(0,210,255,0.8)]' : ''}`} />
+                            <span className="text-[9px] uppercase font-bold tracking-widest">Memory</span>
+                            {getSelectedKey() === 'memory' && <div className="absolute bottom-0 w-[80%] h-[3px] bg-primary rounded-t-md shadow-[0_0_10px_rgba(0,210,255,1)] left-1/2 -translate-x-1/2"></div>}
                         </div>
                     </div>
                 </div>

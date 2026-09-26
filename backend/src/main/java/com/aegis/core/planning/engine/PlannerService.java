@@ -10,12 +10,15 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import com.aegis.core.memory.longterm.service.LongTermMemoryService;
 
 @Service
 public class PlannerService {
 
     private final ModelGatewayService modelGatewayService;
     private final ObjectMapper objectMapper;
+    private final LongTermMemoryService memoryService;
 
     private static final String PLANNER_PROMPT = "You are AEGIS Planner, an AI module responsible for " +
             "translating natural language objectives into a structured, executable JSON plan.\n" +
@@ -31,17 +34,28 @@ public class PlannerService {
             "    }\n" +
             "  ]\n" +
             "}\n" +
-            "Do not include any Markdown blocks, formatting, or conversational text.";
+            "Do not include any Markdown blocks, formatting, or conversational text.\n\n" +
+            "Context / Long-Term Memories:\n%s";
 
-    public PlannerService(ModelGatewayService modelGatewayService, ObjectMapper objectMapper) {
+    public PlannerService(ModelGatewayService modelGatewayService, ObjectMapper objectMapper, LongTermMemoryService memoryService) {
         this.modelGatewayService = modelGatewayService;
         this.objectMapper = objectMapper;
+        this.memoryService = memoryService;
     }
 
     public Plan generatePlan(String objective) throws Exception {
+        String memoriesText = memoryService.getAllMemories().stream()
+                .map(m -> "- [" + m.getCategory().name() + "] " + m.getContent())
+                .collect(Collectors.joining("\n"));
+        if (memoriesText.isEmpty()) {
+            memoriesText = "No relevant memories found.";
+        }
+
+        String finalPrompt = String.format(PLANNER_PROMPT, memoriesText);
+
         ModelRequest request = new ModelRequest();
         request.setMessages(List.of(
-                ModelMessage.system(PLANNER_PROMPT),
+                ModelMessage.system(finalPrompt),
                 ModelMessage.user("Create a detailed plan for the following objective: " + objective)
         ));
 

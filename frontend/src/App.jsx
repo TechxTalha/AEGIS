@@ -9,6 +9,7 @@ import TasksDashboard from './features/tasks/TasksDashboard';
 import TaskDetail from './features/tasks/TaskDetail';
 import ApprovalsPage from './features/approvals/ApprovalsPage';
 import AgentsPage from './features/agents/AgentsPage';
+import MemoryPage from './features/memory/MemoryPage';
 import './assets/index.css';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
                             <Route path="/tasks/:id" element={<TaskDetail />} />
                             <Route path="/approvals" element={<ApprovalsPage />} />
                             <Route path="/agents" element={<AgentsPage />} />
+                            <Route path="/memory" element={<MemoryPage />} />
                         </Route>
 
                         <Route path="*" element={<Navigate to="/" replace />} />

@@ -61,8 +61,8 @@ The audit is a milestone in its own right. It is not a feature stage.
 | 25 | Notifications | IMPLEMENTED |
 | **25.5** | **Full-System Integration Audit** | **COMPLETED** |
 | 26 | iPhone / Mobile Experience | IMPLEMENTED |
-| 27 | Advanced Memory and Long-Term Knowledge | UNCOMPLETED — CURRENT |
-| 28 | Security Hardening | UNCOMPLETED |
+| 27 | Advanced Memory and Long-Term Knowledge | COMPLETED |
+| 28 | Security Hardening | UNCOMPLETED — CURRENT |
 | 29 | Reliability, Testing and Recovery | UNCOMPLETED |
 | 30 | Production Readiness | UNCOMPLETED |
 

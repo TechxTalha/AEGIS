@@ -1,6 +1,8 @@
 spring:
   application:
     name: aegis-backend
+  main:
+    allow-circular-references: true
     
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/aegis?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}

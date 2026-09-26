@@ -27,12 +27,13 @@ const LoginPage = () => {
             {/* Animated Logo */}
             <div className="relative mb-6">
                 <div className="absolute inset-0 bg-[#00d2ff] rounded-full blur-[30px] opacity-20"></div>
-                <img 
-                    src="/apple-touch-icon.png" 
-                    alt="AEGIS Logo" 
-                    className="w-32 h-auto object-contain relative z-10 drop-shadow-[0_0_20px_rgba(0,210,255,0.6)]"
-                    style={{ mixBlendMode: 'screen' }}
-                />
+                <div className="w-36 h-36 rounded-full overflow-hidden relative z-10 drop-shadow-[0_0_25px_rgba(0,210,255,0.8)] border border-[#00d2ff]/30 mx-auto">
+                    <img 
+                        src="/apple-touch-icon.png" 
+                        alt="AEGIS Logo" 
+                        className="w-full h-full object-cover"
+                    />
+                </div>
             </div>
             
             <Title level={3} className="!mt-0 !mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold tracking-widest text-center uppercase">

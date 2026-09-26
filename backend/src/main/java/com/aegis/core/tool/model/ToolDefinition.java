@@ -10,7 +10,7 @@ public class ToolDefinition {
     private String inputSchema;
     private String outputSchema;
     private RiskLevel riskLevel;
-    private ToolStatus status;
+    private ToolStatus status = ToolStatus.ACTIVE;
     private Map<String, String> capabilityMetadata;
     private List<String> requiredPermissions;
     private ExecutionConstraints executionConstraints;
