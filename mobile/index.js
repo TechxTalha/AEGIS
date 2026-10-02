@@ -2,11 +2,13 @@
  * @format
  */
 
-import { AppRegistry } from 'react-native';
+import { AppRegistry, Platform } from 'react-native';
 import App from './App';
-import ReactNativeForegroundService from '@supersami/rn-foreground-service';
 import { name as appName } from './app.json';
 
-ReactNativeForegroundService.register();
+if (Platform.OS === 'android') {
+  const ReactNativeForegroundService = require('@supersami/rn-foreground-service').default;
+  ReactNativeForegroundService.register();
+}
 
 AppRegistry.registerComponent(appName, () => App);

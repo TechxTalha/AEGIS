@@ -5,6 +5,13 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
+# Setup react-native-permissions handlers
+permissions_path = '../node_modules/react-native-permissions/scripts/setup.rb'
+load permissions_path if File.exist?(permissions_path)
+setup_permissions([
+  'Microphone',
+])
+
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
