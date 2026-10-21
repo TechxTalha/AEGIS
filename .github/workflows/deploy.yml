@@ -1,0 +1,204 @@
+name: AEGIS CI/CD Production Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Build & Test (Backend + Frontend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      - name: Make Maven Wrapper Executable
+        run: chmod +x backend/mvnw
+
+      - name: Run Backend Unit & Integration Tests
+        run: |
+          cd backend
+          ./mvnw clean test
+
+      - name: Package Backend Executable JAR
+        run: |
+          cd backend
+          ./mvnw package -DskipTests
+
+      - name: Compute Backend Checksum & Verify Artifact
+        run: |
+          if [ ! -f "backend/target/backend-0.0.1-SNAPSHOT.jar" ]; then
+            echo "FATAL: Backend build failed to produce backend-0.0.1-SNAPSHOT.jar"
+            exit 1
+          fi
+          cd backend/target
+          sha256sum backend-0.0.1-SNAPSHOT.jar | awk '{print $1}' > backend.sha256
+          echo "Backend SHA-256: $(cat backend.sha256)"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Run CI/CD Environment Generator Tests
+        run: node .github/scripts/generate-env.test.js
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build Frontend Production Bundle
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Verify Frontend Distribution Integrity
+        run: |
+          if [ ! -f "frontend/dist/index.html" ] || [ ! -s "frontend/dist/index.html" ]; then
+            echo "FATAL: Frontend build failed to produce valid index.html"
+            exit 1
+          fi
+          if [ ! -d "frontend/dist/assets" ]; then
+            echo "FATAL: Frontend build missing assets directory"
+            exit 1
+          fi
+
+      - name: Upload Backend Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifacts
+          path: |
+            backend/target/backend-0.0.1-SNAPSHOT.jar
+            backend/target/backend.sha256
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Upload Frontend Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy-to-production:
+    name: Deploy to Ubuntu Production Server
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Source Code (for deployment scripts)
+        uses: actions/checkout@v4
+
+      - name: Download Backend Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifacts
+          path: deploy-package/backend/
+
+      - name: Download Frontend Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: deploy-package/frontend/
+
+      - name: Set up Node.js (for secret validation and serialization)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate Secrets & Generate Safe Environment File
+        env:
+          OUTPUT_PATH: deploy-package/production.env
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          AEGIS_SECRET_KEY: ${{ secrets.AEGIS_SECRET_KEY }}
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          AEGIS_MODEL_PRIMARY_PROVIDER: ${{ secrets.AEGIS_MODEL_PRIMARY_PROVIDER || secrets.AEGIS_MODEL_PROVIDER || 'openai' }}
+          AEGIS_MODEL_PRIMARY_ENDPOINT: ${{ secrets.AEGIS_MODEL_PRIMARY_ENDPOINT || secrets.AEGIS_MODEL_ENDPOINT || 'https://api.openai.com/v1' }}
+          AEGIS_MODEL_PRIMARY_API_KEY: ${{ secrets.AEGIS_MODEL_PRIMARY_API_KEY || secrets.AEGIS_MODEL_API_KEY }}
+          AEGIS_MODEL_PRIMARY_NAME: ${{ secrets.AEGIS_MODEL_PRIMARY_NAME || secrets.AEGIS_MODEL_NAME || 'gpt-4o' }}
+          AEGIS_MODEL_FALLBACK1_PROVIDER: ${{ secrets.AEGIS_MODEL_FALLBACK1_PROVIDER || 'groq' }}
+          AEGIS_MODEL_FALLBACK1_ENDPOINT: ${{ secrets.AEGIS_MODEL_FALLBACK1_ENDPOINT || 'https://api.groq.com/openai/v1' }}
+          AEGIS_MODEL_FALLBACK1_API_KEY: ${{ secrets.AEGIS_MODEL_FALLBACK1_API_KEY }}
+          AEGIS_MODEL_FALLBACK1_NAME: ${{ secrets.AEGIS_MODEL_FALLBACK1_NAME || 'llama-3.3-70b-versatile' }}
+          AEGIS_MODEL_FALLBACK2_PROVIDER: ${{ secrets.AEGIS_MODEL_FALLBACK2_PROVIDER || 'gemini' }}
+          AEGIS_MODEL_FALLBACK2_ENDPOINT: ${{ secrets.AEGIS_MODEL_FALLBACK2_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/openai/' }}
+          AEGIS_MODEL_FALLBACK2_API_KEY: ${{ secrets.AEGIS_MODEL_FALLBACK2_API_KEY }}
+          AEGIS_MODEL_FALLBACK2_NAME: ${{ secrets.AEGIS_MODEL_FALLBACK2_NAME || 'gemini-1.5-flash' }}
+          AEGIS_MODEL_FALLBACK3_PROVIDER: ${{ secrets.AEGIS_MODEL_FALLBACK3_PROVIDER || 'openrouter' }}
+          AEGIS_MODEL_FALLBACK3_ENDPOINT: ${{ secrets.AEGIS_MODEL_FALLBACK3_ENDPOINT || 'https://openrouter.ai/api/v1' }}
+          AEGIS_MODEL_FALLBACK3_API_KEY: ${{ secrets.AEGIS_MODEL_FALLBACK3_API_KEY }}
+          AEGIS_MODEL_FALLBACK3_NAME: ${{ secrets.AEGIS_MODEL_FALLBACK3_NAME || 'meta-llama/llama-3.1-8b-instruct:free' }}
+        run: |
+          node .github/scripts/generate-env.js
+
+      - name: Stage Remote Deployment Script and Systemd Unit
+        run: |
+          cp .github/scripts/deploy-remote.sh deploy-package/deploy-remote.sh
+          chmod +x deploy-package/deploy-remote.sh
+          cp scripts/aegis-backend.service deploy-package/aegis-backend.service
+
+      - name: Generate Unique Release Identifier
+        id: release_meta
+        run: |
+          RELEASE_ID="$(date +%Y%m%d%H%M%S)_${{ github.run_number }}_$(echo ${{ github.sha }} | cut -c1-7)"
+          STAGING_DIR="/tmp/aegis-staging-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+          echo "staging_dir=$STAGING_DIR" >> "$GITHUB_OUTPUT"
+          echo "Prepared Release ID: $RELEASE_ID"
+
+      - name: Transfer Release Package to Server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: 'deploy-package/**'
+          target: ${{ steps.release_meta.outputs.staging_dir }}
+          strip_components: 1
+
+      - name: Execute Atomic Release Activation & Verification via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          RELEASE_ID: ${{ steps.release_meta.outputs.release_id }}
+          STAGING_DIR: ${{ steps.release_meta.outputs.staging_dir }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script_stop: true
+          envs: RELEASE_ID,STAGING_DIR,SERVER_HOST
+          script: |
+            sudo bash "${STAGING_DIR}/deploy-remote.sh" "${RELEASE_ID}" "${STAGING_DIR}" "${SERVER_HOST}"
+
+

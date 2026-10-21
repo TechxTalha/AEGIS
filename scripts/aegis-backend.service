@@ -1,0 +1,33 @@
+# =========================================================================
+# AEGIS Backend Systemd Service Unit
+# Deployed to: /etc/systemd/system/aegis-backend.service
+# =========================================================================
+
+[Unit]
+Description=AEGIS Backend Daemon (Spring Boot Embedded Tomcat)
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=aegis
+Group=aegis
+WorkingDirectory=/opt/aegis
+
+# Systemd loads environment configuration from /opt/aegis/.env (symlink to current active release)
+EnvironmentFile=/opt/aegis/.env
+
+# Executes backend JAR via atomic symlink /opt/aegis/backend.jar -> /opt/aegis/current/backend.jar
+ExecStart=/usr/bin/java -Xms512m -Xmx1024m -XX:+UseG1GC -jar /opt/aegis/backend.jar --spring.profiles.active=prod
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
+
+# Security Hardening Constraints
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/aegis
+
+[Install]
+WantedBy=multi-user.target

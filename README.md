@@ -73,3 +73,59 @@ npm run dev
 ```
 
 The frontend will be available at `http://localhost:3000`.
+
+---
+
+## Production Deployment & CI/CD Pipeline
+
+AEGIS features an enterprise-grade automated CI/CD pipeline powered by GitHub Actions ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)). On push to `main`, the pipeline runs tests, compiles the Spring Boot executable JAR, builds the Vite production PWA bundle, transfers release packages to the Ubuntu server via SCP, and atomically activates the release with health checks and automatic rollback capabilities.
+
+### Required GitHub Repository Secrets
+
+Configure these secrets in **GitHub → Repository Settings → Secrets and variables → Actions**:
+
+#### 1. Server & SSH Access (Mandatory)
+| Secret Name | Required | Default | Description | Example |
+| :--- | :---: | :---: | :--- | :--- |
+| `SERVER_HOST` | **Yes** | — | Public IP address or domain of the Ubuntu server | `192.0.2.1` or `aegis.example.com` |
+| `SERVER_USER` | **Yes** | — | SSH deployment username on the server (with sudo access) | `ubuntu` or `root` |
+| `SERVER_SSH_KEY` | **Yes** | — | OpenSSH private key matching server's `~/.ssh/authorized_keys` | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `SERVER_PORT` | No | `22` | SSH port on remote server | `22` |
+
+#### 2. Database Configuration (Mandatory)
+| Secret Name | Required | Default | Description | Example |
+| :--- | :---: | :---: | :--- | :--- |
+| `SPRING_DATASOURCE_URL` | **Yes** | — | JDBC connection string to the production MySQL database | `jdbc:mysql://localhost:3306/aegis?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true` |
+| `SPRING_DATASOURCE_USERNAME` | **Yes** | — | MySQL database username | `aegis_user` |
+| `SPRING_DATASOURCE_PASSWORD` | **Yes** | — | MySQL database user password | `your_secure_db_password` |
+
+#### 3. Security & Cryptographic Keys (Mandatory)
+| Secret Name | Required | Default | Description | Example |
+| :--- | :---: | :---: | :--- | :--- |
+| `JWT_SECRET` | **Yes** | — | 256-bit+ secret key for HMAC-SHA256 JWT tokens (min 32 chars) | `32+_character_random_jwt_secret_key` |
+| `AEGIS_SECRET_KEY` | **Yes** | — | 256-bit master encryption key for sensitive data (min 32 chars) | `32+_character_master_encryption_key` |
+| `CORS_ALLOWED_ORIGINS` | No | `http://${SERVER_HOST},http://localhost` | Comma-separated CORS allowed origins | `http://192.0.2.1,https://aegis.example.com` |
+
+#### 4. Multi-Model Gateway & AI Fallback Cascade
+The Model Gateway supports automatic fallback across multiple providers. If the primary model hits a rate limit (HTTP 429) or provider outage, it immediately cascades to fallback tiers:
+
+| Secret Name | Required | Default | Description | Example |
+| :--- | :---: | :---: | :--- | :--- |
+| `AEGIS_MODEL_PRIMARY_API_KEY` | Recommended | — | Primary model provider API key (*alias: `AEGIS_MODEL_API_KEY`*) | `sk-...` (OpenAI or Groq) |
+| `AEGIS_MODEL_PRIMARY_PROVIDER` | No | `openai` | Primary provider type (`openai`, `groq`, `gemini`, etc.) | `openai` |
+| `AEGIS_MODEL_PRIMARY_ENDPOINT` | No | `https://api.openai.com/v1` | OpenAI-compatible endpoint URL | `https://api.openai.com/v1` |
+| `AEGIS_MODEL_PRIMARY_NAME` | No | `gpt-4o` | Model identifier | `gpt-4o` |
+| `AEGIS_MODEL_FALLBACK1_API_KEY` | No | — | Free-tier Fallback 1 API key (Groq fast inference) | `gsk_...` |
+| `AEGIS_MODEL_FALLBACK1_PROVIDER` | No | `groq` | Fallback 1 provider | `groq` |
+| `AEGIS_MODEL_FALLBACK1_ENDPOINT` | No | `https://api.groq.com/openai/v1` | Fallback 1 API endpoint | `https://api.groq.com/openai/v1` |
+| `AEGIS_MODEL_FALLBACK1_NAME` | No | `llama-3.3-70b-versatile` | Fallback 1 model identifier | `llama-3.3-70b-versatile` |
+| `AEGIS_MODEL_FALLBACK2_API_KEY` | No | — | Free-tier Fallback 2 API key (Google Gemini AI Studio) | `AIzaSy...` |
+| `AEGIS_MODEL_FALLBACK2_PROVIDER` | No | `gemini` | Fallback 2 provider | `gemini` |
+| `AEGIS_MODEL_FALLBACK2_ENDPOINT` | No | `https://generativelanguage.googleapis.com/v1beta/openai/` | Fallback 2 API endpoint | Google OpenAI endpoint |
+| `AEGIS_MODEL_FALLBACK2_NAME` | No | `gemini-1.5-flash` | Fallback 2 model identifier | `gemini-1.5-flash` |
+| `AEGIS_MODEL_FALLBACK3_API_KEY` | No | — | Free-tier Fallback 3 API key (OpenRouter / DeepSeek / Mistral) | `sk-or-v1-...` |
+| `AEGIS_MODEL_FALLBACK3_PROVIDER` | No | `openrouter` | Fallback 3 provider | `openrouter` |
+| `AEGIS_MODEL_FALLBACK3_ENDPOINT` | No | `https://openrouter.ai/api/v1` | Fallback 3 API endpoint | `https://openrouter.ai/api/v1` |
+| `AEGIS_MODEL_FALLBACK3_NAME` | No | `meta-llama/llama-3.1-8b-instruct:free` | Fallback 3 model identifier | `meta-llama/llama-3.1-8b-instruct:free` |
+
+For complete server setup, Nginx reverse proxy configuration, systemd daemon management, and disaster recovery procedures, refer to the [Operations Runbook](runbooks/operations.md).
