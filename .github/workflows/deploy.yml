@@ -204,11 +204,11 @@ jobs:
           SERVER_PORT: ${{ secrets.SERVER_PORT || 22 }}
           STAGING_DIR: ${{ steps.release_meta.outputs.staging_dir }}
         run: |
-          SSH_CMD="ssh -i ~/.ssh/id_deploy -p $SERVER_PORT -o StrictHostKeyChecking=accept-new $SERVER_USER@$SERVER_HOST"
-          echo "Creating remote staging directory: $STAGING_DIR"
-          $SSH_CMD "mkdir -p '$STAGING_DIR'"
+          SSH_OPTS="-i ~/.ssh/id_deploy -p $SERVER_PORT -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15 -v"
+          echo "Testing and creating remote staging directory: $STAGING_DIR"
+          ssh $SSH_OPTS "$SERVER_USER@$SERVER_HOST" "mkdir -p '$STAGING_DIR'"
           echo "Streaming and extracting deployment package onto server..."
-          tar -C deploy-package -czf - . | $SSH_CMD "tar -xzf - -C '$STAGING_DIR'"
+          tar -C deploy-package -czf - . | ssh -i ~/.ssh/id_deploy -p "$SERVER_PORT" -o StrictHostKeyChecking=accept-new -o BatchMode=yes "$SERVER_USER@$SERVER_HOST" "tar -xzf - -C '$STAGING_DIR'"
           echo "✓ Release package transferred and extracted successfully"
 
       - name: Execute Atomic Release Activation & Verification via SSH
@@ -219,7 +219,7 @@ jobs:
           RELEASE_ID: ${{ steps.release_meta.outputs.release_id }}
           STAGING_DIR: ${{ steps.release_meta.outputs.staging_dir }}
         run: |
-          ssh -i ~/.ssh/id_deploy -p "$SERVER_PORT" -o StrictHostKeyChecking=accept-new \
+          ssh -i ~/.ssh/id_deploy -p "$SERVER_PORT" -o StrictHostKeyChecking=accept-new -o BatchMode=yes \
             "$SERVER_USER@$SERVER_HOST" \
             "sudo bash '$STAGING_DIR/deploy-remote.sh' '$RELEASE_ID' '$STAGING_DIR' '$SERVER_HOST'"
 
