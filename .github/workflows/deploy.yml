@@ -181,31 +181,42 @@ jobs:
           ls -la deploy-package/backend/
           ls -la deploy-package/frontend/
 
-      - name: Transfer Release Package to Server via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          source: 'deploy-package/*'
-          target: ${{ steps.release_meta.outputs.staging_dir }}
-          strip_components: 1
+      - name: Configure Secure SSH Client
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || 22 }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SERVER_PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Transfer Release Package to Server via Native SSH Pipe
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || 22 }}
+          STAGING_DIR: ${{ steps.release_meta.outputs.staging_dir }}
+        run: |
+          SSH_CMD="ssh -i ~/.ssh/id_deploy -p $SERVER_PORT -o StrictHostKeyChecking=accept-new $SERVER_USER@$SERVER_HOST"
+          echo "Creating remote staging directory: $STAGING_DIR"
+          $SSH_CMD "mkdir -p '$STAGING_DIR'"
+          echo "Streaming and extracting deployment package onto server..."
+          tar -C deploy-package -czf - . | $SSH_CMD "tar -xzf - -C '$STAGING_DIR'"
+          echo "✓ Release package transferred and extracted successfully"
 
       - name: Execute Atomic Release Activation & Verification via SSH
-        uses: appleboy/ssh-action@v1.0.3
         env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || 22 }}
           RELEASE_ID: ${{ steps.release_meta.outputs.release_id }}
           STAGING_DIR: ${{ steps.release_meta.outputs.staging_dir }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script_stop: true
-          envs: RELEASE_ID,STAGING_DIR,SERVER_HOST
-          script: |
-            sudo bash "${STAGING_DIR}/deploy-remote.sh" "${RELEASE_ID}" "${STAGING_DIR}" "${SERVER_HOST}"
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$SERVER_PORT" -o StrictHostKeyChecking=accept-new \
+            "$SERVER_USER@$SERVER_HOST" \
+            "sudo bash '$STAGING_DIR/deploy-remote.sh' '$RELEASE_ID' '$STAGING_DIR' '$SERVER_HOST'"
 
 

@@ -152,12 +152,12 @@ function validateAndGenerate(env = process.env, customOutputPath = null, throwOn
 
   const targetDir = path.dirname(outputPath);
   if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true, mode: 0o700 });
+    fs.mkdirSync(targetDir, { recursive: true, mode: 0o755 });
   }
 
-  // Ensure directory permissions are restrictive (0700)
+  // Ensure directory permissions allow traversal (0755)
   try {
-    fs.chmodSync(targetDir, 0o700);
+    fs.chmodSync(targetDir, 0o755);
   } catch (_) {
     // Non-fatal if OS doesn't support chmod on directory (e.g. Windows)
   }
