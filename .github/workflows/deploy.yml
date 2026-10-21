@@ -189,8 +189,12 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          # Strip any Windows carriage returns and ensure trailing newline
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
+          # Validate that OpenSSH can parse the private key
+          echo "Validating SSH key format:"
+          ssh-keygen -l -f ~/.ssh/id_deploy
           ssh-keyscan -p "$SERVER_PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Transfer Release Package to Server via Native SSH Pipe
