@@ -139,6 +139,9 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           AEGIS_SECRET_KEY: ${{ secrets.AEGIS_SECRET_KEY }}
+          AEGIS_ADMIN_USERNAME: ${{ secrets.AEGIS_ADMIN_USERNAME }}
+          AEGIS_ADMIN_EMAIL: ${{ secrets.AEGIS_ADMIN_EMAIL }}
+          AEGIS_ADMIN_PASSWORD: ${{ secrets.AEGIS_ADMIN_PASSWORD }}
           CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
           AEGIS_MODEL_PRIMARY_PROVIDER: ${{ secrets.AEGIS_MODEL_PRIMARY_PROVIDER || secrets.AEGIS_MODEL_PROVIDER || 'openai' }}
           AEGIS_MODEL_PRIMARY_ENDPOINT: ${{ secrets.AEGIS_MODEL_PRIMARY_ENDPOINT || secrets.AEGIS_MODEL_ENDPOINT || 'https://api.openai.com/v1' }}
