@@ -25,13 +25,13 @@ public class AdminInitializerService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${aegis.admin.username:admin}")
+    @Value("${aegis.admin.username:Hunter}")
     private String adminUsername;
 
-    @Value("${aegis.admin.email:admin@aegis.local}")
+    @Value("${aegis.admin.email:hunter@aegis.local}")
     private String adminEmail;
 
-    @Value("${aegis.admin.password:Aegis@2026!Admin}")
+    @Value("${aegis.admin.password:Dragon456#}")
     private String adminPassword;
 
     public AdminInitializerService(UserRepository userRepository,
@@ -45,28 +45,33 @@ public class AdminInitializerService {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void initializeAdmin() {
-        if (userRepository.findByUsername(adminUsername).isEmpty()) {
-            logger.info("No administrative account found for '{}'. Seeding initial administrator...", adminUsername);
+        Role adminRole = roleRepository.findByName("ROLE_ADMIN")
+                .orElseThrow(() -> new IllegalStateException("ROLE_ADMIN not found in database!"));
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new IllegalStateException("ROLE_USER not found in database!"));
 
-            Role adminRole = roleRepository.findByName("ROLE_ADMIN")
-                    .orElseThrow(() -> new IllegalStateException("ROLE_ADMIN not found in database!"));
-            Role userRole = roleRepository.findByName("ROLE_USER")
-                    .orElseThrow(() -> new IllegalStateException("ROLE_USER not found in database!"));
+        Set<Role> roles = new HashSet<>();
+        roles.add(adminRole);
+        roles.add(userRole);
 
-            Set<Role> roles = new HashSet<>();
-            roles.add(adminRole);
-            roles.add(userRole);
-
-            User adminUser = new User();
-            adminUser.setUsername(adminUsername);
-            adminUser.setEmail(adminEmail);
-            adminUser.setPasswordHash(passwordEncoder.encode(adminPassword));
-            adminUser.setRoles(roles);
-
-            userRepository.save(adminUser);
-            logger.info("Initial administrator account '{}' created successfully.", adminUsername);
-        } else {
-            logger.info("Administrative account '{}' already exists.", adminUsername);
-        }
+        userRepository.findByUsername(adminUsername).ifPresentOrElse(
+            user -> {
+                logger.info("Administrative account '{}' exists. Syncing password and roles...", adminUsername);
+                user.setPasswordHash(passwordEncoder.encode(adminPassword));
+                user.setRoles(roles);
+                userRepository.save(user);
+                logger.info("Administrative account '{}' synchronized.", adminUsername);
+            },
+            () -> {
+                logger.info("No administrative account found for '{}'. Seeding initial administrator...", adminUsername);
+                User adminUser = new User();
+                adminUser.setUsername(adminUsername);
+                adminUser.setEmail(adminEmail);
+                adminUser.setPasswordHash(passwordEncoder.encode(adminPassword));
+                adminUser.setRoles(roles);
+                userRepository.save(adminUser);
+                logger.info("Initial administrator account '{}' created successfully.", adminUsername);
+            }
+        );
     }
 }
