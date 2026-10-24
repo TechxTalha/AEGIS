@@ -12,9 +12,12 @@ export const useTaskWebSocket = (taskId, onEventReceived) => {
 
         const connectStomp = () => {
             const token = getAccessToken();
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            const host = window.location.host;
+            const wsUrl = `${protocol}//${host}/ws`;
             
             const client = new Client({
-                webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+                webSocketFactory: () => new SockJS(wsUrl),
                 connectHeaders: {
                     Authorization: `Bearer ${token}`
                 },

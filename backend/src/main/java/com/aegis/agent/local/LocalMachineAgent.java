@@ -38,6 +38,9 @@ public class LocalMachineAgent {
     
     private final java.util.concurrent.ExecutorService agentExecutor = java.util.concurrent.Executors.newCachedThreadPool();
 
+    @org.springframework.beans.factory.annotation.Value("${server.port:8080}")
+    private int serverPort;
+
     private StompSession session;
 
     public LocalMachineAgent(AgentIdentityService identityService, 
@@ -63,7 +66,7 @@ public class LocalMachineAgent {
             StompHeaders stompHeaders = new StompHeaders();
             stompHeaders.add("Authorization", "Bearer " + identityService.getAgentToken());
 
-            String url = "ws://localhost:8080/ws";
+            String url = "ws://127.0.0.1:" + serverPort + "/ws";
             logger.info("LocalMachineAgent connecting to AEGIS at {}", url);
 
             stompClient.connectAsync(url, headers, stompHeaders, new AgentSessionHandler())

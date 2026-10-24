@@ -126,6 +126,29 @@ const TaskDetail = () => {
                                 Finish
                             </Button>
                         )}
+                        {['FAILED', 'CANCELLED', 'COMPLETED'].includes(task.status) && (
+                            <Button 
+                                type="primary" 
+                                icon={<RetweetOutlined />} 
+                                onClick={async () => {
+                                    try {
+                                        const newTask = await taskApi.createTask({
+                                            title: task.title,
+                                            description: task.description,
+                                            priority: task.priority
+                                        });
+                                        notification.success({ message: 'Task cloned successfully' });
+                                        navigate(`/tasks/${newTask.id}`);
+                                    } catch (err) {
+                                        notification.error({ message: 'Failed to recreate task', description: err.message });
+                                    }
+                                }} 
+                                block
+                                className="bg-primary text-[#0B0F19] hover:bg-primary/90 font-semibold border-none shadow-neon"
+                            >
+                                Re-run as New Task
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

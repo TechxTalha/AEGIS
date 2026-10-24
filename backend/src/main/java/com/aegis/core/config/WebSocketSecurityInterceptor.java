@@ -79,7 +79,9 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                         Task task = taskRepository.findById(taskId)
                                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
                         
-                        if (!task.getUser().getUsername().equals(username)) {
+                        boolean isAdmin = accessor.getUser() instanceof org.springframework.security.core.Authentication auth &&
+                                auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                        if (!isAdmin && !task.getUser().getUsername().equals(username)) {
                             throw new IllegalArgumentException("Access denied: You do not own this task");
                         }
                     } catch (NumberFormatException e) {

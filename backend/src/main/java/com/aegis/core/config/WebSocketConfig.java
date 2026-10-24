@@ -38,13 +38,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        String[] origins = (allowedOrigins != null && !allowedOrigins.isEmpty())
-                ? allowedOrigins.stream().map(String::trim).filter(s -> !s.isEmpty()).toArray(String[]::new)
-                : new String[]{"http://localhost:3000"};
-
         // Register the "/ws" endpoint, enabling SockJS fallback options so that alternate transports can be used if WebSocket is not available
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(origins)
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
+
+        // Also register pure WebSocket endpoint without SockJS for raw WebSocket clients like LocalMachineAgent
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*");
     }
 }
