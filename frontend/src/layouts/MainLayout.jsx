@@ -44,12 +44,13 @@ const MainLayout = () => {
                 <div className="w-10"></div>
 
                 {/* Centered Logo */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center mt-2">
-                    <div className="w-16 h-16 rounded-full overflow-hidden relative drop-shadow-[0_0_15px_rgba(0,210,255,0.8)] border border-[#00d2ff]/30 bg-black">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                    <div className="relative flex items-center justify-center">
+                        <div className="absolute inset-0 bg-[#00d2ff] rounded-full blur-[20px] opacity-25 pointer-events-none"></div>
                         <img
                             src="/apple-touch-icon.png"
                             alt="AEGIS Logo"
-                            className="w-full h-full object-cover"
+                            className="h-14 w-14 object-contain relative z-10 drop-shadow-[0_0_16px_rgba(0,210,255,0.7)] hover:scale-105 transition-transform duration-300 select-none"
                         />
                     </div>
                 </div>

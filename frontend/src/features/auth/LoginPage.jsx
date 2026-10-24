@@ -29,15 +29,13 @@ const LoginPage = () => {
     return (
         <div className="flex flex-col items-center animate-fade-in">
             {/* Animated Logo */}
-            <div className="relative mb-6">
-                <div className="absolute inset-0 bg-[#00d2ff] rounded-full blur-[30px] opacity-20"></div>
-                <div className="w-36 h-36 rounded-full overflow-hidden relative z-10 drop-shadow-[0_0_25px_rgba(0,210,255,0.8)] border border-[#00d2ff]/30 mx-auto">
-                    <img 
-                        src="/apple-touch-icon.png" 
-                        alt="AEGIS Logo" 
-                        className="w-full h-full object-cover"
-                    />
-                </div>
+            <div className="relative mb-6 flex items-center justify-center">
+                <div className="absolute w-40 h-40 bg-[#00d2ff] rounded-full blur-[45px] opacity-25 pointer-events-none"></div>
+                <img 
+                    src="/apple-touch-icon.png" 
+                    alt="AEGIS Logo" 
+                    className="w-36 h-36 object-contain relative z-10 drop-shadow-[0_0_30px_rgba(0,210,255,0.7)] select-none pointer-events-none transition-transform duration-500 hover:scale-105"
+                />
             </div>
             
             <Title level={3} className="!mt-0 !mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold tracking-widest text-center uppercase">
