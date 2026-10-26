@@ -1,45 +1,30 @@
-import React, { useState } from 'react';
-import { Typography, Card, Tag, Badge } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Typography, Card, Badge } from 'antd';
 import { DesktopOutlined, DatabaseOutlined, GlobalOutlined, CodeOutlined } from '@ant-design/icons';
+import { getStoredAgents } from './agentsData';
 
 const { Title, Text } = Typography;
 
 const AgentsPage = () => {
-    // Mock connected agents
-    const [agents] = useState([
-        {
-            id: 'agent-core-1',
-            name: 'AEGIS Core Orchestrator',
-            type: 'System',
-            status: 'ONLINE',
-            icon: <DesktopOutlined />,
-            capabilities: ['plan', 'execute', 'reason']
-        },
-        {
-            id: 'agent-db-worker',
-            name: 'Database Agent',
-            type: 'Specialized',
-            status: 'ONLINE',
-            icon: <DatabaseOutlined />,
-            capabilities: ['sql.read', 'sql.write', 'schema.analyze']
-        },
-        {
-            id: 'agent-research-1',
-            name: 'Web Research Agent',
-            type: 'Specialized',
-            status: 'BUSY',
-            icon: <GlobalOutlined />,
-            capabilities: ['web.search', 'web.scrape']
-        },
-        {
-            id: 'agent-coder-x',
-            name: 'Antigravity Coder',
-            type: 'External',
-            status: 'OFFLINE',
-            icon: <CodeOutlined />,
-            capabilities: ['fs.write', 'git.commit', 'ide.edit']
+    const [agents, setAgents] = useState(getStoredAgents);
+
+    useEffect(() => {
+        const handleUpdate = () => {
+            setAgents(getStoredAgents());
+        };
+        window.addEventListener('aegis_agents_updated', handleUpdate);
+        return () => window.removeEventListener('aegis_agents_updated', handleUpdate);
+    }, []);
+
+    const getAgentIcon = (id) => {
+        switch (id) {
+            case 'agent-core-1': return <DesktopOutlined />;
+            case 'agent-db-worker': return <DatabaseOutlined />;
+            case 'agent-research-1': return <GlobalOutlined />;
+            case 'agent-coder-x': return <CodeOutlined />;
+            default: return <DesktopOutlined />;
         }
-    ]);
+    };
 
     return (
         <div className="animate-fade-in pb-4 px-2 pt-2">
@@ -58,7 +43,7 @@ const AgentsPage = () => {
                     >
                         <div className="flex items-start">
                             <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-lg mr-3 shadow-neon">
-                                {agent.icon}
+                                {getAgentIcon(agent.id)}
                             </div>
                             <div className="flex-1">
                                 <div className="flex justify-between items-start mb-1">

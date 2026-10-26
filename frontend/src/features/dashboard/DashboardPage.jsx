@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'antd';
-import { PlusOutlined, ReloadOutlined, AudioOutlined } from '@ant-design/icons';
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { taskApi } from '../../api/taskApi';
 import DigitalSignalsGlobe from './DigitalSignalsGlobe';
 import LiveTalkSession from './LiveTalkSession';
 import AgentWorkstations from './AgentWorkstations';
 
 /**
- * DashboardPage (Redesigned)
- * - Summaries removed entirely.
- * - Centerpiece: 3D Holographic Digital Signals Globe with audio reactivity.
- * - Live Talk & Smartphone Chat Session with speech synthesis and voice wave aura.
- * - Animated Agent Desktops & Cyber Lounge (Offline absent, Free resting on sofa with drink, Working locked into multi-screens).
+ * DashboardPage (Optimized Zero-Scroll Command Matrix)
+ * - Zero summaries.
+ * - Central 3D Digital Signals Globe with audio-reactive waveforms.
+ * - Smartphone-styled Live Voice Talk & Cyber Chat.
+ * - Animated Agent Workstations (100% consistent with Agents tab: AEGIS Core, Database, Web Research, Antigravity Coder).
+ * - No text description under headings.
+ * - Perfectly scaled to fit desktop screens without scrolling.
  */
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -36,13 +38,11 @@ const DashboardPage = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Handle audio activity when AI speaks from Phone Voice Talk
     const handleSpeakingChange = (speaking, level = 0.5) => {
         setIsAiSpeaking(speaking);
         setAudioLevel(level);
     };
 
-    // Trigger test speech pulse
     const handleTestSpeak = () => {
         setIsAiSpeaking(true);
         setAudioLevel(0.85);
@@ -70,36 +70,33 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="animate-fade-in pb-12 px-2 max-w-7xl mx-auto">
-            {/* Top Command Center Header */}
-            <div className="mb-6 pt-1 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#00d2ff] shadow-neon animate-pulse" />
-                        <h1 className="text-2xl font-bold tracking-tight text-white mb-0">
-                            AEGIS Command Matrix
-                        </h1>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 font-mono">
-                            v2.4 • NODE 169.58.232.237
-                        </span>
-                    </div>
-                    <p className="text-xs text-gray-400 mb-0">
-                        Holographic signal transmission, voice communications uplink, and agent workstation lounge.
-                    </p>
+        <div className="animate-fade-in pb-2 px-1 max-w-7xl mx-auto flex flex-col justify-start">
+            {/* Top Command Center Header - Clean, No description */}
+            <div className="mb-3 flex justify-between items-center border-b border-white/5 pb-2.5">
+                <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#00d2ff] shadow-neon animate-pulse" />
+                    <h1 className="text-xl font-bold tracking-tight text-white mb-0">
+                        AEGIS Command Matrix
+                    </h1>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 font-mono">
+                        v2.4 • NODE 169.58.232.237
+                    </span>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                     <Button 
+                        size="small"
                         icon={<ReloadOutlined spin={loading} />} 
                         onClick={() => { setLoading(true); fetchTasks().finally(() => setLoading(false)); }} 
                         className="border-white/10 text-gray-300 hover:text-white bg-white/5"
                         title="Sync Telemetry"
                     />
                     <Button 
+                        size="small"
                         type="primary" 
                         icon={<PlusOutlined />} 
                         onClick={() => navigate('/tasks')} 
-                        className="bg-primary text-[#0B0F19] font-bold border-none shadow-neon hover:bg-primary/90"
+                        className="bg-primary text-[#0B0F19] font-bold border-none shadow-neon hover:bg-primary/90 text-xs"
                     >
                         Launch Task
                     </Button>
@@ -107,7 +104,7 @@ const DashboardPage = () => {
             </div>
 
             {/* Main Stage: Digital Signals Globe & Phone Comms Session */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
                 {/* Central Digital Signals Holographic Globe */}
                 <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
                     <DigitalSignalsGlobe 
@@ -121,13 +118,12 @@ const DashboardPage = () => {
                 <div className="lg:col-span-5 xl:col-span-4 flex justify-center">
                     <LiveTalkSession 
                         onSpeakingChange={handleSpeakingChange} 
-                        activeTaskCount={tasks.filter(t => t.status === 'EXECUTING').length}
                     />
                 </div>
             </div>
 
             {/* Bottom Operations Hub: Animated Agents & Desktops / Cyber Lounge */}
-            <div className="mt-8">
+            <div className="mt-3.5">
                 <AgentWorkstations liveTasks={tasks} />
             </div>
         </div>
