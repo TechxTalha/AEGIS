@@ -369,7 +369,7 @@ echo "[7/8] Running production health and readiness checks..."
 
 # Backend health verification via Spring Boot Actuator
 BACKEND_UP=false
-for attempt in $(seq 1 15); do
+for attempt in $(seq 1 30); do
     sleep 3
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 5 http://127.0.0.1:8080/actuator/health || true)
     if [ "$HTTP_CODE" = "200" ]; then
@@ -380,11 +380,11 @@ for attempt in $(seq 1 15); do
             break
         fi
     fi
-    echo "Attempt $attempt/15: Backend not healthy yet (HTTP $HTTP_CODE)..."
+    echo "Attempt $attempt/30: Backend not healthy yet (HTTP $HTTP_CODE)..."
 done
 
 if [ "$BACKEND_UP" != "true" ]; then
-    echo "FATAL: Backend health verification failed after 45 seconds."
+    echo "FATAL: Backend health verification failed after 90 seconds."
     rollback
 fi
 

@@ -39,9 +39,13 @@ public class AgentIdentityService {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    @org.springframework.core.annotation.Order(org.springframework.core.Ordered.HIGHEST_PRECEDENCE)
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
-    public void initializeAgentIdentity() {
+    public synchronized void initializeAgentIdentity() {
+        if (this.agentToken != null) {
+            return;
+        }
         logger.info("Initializing Local Machine Agent Identity...");
         
         User agentUser = userRepository.findByUsername(LOCAL_AGENT_USERNAME)
@@ -65,9 +69,9 @@ public class AgentIdentityService {
         logger.info("Local Agent Identity established and token generated.");
     }
 
-    public String getAgentToken() {
+    public synchronized String getAgentToken() {
         if (agentToken == null) {
-            throw new IllegalStateException("Agent token not initialized yet.");
+            initializeAgentIdentity();
         }
         return agentToken;
     }
