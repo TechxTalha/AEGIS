@@ -10,6 +10,7 @@ import com.aegis.core.task.repository.TaskRepository;
 import com.aegis.core.task.websocket.TaskEventPublisher;
 import com.aegis.core.user.UserRepository;
 import com.aegis.core.user.entity.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class TaskService {
     private final TaskEventPublisher eventPublisher;
     private final TaskExecutionWorker taskExecutionWorker;
 
+    @Autowired
     public TaskService(TaskRepository taskRepository,
                        ExecutionRepository executionRepository,
                        EventRepository eventRepository,
