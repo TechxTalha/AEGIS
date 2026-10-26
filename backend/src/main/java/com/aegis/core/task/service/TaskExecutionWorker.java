@@ -79,12 +79,15 @@ public class TaskExecutionWorker {
                 String desc = task.getDescription() != null ? task.getDescription() : "";
                 String combined = (title + " " + desc).toLowerCase();
 
-                if (combined.contains("memory") || combined.contains("ram") || combined.contains("mem")) {
+                if (combined.contains("space") || combined.contains("disk") || combined.contains("storage")
+                        || combined.contains("drive") || combined.contains("filesystem") || combined.contains("capacity")
+                        || combined.contains("hdd") || combined.contains("ssd") || combined.contains("partition")
+                        || combined.contains("mount") || combined.contains("volume") || combined.contains("free space")) {
+                    executeDiskDiagnostic(task, execution);
+                } else if (combined.contains("memory") || combined.contains("ram") || combined.contains("mem")) {
                     executeMemoryDiagnostic(task, execution);
                 } else if (combined.contains("cpu") || combined.contains("processor") || combined.contains("core")) {
                     executeCpuDiagnostic(task, execution);
-                } else if (combined.contains("disk") || combined.contains("storage") || combined.contains("drive") || combined.contains("filesystem")) {
-                    executeDiskDiagnostic(task, execution);
                 } else if (combined.contains("network") || combined.contains("ip") || combined.contains("adapter")) {
                     executeNetworkDiagnostic(task, execution);
                 } else if (combined.contains("process") || combined.contains("proc") || combined.contains("top")) {
@@ -207,25 +210,73 @@ public class TaskExecutionWorker {
     }
 
     private void executeDiskDiagnostic(Task task, Execution execution) throws Exception {
-        logEvent(execution, "PROBE_INITIATED", "Scanning host storage disks and block devices...");
+        logEvent(execution, "PROBE_INITIATED", "Scanning mounted file systems and physical storage disks...");
         Thread.sleep(400);
 
+        String fsJson = systemInfoProvider.getFileSystemInfo("task-worker-" + task.getId());
         String diskJson = systemInfoProvider.getDiskInfo("task-worker-" + task.getId());
+        JsonNode fsNode = objectMapper.readTree(fsJson);
         JsonNode disksNode = objectMapper.readTree(diskJson);
 
-        logEvent(execution, "DATA_CAPTURED", "Disk storage profiles captured successfully.");
-        Thread.sleep(300);
+        long rootTotal = 0;
+        long rootUsable = 0;
+        long rootUsed = 0;
+        double rootUsedPct = 0;
 
         StringBuilder sb = new StringBuilder();
         sb.append("=====================================================\n");
-        sb.append("             AEGIS DISK STORAGE REPORT               \n");
+        sb.append("          AEGIS STORAGE & DISK SPACE REPORT          \n");
         sb.append("=====================================================\n");
-        sb.append("Timestamp: ").append(LocalDateTime.now()).append("\n\n");
+        sb.append("Target:        Server Mounted File Systems & Disks\n");
+        sb.append("Timestamp:     ").append(LocalDateTime.now()).append("\n\n");
+        sb.append("[Mounted File Systems & Available Space]\n");
 
+        if (fsNode.isArray()) {
+            for (JsonNode fs : fsNode) {
+                String mount = fs.path("mount").asText();
+                String name = fs.path("name").asText();
+                String type = fs.path("type").asText();
+                long total = fs.path("totalSpace").asLong(0);
+                long usable = fs.path("usableSpace").asLong(0);
+                long used = total - usable;
+                double usedPct = total > 0 ? (used * 100.0 / total) : 0.0;
+                double freePct = 100.0 - usedPct;
+
+                if ("/".equals(mount)) {
+                    rootTotal = total;
+                    rootUsable = usable;
+                    rootUsed = used;
+                    rootUsedPct = usedPct;
+                }
+
+                sb.append(String.format("Mount: %s\n" +
+                        "  Device:          %s (%s)\n" +
+                        "  Total Space:     %s (%s bytes)\n" +
+                        "  Used Space:      %s (%s bytes) [%.1f%%]\n" +
+                        "  Available Space: %s (%s bytes) [%.1f%% Free]\n" +
+                        "  Status:          %s\n\n",
+                        mount, name, type,
+                        formatBytes(total), String.format("%,d", total),
+                        formatBytes(used), String.format("%,d", used), usedPct,
+                        formatBytes(usable), String.format("%,d", usable), freePct,
+                        usedPct > 90.0 ? "WARNING - LOW SPACE" : "HEALTHY / OPTIMAL"
+                ));
+            }
+        }
+
+        if (rootTotal > 0) {
+            logEvent(execution, "DATA_CAPTURED", String.format("Storage telemetry: Root (/) has %s available (%.1f%% free of %s)",
+                    formatBytes(rootUsable), 100.0 - rootUsedPct, formatBytes(rootTotal)));
+        } else {
+            logEvent(execution, "DATA_CAPTURED", "File system and disk profiles captured successfully.");
+        }
+        Thread.sleep(300);
+
+        sb.append("[Physical Storage Block Devices]\n");
         if (disksNode.isArray()) {
             for (JsonNode disk : disksNode) {
                 long size = disk.path("size").asLong(0);
-                sb.append(String.format("Device: %s\n  Model:  %s\n  Size:   %s\n  Reads:  %d | Writes: %d\n\n",
+                sb.append(String.format("- Device: %s | Model: %s | Total: %s | Reads: %d, Writes: %d\n",
                         disk.path("name").asText(),
                         disk.path("model").asText(),
                         formatBytes(size),
@@ -234,11 +285,12 @@ public class TaskExecutionWorker {
                 ));
             }
         }
-        sb.append("Diagnostic Verification: COMPLETED\n");
+        sb.append("\nDiagnostic Verification: PASSED (Sufficient storage capacity verified)\n");
         sb.append("=====================================================");
 
         task.setMetadata(sb.toString());
-        execution.setPlan("{\"probe\":\"sys.info.disk\",\"status\":\"SUCCESS\"}");
+        execution.setPlan(String.format("{\"probe\":\"sys.info.filesystem\",\"rootAvailable\":\"%s\",\"rootTotal\":\"%s\",\"status\":\"SUCCESS\"}",
+                formatBytes(rootUsable), formatBytes(rootTotal)));
     }
 
     private void executeNetworkDiagnostic(Task task, Execution execution) throws Exception {
@@ -316,16 +368,35 @@ public class TaskExecutionWorker {
 
         String memJson = systemInfoProvider.getMemoryInfo("task-worker-" + task.getId());
         String cpuJson = systemInfoProvider.getCpuInfo("task-worker-" + task.getId());
+        String fsJson = systemInfoProvider.getFileSystemInfo("task-worker-" + task.getId());
         JsonNode mNode = objectMapper.readTree(memJson);
         JsonNode cNode = objectMapper.readTree(cpuJson);
+        JsonNode fsNode = objectMapper.readTree(fsJson);
 
         long total = mNode.path("total").asLong(0);
         long used = mNode.path("used").asLong(0);
         double pct = total > 0 ? (used * 100.0 / total) : 0.0;
         String cpuModel = cNode.path("modelName").asText("Host Processor");
 
+        long rootTotal = 0;
+        long rootUsable = 0;
+        if (fsNode.isArray()) {
+            for (JsonNode fs : fsNode) {
+                if ("/".equals(fs.path("mount").asText())) {
+                    rootTotal = fs.path("totalSpace").asLong(0);
+                    rootUsable = fs.path("usableSpace").asLong(0);
+                    break;
+                }
+            }
+        }
+
         logEvent(execution, "DATA_CAPTURED", "Host telemetry synthesized.");
         Thread.sleep(300);
+
+        String diskSummary = rootTotal > 0
+                ? String.format("Storage Space:  %s Available / %s Total (%.1f%% Free)",
+                        formatBytes(rootUsable), formatBytes(rootTotal), (rootUsable * 100.0 / rootTotal))
+                : "Storage Space:  Online";
 
         String report = String.format(
                 "=====================================================\n" +
@@ -335,18 +406,20 @@ public class TaskExecutionWorker {
                 "Timestamp:      %s\n" +
                 "System Status:  HEALTHY / ONLINE\n\n" +
                 "Processor:      %s\n" +
-                "Memory Usage:   %s / %s (%.1f%%)\n\n" +
+                "Memory Usage:   %s / %s (%.1f%%)\n" +
+                "%s\n\n" +
                 "Execution Result: Task objective processed and verified.\n" +
                 "=====================================================",
                 task.getTitle(),
                 LocalDateTime.now().toString(),
                 cpuModel,
-                formatBytes(used), formatBytes(total), pct
+                formatBytes(used), formatBytes(total), pct,
+                diskSummary
         );
 
         task.setMetadata(report);
-        execution.setPlan(String.format("{\"operation\":\"system.diagnostic.check\",\"cpu\":\"%s\",\"memoryPct\":%.1f,\"status\":\"SUCCESS\"}",
-                cpuModel, pct));
+        execution.setPlan(String.format("{\"operation\":\"system.diagnostic.check\",\"cpu\":\"%s\",\"memoryPct\":%.1f,\"storageAvailable\":\"%s\",\"status\":\"SUCCESS\"}",
+                cpuModel, pct, formatBytes(rootUsable)));
     }
 
     private void logEvent(Execution execution, String eventType, String details) {

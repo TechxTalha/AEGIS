@@ -10,6 +10,7 @@ import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OperatingSystem;
 import oshi.software.os.OSProcess;
+import oshi.software.os.OSFileStore;
 
 import java.util.List;
 
@@ -61,6 +62,22 @@ public class SystemInfoProvider {
             dNode.put("reads", disk.getReads());
             dNode.put("writes", disk.getWrites());
             arr.add(dNode);
+        }
+        return arr.toString();
+    }
+
+    public String getFileSystemInfo(String agentId) {
+        auditLogger.log(agentId, "sys.info.filesystem", "Queried file system storage info", "SUCCESS");
+        ArrayNode arr = mapper.createArrayNode();
+        for (OSFileStore fs : os.getFileSystem().getFileStores()) {
+            ObjectNode fNode = mapper.createObjectNode();
+            fNode.put("name", fs.getName());
+            fNode.put("mount", fs.getMount());
+            fNode.put("type", fs.getType());
+            fNode.put("totalSpace", fs.getTotalSpace());
+            fNode.put("usableSpace", fs.getUsableSpace());
+            fNode.put("freeSpace", fs.getFreeSpace());
+            arr.add(fNode);
         }
         return arr.toString();
     }
