@@ -26,6 +26,23 @@ public class TaskService {
     private final UserRepository userRepository;
     private final TaskLifecycleValidator lifecycleValidator;
     private final TaskEventPublisher eventPublisher;
+    private final TaskExecutionWorker taskExecutionWorker;
+
+    public TaskService(TaskRepository taskRepository,
+                       ExecutionRepository executionRepository,
+                       EventRepository eventRepository,
+                       UserRepository userRepository,
+                       TaskLifecycleValidator lifecycleValidator,
+                       TaskEventPublisher eventPublisher,
+                       @org.springframework.context.annotation.Lazy TaskExecutionWorker taskExecutionWorker) {
+        this.taskRepository = taskRepository;
+        this.executionRepository = executionRepository;
+        this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
+        this.lifecycleValidator = lifecycleValidator;
+        this.eventPublisher = eventPublisher;
+        this.taskExecutionWorker = taskExecutionWorker;
+    }
 
     public TaskService(TaskRepository taskRepository,
                        ExecutionRepository executionRepository,
@@ -33,12 +50,7 @@ public class TaskService {
                        UserRepository userRepository,
                        TaskLifecycleValidator lifecycleValidator,
                        TaskEventPublisher eventPublisher) {
-        this.taskRepository = taskRepository;
-        this.executionRepository = executionRepository;
-        this.eventRepository = eventRepository;
-        this.userRepository = userRepository;
-        this.lifecycleValidator = lifecycleValidator;
-        this.eventPublisher = eventPublisher;
+        this(taskRepository, executionRepository, eventRepository, userRepository, lifecycleValidator, eventPublisher, null);
     }
 
     @Transactional
@@ -108,6 +120,10 @@ public class TaskService {
         Execution savedExecution = executionRepository.save(execution);
 
         logEvent(savedExecution, "TASK_STARTED", "Task execution started");
+
+        if (taskExecutionWorker != null) {
+            taskExecutionWorker.executeTaskAsync(task.getId(), savedExecution.getId());
+        }
     }
 
     @Transactional

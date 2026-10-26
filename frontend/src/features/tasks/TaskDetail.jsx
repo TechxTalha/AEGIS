@@ -137,16 +137,18 @@ const TaskDetail = () => {
                                             description: task.description,
                                             priority: task.priority
                                         });
-                                        notification.success({ message: 'Task cloned successfully' });
+                                        // Automatically initiate execution for seamless re-run
+                                        await taskApi.startTask(newTask.id);
+                                        notification.success({ message: 'Task re-run started successfully' });
                                         navigate(`/tasks/${newTask.id}`);
                                     } catch (err) {
-                                        notification.error({ message: 'Failed to recreate task', description: err.message });
+                                        notification.error({ message: 'Failed to re-run task', description: err.message });
                                     }
                                 }} 
                                 block
                                 className="bg-primary text-[#0B0F19] hover:bg-primary/90 font-semibold border-none shadow-neon"
                             >
-                                Re-run as New Task
+                                Re-run Task
                             </Button>
                         )}
                     </div>
@@ -156,10 +158,29 @@ const TaskDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <Card title="Description" bordered={false} className="shadow-sm">
-                        <Paragraph className="whitespace-pre-wrap text-gray-700">
+                        <Paragraph className="whitespace-pre-wrap text-gray-300">
                             {task.description || 'No description provided.'}
                         </Paragraph>
                     </Card>
+
+                    {task.metadata && (
+                        <Card 
+                            title={
+                                <div className="flex items-center justify-between">
+                                    <span className="text-white font-semibold">Execution Output & Telemetry</span>
+                                    <Tag color={task.status === 'COMPLETED' ? 'success' : task.status === 'FAILED' ? 'error' : 'processing'}>
+                                        {task.status}
+                                    </Tag>
+                                </div>
+                            } 
+                            bordered={false} 
+                            className="shadow-sm border border-cyan-500/20"
+                        >
+                            <div className="bg-[#0B0F19] border border-cyan-500/20 rounded-lg p-4 font-mono text-xs text-cyan-200/90 whitespace-pre-wrap break-words leading-relaxed shadow-inner overflow-x-auto">
+                                {task.metadata}
+                            </div>
+                        </Card>
+                    )}
 
                     <Card title="Recent Execution Events" bordered={false} className="shadow-sm">
                         {events.length > 0 ? (
@@ -200,8 +221,8 @@ const TaskDetail = () => {
                             </div>
                             {task.metadata && (
                                 <div>
-                                    <Text type="secondary">Metadata</Text>
-                                    <div className="bg-gray-50 p-2 rounded mt-1 font-mono text-xs">
+                                    <Text type="secondary">Output Telemetry</Text>
+                                    <div className="bg-[#0B0F19] border border-white/10 p-3 rounded-lg mt-1 font-mono text-xs text-gray-200 whitespace-pre-wrap break-words shadow-inner max-h-48 overflow-y-auto">
                                         {task.metadata}
                                     </div>
                                 </div>
