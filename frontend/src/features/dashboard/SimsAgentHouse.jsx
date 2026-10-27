@@ -12,14 +12,14 @@ import {
 import { agentApi } from '../../api/agentApi';
 
 /**
- * SimsAgentHouse (3D Roof-Off Architectural Smart HQ)
- * - Structured into 3 Specialized Workstation Wings + 1 Grand Recreation & Living Haven:
- *   1. Master Command Bridge (Top-Left) -> AEGIS Core Orchestrator
- *   2. Quantum Synthesis Lab (Top-Right) -> Antigravity Coder
- *   3. Data Vault & Cyber Radar Intelligence Wing (Bottom-Left) -> Database Agent + Web Research Agent
- *   4. Grand Recreation, Social & Living Haven (Bottom-Right) -> Espresso Bar, Retro Arcade, Cyber Sofa, Sleep Pods
- * - Architectural floor plan with organic open-plan layout, custom floor textures, open archways, and glass dividers
- * - Natural hallway & doorway pathfinding with realistic dwell times (18-30s work, 12-20s lounge breaks)
+ * SimsAgentHouse (High-Fidelity 3D Roof-Off Smart HQ)
+ * - 3 Dedicated Workstation Wings + 1 Grand Recreation Haven:
+ *   1. Master Command Bridge (Top-Left) -> AEGIS Core Orchestrator (Cyan)
+ *   2. Quantum Synthesis Lab (Top-Right) -> Antigravity Coder (Purple)
+ *   3. Data & Radar Intelligence Wing (Bottom-Left) -> Database Agent (Emerald) + Web Research Agent (Amber)
+ *   4. Grand Recreation Haven (Bottom-Right) -> Espresso Bar, Dual Retro Arcades, Sectional Sofa, Cryo-Sleep Pod
+ * - Architectural depth with 3D beveled walls, custom room flooring, and door archways
+ * - Natural pathfinding with realistic dwell times (20-35s work, 14-22s lounge break)
  * - 100% Real-time telemetry, strictly restricted to the 4 canonical agents from the plan
  */
 
@@ -30,11 +30,10 @@ const WINGS = {
         icon: '💻',
         color: '#00d2ff',
         bg: 'rgba(0, 210, 255, 0.08)',
-        border: 'rgba(0, 210, 255, 0.35)',
-        door: { x: 185, y: 155 },
+        door: { x: 180, y: 120 },
         stations: {
-            master: { x: 80, y: 80, role: 'master_console', label: 'Command Console', thought: '⚡' },
-            holo: { x: 135, y: 110, role: 'holo_globe', label: 'Tactical Holo-Globe', thought: '🌐' }
+            master: { x: 85, y: 95, role: 'master_console', label: 'Command Console', thought: '⚡' },
+            holo: { x: 140, y: 125, role: 'holo_globe', label: 'Tactical Holo-Globe', thought: '🌐' }
         }
     },
     quantum_lab: {
@@ -43,41 +42,38 @@ const WINGS = {
         icon: '⚡',
         color: '#a855f7',
         bg: 'rgba(168, 85, 247, 0.08)',
-        border: 'rgba(168, 85, 247, 0.35)',
-        door: { x: 235, y: 155 },
+        door: { x: 235, y: 120 },
         stations: {
-            ide: { x: 285, y: 75, role: 'compiler', label: 'Quantum IDE', thought: '💻' },
-            bench: { x: 345, y: 95, role: 'hardware_bench', label: 'Synthesizer Bench', thought: '⚡' }
+            ide: { x: 285, y: 95, role: 'compiler', label: 'Quantum IDE', thought: '💻' },
+            bench: { x: 350, y: 95, role: 'hardware_bench', label: 'Synthesizer Bench', thought: '⚡' }
         }
     },
     data_radar: {
         id: 'data_radar',
-        name: 'Data & Radar Intelligence Wing',
+        name: 'Data & Radar Wing',
         icon: '🗄️',
         color: '#10b981',
         bg: 'rgba(16, 185, 129, 0.08)',
-        border: 'rgba(16, 185, 129, 0.35)',
-        door: { x: 185, y: 245 },
+        door: { x: 180, y: 280 },
         stations: {
-            sql: { x: 95, y: 235, role: 'sql_terminal', label: 'SQL Matrix Terminal', thought: '🗄️' },
-            servers: { x: 50, y: 275, role: 'servers', label: 'High-Density Clusters', thought: '📊' },
-            recon: { x: 110, y: 365, role: 'recon_desk', label: 'Web Recon Terminal', thought: '📡' },
+            sql: { x: 105, y: 275, role: 'sql_terminal', label: 'SQL Matrix Terminal', thought: '🗄️' },
+            recon: { x: 110, y: 385, role: 'recon_desk', label: 'Web Recon Terminal', thought: '📡' },
+            servers: { x: 55, y: 275, role: 'servers', label: 'Server Clusters', thought: '📊' },
             radar: { x: 55, y: 385, role: 'satellite_dish', label: 'Satellite Scanner', thought: '🛰️' }
         }
     },
     lounge: {
         id: 'lounge',
-        name: 'Grand Recreation & Living Haven',
+        name: 'Grand Recreation Haven',
         icon: '☕',
         color: '#f59e0b',
         bg: 'rgba(245, 158, 11, 0.08)',
-        border: 'rgba(245, 158, 11, 0.35)',
-        door: { x: 235, y: 245 },
+        door: { x: 235, y: 280 },
         stations: {
-            coffee_bar: { x: 265, y: 235, role: 'bar_stool', label: 'Espresso Bar', thought: '☕' },
-            arcade: { x: 350, y: 235, role: 'arcade_cabinet', label: 'Retro Arcade', thought: '🎮' },
-            sofa: { x: 280, y: 335, role: 'couch', label: 'Cyber Lounge Sofa', thought: '🛋️' },
-            pod: { x: 350, y: 375, role: 'sleep_pod', label: 'Cryo-Sleep Pod', thought: '💤' }
+            coffee_bar: { x: 270, y: 265, role: 'bar_stool', label: 'Espresso Bar', thought: '☕' },
+            arcade: { x: 350, y: 265, role: 'arcade_cabinet', label: 'Retro Arcade', thought: '🎮' },
+            sofa: { x: 270, y: 345, role: 'couch', label: 'Cyber Lounge Sofa', thought: '🛋️' },
+            pod: { x: 355, y: 360, role: 'sleep_pod', label: 'Cryo-Sleep Pod', thought: '💤' }
         }
     }
 };
@@ -155,12 +151,11 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
     const [activeWingFilter, setActiveWingFilter] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Positions, velocities and animation states for Sims roaming personas
+    // Roaming simulation states and game loop
     const agentSimStatesRef = useRef({});
     const animFrameRef = useRef(null);
     const [tick, setTick] = useState(0);
 
-    // Fetch live agents & real system telemetry from backend
     const fetchLiveAgents = async () => {
         try {
             const data = await agentApi.getLiveAgents();
@@ -191,7 +186,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
         return () => clearInterval(interval);
     }, []);
 
-    // Initialize or steer agent targets
+    // Waypoint initialization with accurate station coordinates
     const syncAgentWaypoints = (agentList) => {
         agentList.forEach((a, idx) => {
             const wingKey = a.homeWing || (a.id === 'agent-core-1' ? 'bridge' : a.id === 'agent-coder-x' ? 'quantum_lab' : 'data_radar');
@@ -212,13 +207,12 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                     currentWing: isOffline ? 'lounge' : wingKey,
                     facing: 'down',
                     thought: isOffline ? '💤' : a.status === 'BUSY' ? '⚡' : station.thought,
-                    nextWanderTime: Date.now() + 16000 + idx * 5000,
+                    nextWanderTime: Date.now() + 20000 + idx * 5000, // 20-35s dwell time
                     walkCycle: 0
                 };
             } else {
                 const sim = agentSimStatesRef.current[a.id];
                 if (a.status === 'BUSY') {
-                    // Lock into home station immediately
                     sim.pathQueue = [
                         { x: sim.x, y: 200 },
                         { x: wing.door.x, y: wing.door.y },
@@ -236,7 +230,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
         });
     };
 
-    // Autonomous Roaming Game Loop: agents dwell 18-30s at stations, then visit the Grand Recreation Haven!
+    // Autonomous Roaming Game Loop with Corridor Navigation
     useEffect(() => {
         let lastTime = performance.now();
 
@@ -249,7 +243,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                 const sim = agentSimStatesRef.current[agent.id];
                 if (!sim) return;
 
-                const homeWingKey = agent.homeWing || (agent.id === 'agent-core-1' ? 'bridge' : agent.id === 'agent-coder-x' ? 'quantum_lab' : 'data_radar');
+                const homeWingKey = agent.homeWing || (agent.id === 'agent-core-1' ? 'bridge' : a.id === 'agent-coder-x' ? 'quantum_lab' : 'data_radar');
                 const homeWing = WINGS[homeWingKey];
 
                 // 1. Pick a roaming target when dwell timer elapses
@@ -265,16 +259,16 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         ];
                         const chosenActivity = loungeStations[Math.floor(Math.random() * loungeStations.length)];
 
-                        // Route through doorways and central atrium:
                         sim.pathQueue = [
                             { x: homeWing.door.x, y: homeWing.door.y },
-                            { x: 210, y: 200 }, // Central Atrium nexus
+                            { x: 210, y: homeWing.door.y },
+                            { x: 210, y: WINGS.lounge.door.y },
                             { x: WINGS.lounge.door.x, y: WINGS.lounge.door.y },
                             { x: chosenActivity.x, y: chosenActivity.y }
                         ];
                         sim.targetWing = 'lounge';
                         sim.thought = chosenActivity.thought;
-                        sim.nextWanderTime = now + 14000 + Math.random() * 8000; // Stay at recreation lounge for 14-22s
+                        sim.nextWanderTime = now + 14000 + Math.random() * 8000; // Stay at lounge for 14-22s
                     } else {
                         // Return to home workstation
                         const stationKeys = Object.keys(homeWing.stations);
@@ -284,17 +278,18 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
 
                         sim.pathQueue = [
                             { x: WINGS.lounge.door.x, y: WINGS.lounge.door.y },
-                            { x: 210, y: 200 }, // Central Atrium nexus
+                            { x: 210, y: WINGS.lounge.door.y },
+                            { x: 210, y: homeWing.door.y },
                             { x: homeWing.door.x, y: homeWing.door.y },
                             { x: station.x, y: station.y }
                         ];
                         sim.targetWing = homeWingKey;
                         sim.thought = station.thought;
-                        sim.nextWanderTime = now + 20000 + Math.random() * 12000; // Dwell at work station for 20-32s
+                        sim.nextWanderTime = now + 22000 + Math.random() * 12000; // Work at station for 22-34s
                     }
                 }
 
-                // 2. Consume path queue
+                // 2. Consume path queue nodes
                 if (sim.pathQueue.length > 0 && Math.hypot(sim.targetX - sim.x, sim.targetY - sim.y) < 3) {
                     const nextNode = sim.pathQueue.shift();
                     sim.targetX = nextNode.x;
@@ -330,29 +325,28 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
 
     return (
         <div className="w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0a0f1b] via-[#080d16] to-[#060a11] border border-white/15 p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.85)] overflow-hidden select-none">
-            {/* Header: Roof-Off Title & Telemetry Counters */}
+            {/* Header: Roof-Off Title & Clean Non-Wrapping Telemetry Badges */}
             <div className="flex justify-between items-center px-1 pb-1.5 border-b border-white/5 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-neon animate-pulse" />
-                    <div>
-                        <h3 className="text-xs font-bold text-white tracking-wider uppercase mb-0 flex items-center gap-1.5">
-                            AEGIS SMART HQ
-                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-500/30 font-mono">
-                                3 WINGS + RECREATION
-                            </span>
-                        </h3>
-                    </div>
+                    <h3 className="text-xs font-bold text-white tracking-wider uppercase mb-0 flex items-center gap-1.5">
+                        AEGIS SMART HQ
+                    </h3>
                 </div>
 
                 <div className="flex items-center gap-1.5 text-[10px] font-mono">
-                    <span className="text-cyan-400 font-semibold">{houseStats.workingCount} Working</span>
-                    <span className="text-gray-500">•</span>
-                    <span className="text-amber-400 font-semibold">{houseStats.idleCount} Idle</span>
-                    <span className="text-gray-500">•</span>
-                    <span className="text-gray-400">{houseStats.offlineCount} Off</span>
+                    <span className="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-semibold">
+                        {houseStats.workingCount} Working
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold">
+                        {houseStats.idleCount} Idle
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/30">
+                        {houseStats.offlineCount} Off
+                    </span>
                     <button 
                         onClick={() => { setLoading(true); fetchLiveAgents().finally(() => setLoading(false)); }}
-                        className="ml-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        className="ml-1 text-gray-400 hover:text-white transition-colors cursor-pointer p-0.5"
                         title="Refresh Agents"
                     >
                         <ReloadOutlined spin={loading} />
@@ -363,7 +357,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
             {/* Architectural 3D Roof-Off SVG Canvas */}
             <div className="flex-1 relative w-full h-full min-h-0 my-1 rounded-2xl bg-[#060910] border border-white/10 overflow-hidden shadow-inner flex items-center justify-center">
                 <svg
-                    viewBox="0 0 420 460"
+                    viewBox="0 0 420 450"
                     className="w-full h-full object-contain"
                     preserveAspectRatio="xMidYMid meet"
                 >
@@ -387,23 +381,18 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         </linearGradient>
                     </defs>
 
-                    {/* Outer Smart House Architectural Walls */}
-                    <rect x="6" y="6" width="408" height="448" rx="20" fill="#070a13" stroke="rgba(0, 210, 255, 0.35)" strokeWidth="2.5" />
+                    {/* Outer Architectural Double-Beveled Walls */}
+                    <rect x="8" y="8" width="404" height="434" rx="16" fill="#070a13" stroke="#0f172a" strokeWidth="4" />
+                    <rect x="8" y="8" width="404" height="434" rx="16" fill="none" stroke="rgba(0, 210, 255, 0.35)" strokeWidth="1.5" />
 
-                    {/* Central Glass Atrium Linking All Wings */}
-                    <path 
-                        d="M 180 14 L 240 14 L 240 446 L 180 446 Z" 
-                        fill="url(#atriumGlow)" 
-                    />
-                    <path 
-                        d="M 14 185 L 406 185 L 406 215 L 14 215 Z" 
-                        fill="url(#atriumGlow)" 
-                    />
+                    {/* Central Glass Atrium Gallery (Walkway connecting all wings) */}
+                    <rect x="182" y="10" width="56" height="430" fill="url(#atriumGlow)" />
+                    <rect x="10" y="185" width="400" height="30" fill="url(#atriumGlow)" />
 
-                    {/* Center Nexus Circle with Orbiting Power Core */}
-                    <circle cx="210" cy="200" r="18" fill="#090e1a" stroke="rgba(0, 210, 255, 0.5)" strokeWidth="1.5" />
-                    <circle cx="210" cy="200" r="9" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-spin" strokeDasharray="4 2" />
-                    <circle cx="210" cy="200" r="3.5" fill="#00d2ff" className="animate-pulse" />
+                    {/* Central Nexus Power Core with Orbiting Rings */}
+                    <circle cx="210" cy="200" r="16" fill="#090e1a" stroke="rgba(0, 210, 255, 0.5)" strokeWidth="1.5" />
+                    <circle cx="210" cy="200" r="8" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-spin" strokeDasharray="4 2" />
+                    <circle cx="210" cy="200" r="3" fill="#00d2ff" className="animate-pulse" />
 
                     {/* =========================================================================
                         WING 1 (Top-Left): MASTER COMMAND BRIDGE (AEGIS Core Orchestrator)
@@ -413,38 +402,36 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         onClick={() => setActiveWingFilter(activeWingFilter === 'bridge' ? null : 'bridge')}
                     >
                         {/* Floor Boundary with Hex Texture */}
-                        <path 
-                            d="M 14 14 L 185 14 L 185 185 L 14 185 Z" 
-                            fill={activeWingFilter === 'bridge' ? 'rgba(0, 210, 255, 0.18)' : 'rgba(0, 210, 255, 0.05)'} 
-                        />
-                        <path d="M 14 14 L 185 14 L 185 185 L 14 185 Z" fill="url(#hexGrid)" />
-                        
-                        {/* Glass Partition Wall & Open Archway */}
-                        <line x1="185" y1="14" x2="185" y2="135" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
-                        <line x1="185" y1="175" x2="185" y2="185" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="2" />
-                        <line x1="14" y1="185" x2="185" y2="185" stroke="rgba(0, 210, 255, 0.3)" strokeWidth="1.5" />
+                        <path d="M 12 12 L 180 12 L 180 185 L 12 185 Z" fill={activeWingFilter === 'bridge' ? 'rgba(0, 210, 255, 0.18)' : 'rgba(0, 210, 255, 0.05)'} />
+                        <path d="M 12 12 L 180 12 L 180 185 L 12 185 Z" fill="url(#hexGrid)" />
 
-                        {/* Title Badge */}
-                        <rect x="22" y="24" width="130" height="15" rx="3" fill="rgba(0, 210, 255, 0.15)" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="0.8" />
-                        <text x="28" y="35" fill="#38bdf8" fontSize="8" fontWeight="bold" fontFamily="monospace">
+                        {/* Architectural Wall Dividers with Defined Doorway */}
+                        <line x1="180" y1="12" x2="180" y2="105" stroke="#1e293b" strokeWidth="3" />
+                        <line x1="180" y1="105" x2="180" y2="140" stroke="#00d2ff" strokeWidth="1.2" strokeDasharray="3 3" />
+                        <line x1="180" y1="140" x2="180" y2="185" stroke="#1e293b" strokeWidth="3" />
+                        <line x1="12" y1="185" x2="180" y2="185" stroke="#1e293b" strokeWidth="2.5" />
+
+                        {/* Wing Title Badge */}
+                        <rect x="20" y="20" width="115" height="15" rx="3" fill="rgba(0, 210, 255, 0.15)" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="0.8" />
+                        <text x="26" y="31" fill="#38bdf8" fontSize="7.5" fontWeight="bold" fontFamily="monospace">
                             💻 COMMAND BRIDGE
                         </text>
 
                         {/* Master Dual-Curved Console */}
-                        <path d="M 45 65 Q 80 50 115 65 L 115 78 Q 80 63 45 78 Z" fill="#0f172a" stroke="#00d2ff" strokeWidth="1" />
-                        <rect x="52" y="58" width="22" height="7" rx="1" fill="#00d2ff" opacity="0.9" />
-                        <rect x="84" y="58" width="22" height="7" rx="1" fill="#38bdf8" opacity="0.9" />
+                        <path d="M 50 65 Q 85 50 120 65 L 120 78 Q 85 63 50 78 Z" fill="#0f172a" stroke="#00d2ff" strokeWidth="1" />
+                        <rect x="58" y="58" width="22" height="7" rx="1" fill="#00d2ff" opacity="0.9" />
+                        <rect x="90" y="58" width="22" height="7" rx="1" fill="#38bdf8" opacity="0.9" />
                         {/* Commander Chair */}
-                        <circle cx="80" cy="90" r="7.5" fill="#1e293b" stroke="#00d2ff" strokeWidth="1" />
+                        <circle cx="85" cy="98" r="8" fill="#1e293b" stroke="#00d2ff" strokeWidth="1" />
 
                         {/* Tactical Holo-Globe Projector */}
-                        <circle cx="140" cy="115" r="18" fill="#080f1d" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="0.8" />
-                        <circle cx="140" cy="115" r="11" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-spin" strokeDasharray="3 3" />
-                        <circle cx="140" cy="115" r="4" fill="#38bdf8" className="animate-ping" opacity="0.5" />
+                        <circle cx="145" cy="120" r="18" fill="#080f1d" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="0.8" />
+                        <circle cx="145" cy="120" r="11" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-spin" strokeDasharray="3 3" />
+                        <circle cx="145" cy="120" r="3.5" fill="#38bdf8" className="animate-ping" opacity="0.5" />
 
                         {/* Strategic HUD Screen on Wall */}
-                        <rect x="25" y="125" width="45" height="25" rx="3" fill="#091322" stroke="#0284c7" strokeWidth="0.7" />
-                        <path d="M 30 137 L 42 131 L 52 142 L 64 133" fill="none" stroke="#38bdf8" strokeWidth="1" />
+                        <rect x="25" y="115" width="45" height="24" rx="3" fill="#091322" stroke="#0284c7" strokeWidth="0.7" />
+                        <path d="M 30 127 L 42 121 L 52 132 L 64 123" fill="none" stroke="#38bdf8" strokeWidth="1" />
                     </g>
 
                     {/* =========================================================================
@@ -455,18 +442,17 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         onClick={() => setActiveWingFilter(activeWingFilter === 'quantum_lab' ? null : 'quantum_lab')}
                     >
                         {/* Floor Boundary */}
-                        <path 
-                            d="M 235 14 L 406 14 L 406 185 L 235 185 Z" 
-                            fill={activeWingFilter === 'quantum_lab' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(168, 85, 247, 0.05)'} 
-                        />
-                        {/* Glass Partition Wall & Open Archway */}
-                        <line x1="235" y1="14" x2="235" y2="135" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
-                        <line x1="235" y1="175" x2="235" y2="185" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="2" />
-                        <line x1="235" y1="185" x2="406" y2="185" stroke="rgba(168, 85, 247, 0.3)" strokeWidth="1.5" />
+                        <path d="M 238 12 L 408 12 L 408 185 L 238 185 Z" fill={activeWingFilter === 'quantum_lab' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(168, 85, 247, 0.05)'} />
 
-                        {/* Title Badge */}
-                        <rect x="245" y="24" width="130" height="15" rx="3" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.8" />
-                        <text x="251" y="35" fill="#c084fc" fontSize="8" fontWeight="bold" fontFamily="monospace">
+                        {/* Architectural Wall Dividers with Defined Doorway */}
+                        <line x1="238" y1="12" x2="238" y2="105" stroke="#1e293b" strokeWidth="3" />
+                        <line x1="238" y1="105" x2="238" y2="140" stroke="#a855f7" strokeWidth="1.2" strokeDasharray="3 3" />
+                        <line x1="238" y1="140" x2="238" y2="185" stroke="#1e293b" strokeWidth="3" />
+                        <line x1="238" y1="185" x2="408" y2="185" stroke="#1e293b" strokeWidth="2.5" />
+
+                        {/* Wing Title Badge */}
+                        <rect x="248" y="20" width="115" height="15" rx="3" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.8" />
+                        <text x="254" y="31" fill="#c084fc" fontSize="7.5" fontWeight="bold" fontFamily="monospace">
                             ⚡ QUANTUM LAB
                         </text>
 
@@ -475,7 +461,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         <rect x="267" y="58" width="18" height="12" rx="1" fill="#c084fc" opacity="0.9" />
                         <rect x="289" y="58" width="18" height="12" rx="1" fill="#e879f9" opacity="0.9" />
                         {/* Coder Gaming Chair */}
-                        <circle cx="287" cy="94" r="7.5" fill="#3b0764" stroke="#a855f7" strokeWidth="1" />
+                        <circle cx="287" cy="98" r="8" fill="#3b0764" stroke="#a855f7" strokeWidth="1" />
 
                         {/* Synthesizer Hardware Bench with Oscillo Screen */}
                         <rect x="335" y="55" width="55" height="30" rx="3" fill="#181126" stroke="#9333ea" strokeWidth="0.8" />
@@ -493,45 +479,44 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         onClick={() => setActiveWingFilter(activeWingFilter === 'data_radar' ? null : 'data_radar')}
                     >
                         {/* Floor Boundary with Matrix Grid */}
-                        <path 
-                            d="M 14 215 L 185 215 L 185 446 L 14 446 Z" 
-                            fill={activeWingFilter === 'data_radar' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(16, 185, 129, 0.05)'} 
-                        />
-                        <path d="M 14 215 L 185 215 L 185 446 L 14 446 Z" fill="url(#matrixGrid)" />
-                        
-                        {/* Corridor Divider & Open Archway */}
-                        <line x1="185" y1="215" x2="185" y2="230" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="2" />
-                        <line x1="185" y1="265" x2="185" y2="446" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
+                        <path d="M 12 215 L 180 215 L 180 438 L 12 438 Z" fill={activeWingFilter === 'data_radar' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(16, 185, 129, 0.05)'} />
+                        <path d="M 12 215 L 180 215 L 180 438 L 12 438 Z" fill="url(#matrixGrid)" />
 
-                        {/* Title Badge */}
-                        <rect x="22" y="222" width="150" height="15" rx="3" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="0.8" />
-                        <text x="28" y="233" fill="#34d399" fontSize="7.5" fontWeight="bold" fontFamily="monospace">
+                        {/* Architectural Wall Dividers with Defined Doorway */}
+                        <line x1="12" y1="215" x2="180" y2="215" stroke="#1e293b" strokeWidth="2.5" />
+                        <line x1="180" y1="215" x2="180" y2="265" stroke="#1e293b" strokeWidth="3" />
+                        <line x1="180" y1="265" x2="180" y2="300" stroke="#10b981" strokeWidth="1.2" strokeDasharray="3 3" />
+                        <line x1="180" y1="300" x2="180" y2="438" stroke="#1e293b" strokeWidth="3" />
+
+                        {/* Wing Title Badge */}
+                        <rect x="20" y="222" width="130" height="15" rx="3" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="0.8" />
+                        <text x="26" y="33" transform="translate(0, 200)" fill="#34d399" fontSize="7" fontWeight="bold" fontFamily="monospace">
                             🗄️ DATA & RADAR WING
                         </text>
 
                         {/* --- Section A: SQL Data Vault --- */}
                         {/* Server Towers with Cascading LEDs */}
-                        <rect x="25" y="250" width="45" height="34" rx="3" fill="#042017" stroke="#10b981" strokeWidth="0.9" />
-                        <circle cx="33" cy="260" r="2" fill="#10b981" className="animate-pulse" />
-                        <circle cx="43" cy="260" r="2" fill="#34d399" />
-                        <circle cx="53" cy="260" r="2" fill="#6ee7b7" />
-                        <circle cx="33" cy="272" r="2" fill="#34d399" />
-                        <circle cx="43" cy="272" r="2" fill="#10b981" className="animate-pulse" />
+                        <rect x="25" y="248" width="45" height="34" rx="3" fill="#042017" stroke="#10b981" strokeWidth="0.9" />
+                        <circle cx="33" cy="258" r="2" fill="#10b981" className="animate-pulse" />
+                        <circle cx="43" cy="258" r="2" fill="#34d399" />
+                        <circle cx="53" cy="258" r="2" fill="#6ee7b7" />
+                        <circle cx="33" cy="270" r="2" fill="#34d399" />
+                        <circle cx="43" cy="270" r="2" fill="#10b981" className="animate-pulse" />
 
                         {/* SQL Matrix Terminal */}
                         <rect x="80" y="248" width="55" height="26" rx="4" fill="#061f18" stroke="#10b981" strokeWidth="0.8" />
                         <rect x="86" y="252" width="20" height="8" rx="1" fill="#34d399" opacity="0.9" />
                         <rect x="110" y="252" width="20" height="8" rx="1" fill="#10b981" opacity="0.9" />
-                        <circle cx="107" cy="284" r="7" fill="#064e3b" stroke="#34d399" strokeWidth="0.8" />
+                        <circle cx="107" cy="286" r="7.5" fill="#064e3b" stroke="#34d399" strokeWidth="0.8" />
 
                         {/* Levitating Emerald Data-Cube */}
-                        <g transform="translate(155, 270)">
+                        <g transform="translate(155, 268)">
                             <rect x="-8" y="-8" width="16" height="16" rx="2" fill="none" stroke="#10b981" strokeWidth="1" className="animate-pulse" />
                             <circle cx="0" cy="0" r="2" fill="#6ee7b7" />
                         </g>
 
                         {/* Sub-Divider line within wing */}
-                        <line x1="20" y1="315" x2="175" y2="315" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" strokeDasharray="3 3" />
+                        <line x1="20" y1="318" x2="170" y2="318" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" strokeDasharray="3 3" />
 
                         {/* --- Section B: Cyber Radar & Web Recon --- */}
                         {/* Phased Satellite Radar Dish */}
@@ -546,7 +531,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         <rect x="91" y="352" width="14" height="8" rx="1" fill="#fbbf24" opacity="0.9" />
                         <rect x="108" y="352" width="14" height="8" rx="1" fill="#d97706" opacity="0.9" />
                         <rect x="125" y="352" width="14" height="8" rx="1" fill="#fbbf24" opacity="0.9" />
-                        <circle cx="115" cy="384" r="7" fill="#44403c" stroke="#f59e0b" strokeWidth="0.8" />
+                        <circle cx="115" cy="386" r="7.5" fill="#44403c" stroke="#f59e0b" strokeWidth="0.8" />
 
                         {/* Global Feed Ticker */}
                         <rect x="25" y="415" width="145" height="16" rx="3" fill="#181512" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="0.7" />
@@ -563,23 +548,19 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         onClick={() => setActiveWingFilter(activeWingFilter === 'lounge' ? null : 'lounge')}
                     >
                         {/* Warm Hardwood Cyber Floor */}
-                        <path 
-                            d="M 235 215 L 406 215 L 406 446 L 235 446 Z" 
-                            fill="url(#woodPlanks)" 
-                        />
-                        <path 
-                            d="M 235 215 L 406 215 L 406 446 L 235 446 Z" 
-                            fill={activeWingFilter === 'lounge' ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.05)'} 
-                        />
+                        <path d="M 238 215 L 408 215 L 408 438 L 238 438 Z" fill="url(#woodPlanks)" />
+                        <path d="M 238 215 L 408 215 L 408 438 L 238 438 Z" fill={activeWingFilter === 'lounge' ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.05)'} />
 
-                        {/* Corridor Archway & Warm Glow Barrier */}
-                        <line x1="235" y1="215" x2="235" y2="230" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="2" />
-                        <line x1="235" y1="265" x2="235" y2="446" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
+                        {/* Architectural Wall Dividers with Defined Doorway */}
+                        <line x1="238" y1="215" x2="408" y2="215" stroke="#1e293b" strokeWidth="2.5" />
+                        <line x1="238" y1="215" x2="238" y2="265" stroke="#1e293b" strokeWidth="3" />
+                        <line x1="238" y1="265" x2="238" y2="300" stroke="#f59e0b" strokeWidth="1.2" strokeDasharray="3 3" />
+                        <line x1="238" y1="300" x2="238" y2="438" stroke="#1e293b" strokeWidth="3" />
 
-                        {/* Title Badge */}
-                        <rect x="245" y="222" width="150" height="15" rx="3" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="0.8" />
-                        <text x="251" y="233" fill="#fbbf24" fontSize="7.5" fontWeight="bold" fontFamily="monospace">
-                            ☕ GRAND RECREATION HAVEN
+                        {/* Wing Title Badge */}
+                        <rect x="248" y="222" width="130" height="15" rx="3" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="0.8" />
+                        <text x="254" y="233" fill="#fbbf24" fontSize="7" fontWeight="bold" fontFamily="monospace">
+                            ☕ RECREATION HAVEN
                         </text>
 
                         {/* --- 1. Gourmet Cyber Espresso Bar --- */}
@@ -621,17 +602,17 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
 
                         {/* --- 4. Acoustic Cryo-Sleep Pod Nook --- */}
                         <g transform="translate(328, 335)">
-                            <rect x="0" y="0" width="45" height="74" rx="12" fill="#0c1220" stroke="#a855f7" strokeWidth="1" />
-                            <rect x="6" y="8" width="33" height="44" rx="8" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.8" />
-                            <circle cx="22" cy="62" r="2.5" fill="#c084fc" className="animate-ping" opacity="0.4" />
-                            <circle cx="22" cy="62" r="1.5" fill="#c084fc" />
-                            <text x="22" y="32" textAnchor="middle" fill="#c084fc" fontSize="6.5" fontFamily="monospace">POD 01</text>
-                            <text x="22" y="70" textAnchor="middle" fill="#64748b" fontSize="5" fontFamily="monospace">CRYO-BAY</text>
+                            <rect x="0" y="0" width="48" height="72" rx="12" fill="#0c1220" stroke="#a855f7" strokeWidth="1" />
+                            <rect x="6" y="8" width="36" height="44" rx="8" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.8" />
+                            <circle cx="24" cy="62" r="2.5" fill="#c084fc" className="animate-ping" opacity="0.4" />
+                            <circle cx="24" cy="62" r="1.5" fill="#c084fc" />
+                            <text x="24" y="24" textAnchor="middle" fill="#c084fc" fontSize="6.5" fontFamily="monospace">POD 01</text>
+                            <text x="24" y="68" textAnchor="middle" fill="#64748b" fontSize="5" fontFamily="monospace">CRYO-BAY</text>
                         </g>
                     </g>
 
                     {/* =========================================================================
-                        RENDER THE 4 CANONICAL AGENT PERSONAS (Walking, Thinking & Relaxing)
+                        RENDER THE 4 CANONICAL AGENT PERSONAS (Sims Animated Sprites)
                        ========================================================================= */}
                     {agents.map((agent) => {
                         const sim = agentSimStatesRef.current[agent.id] || { x: 100, y: 100, thought: '☕', walkCycle: 0 };
@@ -662,11 +643,11 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                                 {/* Persona Shadow */}
                                 <ellipse cx="0" cy="10" rx="10" ry="4" fill="rgba(0,0,0,0.5)" />
 
-                                {/* Persona Legs (Walking cycle animation) */}
+                                {/* Persona Legs */}
                                 <rect x="-5" y="4" width="3" height="7" rx="1" fill="#0f172a" />
                                 <rect x="2" y="4" width="3" height="7" rx="1" fill="#0f172a" />
 
-                                {/* Persona Torso with Outfit Color */}
+                                {/* Persona Torso with Outfit */}
                                 <rect 
                                     x="-8" y="-7" width="16" height="13" 
                                     rx="3" fill={outfitColor} 
@@ -702,9 +683,9 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
 
                                 {/* Name Tag Label Below Persona */}
                                 <rect 
-                                    x="-32" y="15" width="64" height="12" 
-                                    rx="3" fill="rgba(11, 15, 25, 0.9)" 
-                                    stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" 
+                                    x="-30" y="15" width="60" height="12" 
+                                    rx="3" fill="rgba(11, 15, 25, 0.92)" 
+                                    stroke="rgba(255,255,255,0.2)" strokeWidth="0.6" 
                                 />
                                 <text 
                                     x="0" y="24" textAnchor="middle" 
@@ -720,35 +701,36 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
 
             {/* Bottom Wing Navigation & Status Footer */}
             <div className="flex justify-between items-center px-1 pt-1 border-t border-white/5 text-[10px] font-mono text-gray-400 flex-shrink-0">
-                <div className="flex gap-1.5">
+                <div className="flex gap-1">
                     <span 
-                        onClick={() => setActiveWingFilter('bridge')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'bridge' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'bridge' ? null : 'bridge')}
+                        className={`cursor-pointer px-2 py-0.5 rounded-md text-[10px] transition-colors ${activeWingFilter === 'bridge' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
                         💻 Bridge
                     </span>
                     <span 
-                        onClick={() => setActiveWingFilter('quantum_lab')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'quantum_lab' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'quantum_lab' ? null : 'quantum_lab')}
+                        className={`cursor-pointer px-2 py-0.5 rounded-md text-[10px] transition-colors ${activeWingFilter === 'quantum_lab' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
-                        ⚡ Quantum Lab
+                        ⚡ Lab
                     </span>
                     <span 
-                        onClick={() => setActiveWingFilter('data_radar')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'data_radar' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'data_radar' ? null : 'data_radar')}
+                        className={`cursor-pointer px-2 py-0.5 rounded-md text-[10px] transition-colors ${activeWingFilter === 'data_radar' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
-                        🗄️ Data & Radar
+                        🗄️ Intel
                     </span>
                     <span 
-                        onClick={() => setActiveWingFilter('lounge')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'lounge' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'lounge' ? null : 'lounge')}
+                        className={`cursor-pointer px-2 py-0.5 rounded-md text-[10px] transition-colors ${activeWingFilter === 'lounge' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
-                        ☕ Recreation Haven
+                        ☕ Lounge
                     </span>
                 </div>
 
-                <div className="text-[9px] text-gray-400">
-                    Host RAM: <span className="text-cyan-400 font-semibold">{hostTelemetry?.hostMemory?.split(' ')[0] || '1.4GB'}</span>
+                <div className="text-[10px] font-mono flex items-center gap-1 text-gray-400">
+                    <span>RAM:</span>
+                    <span className="text-cyan-400 font-semibold">{hostTelemetry?.hostMemory?.split(' ')[0] || '1.4GB'}</span>
                 </div>
             </div>
 
