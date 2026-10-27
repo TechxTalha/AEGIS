@@ -5,13 +5,13 @@ import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { taskApi } from '../../api/taskApi';
 import DigitalSignalsGlobe from './DigitalSignalsGlobe';
 import LiveTalkSession from './LiveTalkSession';
-import AgentWorkstations from './AgentWorkstations';
+import SimsAgentHouse from './SimsAgentHouse';
 
 /**
  * DashboardPage (3-Column Command Matrix Layout)
  * - Left: Live Talk & Cyber Chat (Smartphone Comms)
  * - Center: Digital Signals Holographic Globe (Audio-Reactive)
- * - Right: Animated Agent Workstations (AEGIS Core, Database, Web Research, Antigravity Coder)
+ * - Right: Sims-Style 3D Roof-Off Agent House (Interactive Roaming Personas)
  * - Full-width, zero-scroll responsive layout with prominent header logo.
  */
 const DashboardPage = () => {
@@ -87,9 +87,9 @@ const DashboardPage = () => {
                     />
                 </div>
 
-                {/* Column 3 (RIGHT): Animated Agent Workstations */}
+                {/* Column 3 (RIGHT): 3D Roof-Off Sims Agent House */}
                 <div className="lg:col-span-3 xl:col-span-3 2xl:col-span-3 flex flex-col">
-                    <AgentWorkstations 
+                    <SimsAgentHouse 
                         liveTasks={tasks} 
                     />
                 </div>

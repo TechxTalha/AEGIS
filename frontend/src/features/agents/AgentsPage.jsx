@@ -1,72 +1,168 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Card, Badge } from 'antd';
-import { DesktopOutlined, DatabaseOutlined, GlobalOutlined, CodeOutlined } from '@ant-design/icons';
-import { getStoredAgents } from './agentsData';
+import { Typography, Card, Badge, Tooltip } from 'antd';
+import { 
+    DesktopOutlined, 
+    DatabaseOutlined, 
+    GlobalOutlined, 
+    CodeOutlined,
+    ReloadOutlined,
+    DashboardOutlined,
+    ApartmentOutlined
+} from '@ant-design/icons';
+import { agentApi } from '../../api/agentApi';
 
 const { Title, Text } = Typography;
 
+const ROOM_NAMES = {
+    workstation: { name: 'Command Deck', icon: '💻', color: 'text-cyan-400' },
+    kitchen: { name: 'Coffee Bar', icon: '☕', color: 'text-amber-400' },
+    lounge: { name: 'Arcade Lounge', icon: '🎮', color: 'text-purple-400' },
+    rest_pod: { name: 'Sleep Pods', icon: '💤', color: 'text-gray-400' }
+};
+
 const AgentsPage = () => {
-    const [agents, setAgents] = useState(getStoredAgents);
+    const [agents, setAgents] = useState([]);
+    const [hostTelemetry, setHostTelemetry] = useState(null);
+    const [houseStats, setHouseStats] = useState({ workingCount: 0, idleCount: 0, offlineCount: 0 });
+    const [loading, setLoading] = useState(false);
+
+    const fetchLiveAgents = async () => {
+        try {
+            const data = await agentApi.getLiveAgents();
+            if (data && data.agents) {
+                setAgents(data.agents);
+                setHouseStats(data.houseStats || { workingCount: 0, idleCount: 0, offlineCount: 0 });
+                setHostTelemetry({
+                    hostMemory: data.hostMemory,
+                    activeTask: data.activeTask,
+                    isExecuting: data.isExecuting
+                });
+            }
+        } catch (err) {
+            console.error('Failed to fetch real-time agents:', err);
+        }
+    };
 
     useEffect(() => {
-        const handleUpdate = () => {
-            setAgents(getStoredAgents());
-        };
-        window.addEventListener('aegis_agents_updated', handleUpdate);
-        return () => window.removeEventListener('aegis_agents_updated', handleUpdate);
+        fetchLiveAgents();
+        const interval = setInterval(fetchLiveAgents, 4000);
+        return () => clearInterval(interval);
     }, []);
 
-    const getAgentIcon = (id) => {
-        switch (id) {
-            case 'agent-core-1': return <DesktopOutlined />;
-            case 'agent-db-worker': return <DatabaseOutlined />;
-            case 'agent-research-1': return <GlobalOutlined />;
-            case 'agent-coder-x': return <CodeOutlined />;
-            default: return <DesktopOutlined />;
-        }
+    const getAgentIcon = (id, outfitColor) => {
+        return (
+            <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mr-3 shadow-neon transition-transform hover:scale-105"
+                style={{ 
+                    backgroundColor: `${outfitColor}20`, 
+                    border: `1px solid ${outfitColor}60`,
+                    color: outfitColor 
+                }}
+            >
+                {id.includes('db') ? <DatabaseOutlined /> :
+                 id.includes('research') ? <GlobalOutlined /> :
+                 id.includes('coder') ? <CodeOutlined /> : <DesktopOutlined />}
+            </div>
+        );
     };
 
     return (
         <div className="animate-fade-in pb-4 px-2 pt-2">
-            <div className="mb-6 pt-2">
-                <Title level={2} className="!mt-0 !mb-1 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold tracking-tight">Agents</Title>
-                <Text className="text-gray-400">Manage machine and specialized agents.</Text>
+            {/* Header: Clean title without redundant text description */}
+            <div className="mb-4 pt-1 flex justify-between items-center">
+                <Title level={2} className="!mt-0 !mb-0 text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 font-bold tracking-tight">
+                    Agents
+                </Title>
+                <div className="flex items-center gap-3 text-xs font-mono text-gray-400">
+                    <span className="text-cyan-400 font-semibold">{houseStats.workingCount} Working</span>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-amber-400 font-semibold">{houseStats.idleCount} Idle</span>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-gray-400">{houseStats.offlineCount} Offline</span>
+                    <button 
+                        onClick={() => { setLoading(true); fetchLiveAgents().finally(() => setLoading(false)); }}
+                        className="ml-2 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        title="Refresh Agents"
+                    >
+                        <ReloadOutlined spin={loading} />
+                    </button>
+                </div>
             </div>
 
-            <div className="space-y-3">
-                {agents.map((agent) => (
-                    <Card 
-                        key={agent.id} 
-                        bordered={false} 
-                        className="shadow-glass"
-                        styles={{ body: { padding: '16px' } }}
-                    >
-                        <div className="flex items-start">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-lg mr-3 shadow-neon">
-                                {getAgentIcon(agent.id)}
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex justify-between items-start mb-1">
-                                    <div className="font-bold text-gray-200 text-base leading-tight pr-2">{agent.name}</div>
-                                    <Badge 
-                                        status={agent.status === 'ONLINE' ? 'success' : agent.status === 'BUSY' ? 'processing' : 'default'} 
-                                        text={<span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">{agent.status}</span>}
-                                    />
-                                </div>
-                                <div className="text-xs text-gray-400 mb-3">
-                                    {agent.id} • {agent.type}
-                                </div>
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                    {agent.capabilities.map(cap => (
-                                        <span key={cap} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300">
-                                            {cap}
+            {/* Host Hardware & Telemetry Bar */}
+            {hostTelemetry && (
+                <div className="mb-4 p-3 rounded-2xl bg-gradient-to-r from-[#0e1424] to-[#12182b] border border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs font-mono shadow-glass">
+                    <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="text-gray-400">HOST TELEMETRY:</span>
+                        <span className="text-white font-bold">{hostTelemetry.hostMemory}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-gray-400">ACTIVE TASK:</span>
+                        <span className="text-cyan-300 font-semibold truncate max-w-[320px]">
+                            {hostTelemetry.activeTask || 'Standing by for instructions'}
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {/* Agent Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {agents.map((agent) => {
+                    const roomInfo = ROOM_NAMES[agent.room] || { name: 'Smart HQ', icon: '📍', color: 'text-gray-400' };
+                    const outfitColor = agent.persona?.outfitColor || '#00d2ff';
+
+                    return (
+                        <Card 
+                            key={agent.id} 
+                            bordered={false} 
+                            className="shadow-glass border border-white/5 hover:border-white/20 transition-all rounded-2xl bg-[#0b0f19]/90"
+                            styles={{ body: { padding: '16px' } }}
+                        >
+                            <div className="flex items-start">
+                                {getAgentIcon(agent.id, outfitColor)}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <div className="font-bold text-gray-100 text-sm leading-tight pr-2 truncate">
+                                            {agent.name}
+                                        </div>
+                                        <Badge 
+                                            status={agent.status === 'ONLINE' ? 'success' : agent.status === 'BUSY' ? 'processing' : 'default'} 
+                                            text={<span className="text-[10px] uppercase font-bold tracking-wider text-gray-300">{agent.status}</span>}
+                                        />
+                                    </div>
+
+                                    {/* Role, Location & Hardware Usage */}
+                                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-400 mb-2">
+                                        <span>{agent.type}</span>
+                                        <span>•</span>
+                                        <span className={`flex items-center gap-1 font-semibold ${roomInfo.color}`}>
+                                            <span>{roomInfo.icon}</span>
+                                            <span>{roomInfo.name}</span>
                                         </span>
-                                    ))}
+                                        <span>•</span>
+                                        <span className="text-cyan-400 font-mono">{agent.cpu}% CPU</span>
+                                    </div>
+
+                                    {/* Real-time Activity */}
+                                    <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-gray-300 mb-2.5 font-sans line-clamp-1">
+                                        <span className="text-gray-500 font-mono mr-1.5">TASK:</span>
+                                        {agent.currentTask}
+                                    </div>
+
+                                    {/* Capabilities */}
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {agent.capabilities?.map(cap => (
+                                            <span key={cap} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-400 font-mono">
+                                                {cap}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </Card>
-                ))}
+                        </Card>
+                    );
+                })}
             </div>
         </div>
     );
