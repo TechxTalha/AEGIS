@@ -8,14 +8,11 @@ import LiveTalkSession from './LiveTalkSession';
 import AgentWorkstations from './AgentWorkstations';
 
 /**
- * DashboardPage (Widescreen Full-Bleed Command Matrix)
- * - Zero summaries.
- * - Utilizes 100% of the screen width (no max-w-7xl restriction).
- * - Perfectly scaled to fit desktop screen without vertical scrolling.
- * - Spacious components with rich aesthetics that don't feel squished.
- * - Central 3D Digital Signals Globe with audio-reactive waveforms.
- * - Smartphone-styled Live Voice Talk & Cyber Chat.
- * - Animated Agent Workstations (AEGIS Core, Database, Web Research, Antigravity Coder).
+ * DashboardPage (3-Column Command Matrix Layout)
+ * - Left: Live Talk & Cyber Chat (Smartphone Comms)
+ * - Center: Digital Signals Holographic Globe (Audio-Reactive)
+ * - Right: Animated Agent Workstations (AEGIS Core, Database, Web Research, Antigravity Coder)
+ * - Full-width, zero-scroll responsive layout with prominent header logo.
  */
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -72,7 +69,7 @@ const DashboardPage = () => {
 
     return (
         <div className="animate-fade-in w-full pb-2 px-1 lg:px-3 flex flex-col justify-start">
-            {/* Top Command Center Header */}
+            {/* Top Command Center Bar */}
             <div className="mb-2.5 flex justify-between items-center border-b border-white/5 pb-2">
                 <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#00d2ff] shadow-neon animate-pulse" />
@@ -104,10 +101,17 @@ const DashboardPage = () => {
                 </div>
             </div>
 
-            {/* Main Stage: Widescreen Globe & Phone Comms Session */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
-                {/* Central Digital Signals Holographic Globe (Wide viewport) */}
-                <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 flex flex-col h-full">
+            {/* 3-Column Symmetrical Command Layout: Left (Chat), Center (Globe), Right (Agents) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 xl:gap-4 items-stretch w-full">
+                {/* Column 1 (LEFT): Live Talk & Cyber Chat Phone */}
+                <div className="lg:col-span-3 xl:col-span-3 2xl:col-span-3 flex justify-center">
+                    <LiveTalkSession 
+                        onSpeakingChange={handleSpeakingChange} 
+                    />
+                </div>
+
+                {/* Column 2 (CENTER): Digital Signals Holographic Globe */}
+                <div className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 flex flex-col">
                     <DigitalSignalsGlobe 
                         isSpeaking={isAiSpeaking} 
                         audioLevel={audioLevel} 
@@ -115,17 +119,12 @@ const DashboardPage = () => {
                     />
                 </div>
 
-                {/* Smartphone Live Talk & Cyber Chat */}
-                <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 flex justify-center h-full">
-                    <LiveTalkSession 
-                        onSpeakingChange={handleSpeakingChange} 
+                {/* Column 3 (RIGHT): Animated Agent Workstations */}
+                <div className="lg:col-span-3 xl:col-span-3 2xl:col-span-3 flex flex-col">
+                    <AgentWorkstations 
+                        liveTasks={tasks} 
                     />
                 </div>
-            </div>
-
-            {/* Bottom Operations Hub: Animated Agents & Desktops / Cyber Lounge */}
-            <div className="mt-3">
-                <AgentWorkstations liveTasks={tasks} />
             </div>
         </div>
     );

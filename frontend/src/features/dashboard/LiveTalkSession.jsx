@@ -11,9 +11,9 @@ import {
 } from '@ant-design/icons';
 
 /**
- * LiveTalkSession
- * Modern Cyber Smartphone Live Voice Talk & Encrypted Chat module.
- * Designed with comfortable, non-squished proportions matching the Globe height.
+ * LiveTalkSession (Left Column Smartphone Comms)
+ * Form factor: High-end Cyber Smartphone
+ * Mode: Live Voice Talk (ChatGPT Voice/Siri style) + Cyber Chat Feed
  */
 const LiveTalkSession = ({ onSpeakingChange }) => {
     const [mode, setMode] = useState('voice'); // 'voice' | 'chat'
@@ -27,8 +27,8 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         {
             id: 1,
             sender: 'ai',
-            text: 'AEGIS Command Live Comms established. Systems nominal.',
-            time: '22:15'
+            text: 'AEGIS Command Live Comms established. Systems nominal. Standing by for directives.',
+            time: '15:00'
         }
     ]);
 
@@ -70,7 +70,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         utterance.onstart = () => {
             setIsAiSpeaking(true);
             startWaveformAnimation();
-            onSpeakingChange?.(true, 0.7);
+            onSpeakingChange?.(true, 0.75);
         };
 
         utterance.onend = () => {
@@ -92,7 +92,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         setIsAiSpeaking(true);
         startWaveformAnimation();
         onSpeakingChange?.(true, 0.8);
-        const duration = Math.min(5000, Math.max(2200, text.length * 50));
+        const duration = Math.min(5000, Math.max(2400, text.length * 50));
         setTimeout(() => {
             setIsAiSpeaking(false);
             stopWaveformAnimation();
@@ -214,17 +214,17 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     ];
 
     return (
-        <div className="w-full flex justify-center h-full">
-            {/* Cyber Smartphone Chassis */}
-            <div className="relative w-full max-w-[370px] h-[360px] xl:h-[385px] rounded-[32px] bg-[#0c101c] border border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col p-3 transition-all">
+        <div className="w-full h-full flex justify-center">
+            {/* Cyber Smartphone Chassis - Scaled for 3-Column Height */}
+            <div className="relative w-full max-w-[380px] h-[640px] xl:h-[660px] rounded-[38px] bg-[#0c101c] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col p-3.5 transition-all">
                 {/* Dynamic Island & Phone Status Bar */}
-                <div className="flex justify-between items-center px-3 pt-0.5 pb-1.5">
-                    <span className="text-xs font-semibold text-gray-300 font-mono">{currentTime || '22:30'}</span>
+                <div className="flex justify-between items-center px-3 pt-1 pb-2">
+                    <span className="text-xs font-semibold text-gray-300 font-mono">{currentTime || '15:00'}</span>
                     
                     {/* Dynamic Island Pill */}
-                    <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-black/80 border border-white/10 shadow-inner">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isAiSpeaking ? 'bg-cyan-400 animate-ping' : isMicActive ? 'bg-red-400 animate-pulse' : 'bg-green-400'}`} />
-                        <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/85 border border-white/10 shadow-inner">
+                        <span className={`w-2 h-2 rounded-full ${isAiSpeaking ? 'bg-cyan-400 animate-ping' : isMicActive ? 'bg-red-400 animate-pulse' : 'bg-green-400'}`} />
+                        <span className="text-[10px] font-mono text-gray-300 uppercase tracking-wider font-semibold">
                             {isAiSpeaking ? 'AI Speaking' : isMicActive ? 'Listening' : 'AEGIS 5G'}
                         </span>
                     </div>
@@ -237,10 +237,10 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                 </div>
 
                 {/* Mode Selector Tab */}
-                <div className="flex bg-[#13192b]/80 p-1 rounded-xl mb-2.5 border border-white/5">
+                <div className="flex bg-[#13192b]/90 p-1 rounded-xl mb-3 border border-white/5">
                     <button
                         onClick={() => setMode('voice')}
-                        className={`flex-1 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                             mode === 'voice' 
                                 ? 'bg-[#00d2ff] text-[#0B0F19] shadow-neon' 
                                 : 'text-gray-400 hover:text-white'
@@ -250,7 +250,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                     </button>
                     <button
                         onClick={() => setMode('chat')}
-                        className={`flex-1 py-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                             mode === 'chat' 
                                 ? 'bg-[#00d2ff] text-[#0B0F19] shadow-neon' 
                                 : 'text-gray-400 hover:text-white'
@@ -262,23 +262,28 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
                 {/* 1. Live Voice Talk Mode */}
                 {mode === 'voice' && (
-                    <div className="flex-1 flex flex-col justify-between items-center py-1 px-1">
+                    <div className="flex-1 flex flex-col justify-between items-center py-4 px-2">
                         <div className="text-center">
-                            <h3 className="text-xs font-bold text-white tracking-tight mb-0">AEGIS Neural Voice</h3>
-                            <p className="text-[10px] text-cyan-400/80 font-mono mb-0">QUANTUM UPLINK ACTIVE</p>
+                            <h3 className="text-base font-bold text-white tracking-tight mb-0.5">AEGIS Neural Voice</h3>
+                            <p className="text-[11px] text-cyan-400/90 font-mono mb-0">QUANTUM UPLINK ACTIVE</p>
                         </div>
 
                         {/* Animated Voice Orb */}
-                        <div className="relative my-auto flex items-center justify-center w-32 h-32">
+                        <div className="relative my-auto flex items-center justify-center w-48 h-48">
                             <div 
-                                className={`absolute inset-0 rounded-full border border-cyan-400/30 transition-all duration-300 ${
+                                className={`absolute inset-0 rounded-full border-2 border-cyan-400/30 transition-all duration-300 ${
                                     isAiSpeaking ? 'scale-125 opacity-70 animate-ping' : isMicActive ? 'scale-110 opacity-50' : 'opacity-20'
+                                }`} 
+                            />
+                            <div 
+                                className={`absolute inset-2 rounded-full border border-purple-500/40 transition-all duration-500 ${
+                                    isAiSpeaking ? 'scale-110 rotate-45' : 'scale-95'
                                 }`} 
                             />
 
                             <div 
                                 onClick={toggleMic}
-                                className={`w-24 h-24 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative z-10 shadow-[0_0_30px_rgba(0,210,255,0.4)] ${
+                                className={`w-32 h-32 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative z-10 shadow-[0_0_40px_rgba(0,210,255,0.45)] ${
                                     isAiSpeaking 
                                         ? 'bg-gradient-to-tr from-cyan-400 via-blue-500 to-purple-600 scale-105' 
                                         : isMicActive 
@@ -287,25 +292,25 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                 }`}
                             >
                                 {isAiSpeaking ? (
-                                    <div className="flex items-center gap-1">
-                                        <span className="w-1.5 h-5 bg-white rounded-full animate-pulse" />
-                                        <span className="w-1.5 h-8 bg-white rounded-full animate-bounce" />
+                                    <div className="flex items-center gap-1.5">
                                         <span className="w-1.5 h-6 bg-white rounded-full animate-pulse" />
+                                        <span className="w-1.5 h-10 bg-white rounded-full animate-bounce" />
+                                        <span className="w-1.5 h-7 bg-white rounded-full animate-pulse" />
                                     </div>
                                 ) : isMicActive ? (
-                                    <AudioOutlined className="text-2xl text-white animate-bounce" />
+                                    <AudioOutlined className="text-3xl text-white animate-bounce" />
                                 ) : (
-                                    <AudioOutlined className="text-2xl text-white/90" />
+                                    <AudioOutlined className="text-3xl text-white/90" />
                                 )}
-                                <span className="text-[9px] font-bold text-white/90 mt-1 uppercase tracking-wider">
+                                <span className="text-[10px] font-bold text-white/90 mt-1 uppercase tracking-wider">
                                     {isAiSpeaking ? 'Speaking' : isMicActive ? 'Listening' : 'Tap to Talk'}
                                 </span>
                             </div>
                         </div>
 
                         {/* Subtitle Pill */}
-                        <div className="w-full bg-[#151c30]/90 border border-white/10 rounded-xl px-3 py-1.5 text-center mb-2 min-h-[38px] flex items-center justify-center">
-                            <p className="text-[11px] text-gray-200 line-clamp-2 italic mb-0">
+                        <div className="w-full bg-[#151c30]/90 border border-white/10 rounded-2xl p-3 text-center mb-4 min-h-[52px] flex items-center justify-center">
+                            <p className="text-xs text-gray-200 line-clamp-2 italic mb-0">
                                 {transcript}
                             </p>
                         </div>
@@ -314,30 +319,30 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                         <div className="w-full flex justify-around items-center pt-1">
                             <button
                                 onClick={toggleMic}
-                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                                     isMicActive 
-                                        ? 'bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.7)]' 
+                                        ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.7)]' 
                                         : 'bg-white/10 hover:bg-white/20 text-gray-200'
                                 }`}
                                 title={isMicActive ? "Mute Microphone" : "Unmute Microphone"}
                             >
-                                {isMicActive ? <AudioOutlined className="text-base" /> : <AudioMutedOutlined className="text-base" />}
+                                {isMicActive ? <AudioOutlined className="text-lg" /> : <AudioMutedOutlined className="text-lg" />}
                             </button>
 
                             <button
                                 onClick={() => speakText("Testing AEGIS voice carrier frequency. Signal reception clear.")}
-                                className="w-12 h-12 rounded-full bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-[#0B0F19] flex items-center justify-center font-bold shadow-neon transition-all"
+                                className="w-14 h-14 rounded-full bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-[#0B0F19] flex items-center justify-center font-bold shadow-neon transition-all"
                                 title="Synthesize Voice Response"
                             >
-                                <SoundOutlined className="text-lg" />
+                                <SoundOutlined className="text-xl" />
                             </button>
 
                             <button
                                 onClick={() => setMode('chat')}
-                                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 flex items-center justify-center transition-all"
+                                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 flex items-center justify-center transition-all"
                                 title="Open Text Chat"
                             >
-                                <MessageOutlined className="text-base" />
+                                <MessageOutlined className="text-lg" />
                             </button>
                         </div>
                     </div>
@@ -347,16 +352,16 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                 {mode === 'chat' && (
                     <div className="flex-1 flex flex-col justify-between overflow-hidden">
                         {/* Messages Feed */}
-                        <div className="flex-1 overflow-y-auto space-y-2 pr-1 py-1">
+                        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 py-1">
                             {messages.map((msg) => (
                                 <div 
                                     key={msg.id} 
                                     className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                                 >
                                     <div 
-                                        className={`max-w-[85%] rounded-xl px-3 py-1.5 text-xs leading-relaxed ${
+                                        className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
                                             msg.sender === 'user'
-                                                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-br-none shadow-sm'
+                                                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-br-none shadow-md'
                                                 : 'bg-[#182035] text-gray-200 border border-white/10 rounded-bl-none shadow-sm'
                                         }`}
                                     >
@@ -371,7 +376,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                         </div>
 
                         {/* Quick Prompts */}
-                        <div className="flex gap-1.5 overflow-x-auto py-1.5 no-scrollbar">
+                        <div className="flex gap-1.5 overflow-x-auto py-2 no-scrollbar">
                             {quickChips.map((chip, idx) => (
                                 <button
                                     key={idx}
