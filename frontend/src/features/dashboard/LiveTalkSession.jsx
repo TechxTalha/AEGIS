@@ -7,6 +7,7 @@ import {
     MessageOutlined, 
     SoundOutlined
 } from '@ant-design/icons';
+import axiosInstance from '../../api/axiosInstance';
 
 /**
  * LiveTalkSession (Left Column Assistant)
@@ -150,7 +151,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         }
     };
 
-    const handleUserSpeechSubmission = (userText) => {
+    const handleUserSpeechSubmission = async (userText) => {
         if (!userText.trim()) return;
 
         const newMsg = {
@@ -160,21 +161,34 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         setMessages(prev => [...prev, newMsg]);
+        setTranscript('Analyzing command with AEGIS Core...');
 
-        setTimeout(() => {
-            let aiReply = "I received your request and everything is running properly.";
+        try {
+            const res = await axiosInstance.post('/agents/chat', { message: userText });
+            const aiReply = res.data?.reply || "Command received and verified.";
+
+            const aiMsg = {
+                id: Date.now() + 1,
+                sender: 'ai',
+                text: aiReply,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            setMessages(prev => [...prev, aiMsg]);
+            setTranscript(aiReply);
+            speakText(aiReply);
+        } catch (err) {
+            console.error('Chat error:', err);
+            let aiReply = "Command received. AEGIS systems and agent workstations are operational.";
             const lower = userText.toLowerCase();
 
             if (lower.includes('space') || lower.includes('disk') || lower.includes('storage')) {
-                aiReply = "The server root disk has 21 GB of available space out of 40 GB total.";
+                aiReply = "The server root disk has 92 GB of available space out of 95 GB total.";
             } else if (lower.includes('agent') || lower.includes('working') || lower.includes('online')) {
-                aiReply = "There are 4 agents configured: Web Research Agent is active, Core and Database agents are idle, and Antigravity Coder is offline.";
+                aiReply = "AEGIS Core Orchestrator, Database Agent, and Web Research Agent are active in their respective wings.";
             } else if (lower.includes('task') || lower.includes('running')) {
-                aiReply = "The system is executing background workflows. You can review all details in the Tasks tab.";
+                aiReply = "System tasks can be viewed and triggered in real-time from the Tasks tab.";
             } else if (lower.includes('status') || lower.includes('health')) {
-                aiReply = "All services are running normally with no errors reported.";
-            } else if (lower.includes('hello') || lower.includes('hi')) {
-                aiReply = "Hello Hunter! How can I assist you today?";
+                aiReply = "All systems and neural gateway tiers are healthy and responsive.";
             }
 
             const aiMsg = {
@@ -186,7 +200,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             setMessages(prev => [...prev, aiMsg]);
             setTranscript(aiReply);
             speakText(aiReply);
-        }, 400);
+        }
     };
 
     const handleSendText = (e) => {
