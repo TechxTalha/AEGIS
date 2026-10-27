@@ -12,95 +12,75 @@ import {
 import { agentApi } from '../../api/agentApi';
 
 /**
- * SimsAgentHouse (3D Roof-Off Smart Agent HQ)
- * - 4 Dedicated Specialized Agent Decks with Contextual Colors & Hardware:
- *   1. Command Ops Deck (Cyan) -> AEGIS Core Orchestrator
- *   2. Data Vault & SQL Matrix (Emerald) -> Database Agent
- *   3. Global Cyber Radar Hub (Amber) -> Web Research Agent
- *   4. Quantum Synthesis Lab & Sleep Pod (Purple) -> Antigravity Coder
- * - Central Social Corridor & Cross-Plaza:
- *   - Espresso Bar & Snack Counter
- *   - Retro 8-Bit Cyber Arcade Machine
- *   - Energy Nexus Core
- * - Autonomous Roaming Engine with Natural Hallway Pathfinding & Realistic Dwell Times
- * - 100% Real-Time Data (Linux Host Memory, active task state)
- * - Restricted strictly to the 4 planned canonical agents
+ * SimsAgentHouse (3D Roof-Off Architectural Smart HQ)
+ * - Structured into 3 Specialized Workstation Wings + 1 Grand Recreation & Living Haven:
+ *   1. Master Command Bridge (Top-Left) -> AEGIS Core Orchestrator
+ *   2. Quantum Synthesis Lab (Top-Right) -> Antigravity Coder
+ *   3. Data Vault & Cyber Radar Intelligence Wing (Bottom-Left) -> Database Agent + Web Research Agent
+ *   4. Grand Recreation, Social & Living Haven (Bottom-Right) -> Espresso Bar, Retro Arcade, Cyber Sofa, Sleep Pods
+ * - Architectural floor plan with organic open-plan layout, custom floor textures, open archways, and glass dividers
+ * - Natural hallway & doorway pathfinding with realistic dwell times (18-30s work, 12-20s lounge breaks)
+ * - 100% Real-time telemetry, strictly restricted to the 4 canonical agents from the plan
  */
 
-// 4 Contextual Decks & Central Plaza Definitions (Canvas grid: 400 x 460)
-const DECKS = {
-    deck_core: {
-        id: 'deck_core',
-        name: 'Command Ops Deck',
+const WINGS = {
+    bridge: {
+        id: 'bridge',
+        name: 'Master Command Bridge',
         icon: '💻',
-        agentId: 'agent-core-1',
-        themeColor: '#00d2ff',
-        bgGlow: 'rgba(0, 210, 255, 0.08)',
-        borderColor: 'rgba(0, 210, 255, 0.35)',
-        x: 12, y: 12, w: 178, h: 196,
-        door: { x: 160, y: 200 },
-        stations: [
-            { x: 75, y: 88, role: 'master_console', action: 'commanding', label: 'Master Console' },
-            { x: 135, y: 92, role: 'tactical_map', action: 'analyzing', label: 'Tactical Map' },
-            { x: 60, y: 155, role: 'holo_globe', action: 'orbiting', label: 'Holo-Globe' }
-        ]
+        color: '#00d2ff',
+        bg: 'rgba(0, 210, 255, 0.08)',
+        border: 'rgba(0, 210, 255, 0.35)',
+        door: { x: 185, y: 155 },
+        stations: {
+            master: { x: 80, y: 80, role: 'master_console', label: 'Command Console', thought: '⚡' },
+            holo: { x: 135, y: 110, role: 'holo_globe', label: 'Tactical Holo-Globe', thought: '🌐' }
+        }
     },
-    deck_db: {
-        id: 'deck_db',
-        name: 'Data Vault & SQL Matrix',
-        icon: '🗄️',
-        agentId: 'agent-db-worker',
-        themeColor: '#10b981',
-        bgGlow: 'rgba(16, 185, 129, 0.08)',
-        borderColor: 'rgba(16, 185, 129, 0.35)',
-        x: 210, y: 12, w: 178, h: 196,
-        door: { x: 240, y: 200 },
-        stations: [
-            { x: 320, y: 92, role: 'query_terminal', action: 'indexing', label: 'Query Terminal' },
-            { x: 255, y: 85, role: 'server_cluster', action: 'optimizing', label: 'Server Cluster' },
-            { x: 280, y: 155, role: 'data_cube', action: 'inspecting', label: 'Holo Data-Cube' }
-        ]
-    },
-    deck_research: {
-        id: 'deck_research',
-        name: 'Global Cyber Radar',
-        icon: '📡',
-        agentId: 'agent-research-1',
-        themeColor: '#f59e0b',
-        bgGlow: 'rgba(245, 158, 11, 0.08)',
-        borderColor: 'rgba(245, 158, 11, 0.35)',
-        x: 12, y: 252, w: 178, h: 196,
-        door: { x: 160, y: 260 },
-        stations: [
-            { x: 125, y: 340, role: 'recon_desk', action: 'scraping', label: 'Recon Bay' },
-            { x: 65, y: 340, role: 'radar_dish', action: 'scanning', label: 'Phased Radar' },
-            { x: 80, y: 405, role: 'feed_wall', action: 'monitoring', label: 'Live Ticker' }
-        ]
-    },
-    deck_coder: {
-        id: 'deck_coder',
+    quantum_lab: {
+        id: 'quantum_lab',
         name: 'Quantum Synthesis Lab',
         icon: '⚡',
-        agentId: 'agent-coder-x',
-        themeColor: '#a855f7',
-        bgGlow: 'rgba(168, 85, 247, 0.08)',
-        borderColor: 'rgba(168, 85, 247, 0.35)',
-        x: 210, y: 252, w: 178, h: 196,
-        door: { x: 240, y: 260 },
-        stations: [
-            { x: 265, y: 340, role: 'code_terminal', action: 'synthesizing', label: 'Quantum IDE' },
-            { x: 335, y: 335, role: 'sleep_pod', action: 'hibernating', label: 'Cryo-Pod 01' },
-            { x: 295, y: 410, role: 'docking_bay', action: 'docking', label: 'Recharge Bay' }
-        ]
+        color: '#a855f7',
+        bg: 'rgba(168, 85, 247, 0.08)',
+        border: 'rgba(168, 85, 247, 0.35)',
+        door: { x: 235, y: 155 },
+        stations: {
+            ide: { x: 285, y: 75, role: 'compiler', label: 'Quantum IDE', thought: '💻' },
+            bench: { x: 345, y: 95, role: 'hardware_bench', label: 'Synthesizer Bench', thought: '⚡' }
+        }
+    },
+    data_radar: {
+        id: 'data_radar',
+        name: 'Data & Radar Intelligence Wing',
+        icon: '🗄️',
+        color: '#10b981',
+        bg: 'rgba(16, 185, 129, 0.08)',
+        border: 'rgba(16, 185, 129, 0.35)',
+        door: { x: 185, y: 245 },
+        stations: {
+            sql: { x: 95, y: 235, role: 'sql_terminal', label: 'SQL Matrix Terminal', thought: '🗄️' },
+            servers: { x: 50, y: 275, role: 'servers', label: 'High-Density Clusters', thought: '📊' },
+            recon: { x: 110, y: 365, role: 'recon_desk', label: 'Web Recon Terminal', thought: '📡' },
+            radar: { x: 55, y: 385, role: 'satellite_dish', label: 'Satellite Scanner', thought: '🛰️' }
+        }
+    },
+    lounge: {
+        id: 'lounge',
+        name: 'Grand Recreation & Living Haven',
+        icon: '☕',
+        color: '#f59e0b',
+        bg: 'rgba(245, 158, 11, 0.08)',
+        border: 'rgba(245, 158, 11, 0.35)',
+        door: { x: 235, y: 245 },
+        stations: {
+            coffee_bar: { x: 265, y: 235, role: 'bar_stool', label: 'Espresso Bar', thought: '☕' },
+            arcade: { x: 350, y: 235, role: 'arcade_cabinet', label: 'Retro Arcade', thought: '🎮' },
+            sofa: { x: 280, y: 335, role: 'couch', label: 'Cyber Lounge Sofa', thought: '🛋️' },
+            pod: { x: 350, y: 375, role: 'sleep_pod', label: 'Cryo-Sleep Pod', thought: '💤' }
+        }
     }
 };
-
-// Social Plaza Waypoints (Coffee Bar, Arcade Lounge, Central Nexus)
-const SOCIAL_WAYPOINTS = [
-    { id: 'coffee', x: 145, y: 230, action: 'sipping', thought: '☕', name: 'Espresso Bar' },
-    { id: 'arcade', x: 255, y: 230, action: 'gaming', thought: '🎮', name: 'Cyber Arcade' },
-    { id: 'nexus', x: 200, y: 230, action: 'socializing', thought: '💬', name: 'Plaza Nexus' }
-];
 
 const CANONICAL_IDS = ['agent-core-1', 'agent-db-worker', 'agent-research-1', 'agent-coder-x'];
 
@@ -111,9 +91,9 @@ const DEFAULT_AGENTS = [
         role: 'Mission Lead & System Orchestrator',
         type: 'System',
         status: 'ONLINE',
-        homeDeck: 'deck_core',
-        room: 'deck_core',
-        currentTask: 'Command matrix synchronized',
+        homeWing: 'bridge',
+        defaultStation: 'master',
+        currentTask: 'Command bridge synchronized',
         cpu: 14,
         memory: '1.4 GB / 7.8 GB',
         capabilities: ['plan', 'execute', 'reason', 'orchestrate'],
@@ -126,8 +106,8 @@ const DEFAULT_AGENTS = [
         role: 'Data Architect & SQL Engine',
         type: 'Specialized',
         status: 'ONLINE',
-        homeDeck: 'deck_db',
-        room: 'deck_db',
+        homeWing: 'data_radar',
+        defaultStation: 'sql',
         currentTask: 'Database connection pool active',
         cpu: 11,
         memory: '1.8 GB allocated',
@@ -141,8 +121,8 @@ const DEFAULT_AGENTS = [
         role: 'Realtime Web & API Explorer',
         type: 'Specialized',
         status: 'ONLINE',
-        homeDeck: 'deck_research',
-        room: 'deck_research',
+        homeWing: 'data_radar',
+        defaultStation: 'recon',
         currentTask: 'Global network scanner standby',
         cpu: 8,
         memory: '2.4 GB allocated',
@@ -156,9 +136,9 @@ const DEFAULT_AGENTS = [
         role: 'Autonomous Code Synthesis',
         type: 'External',
         status: 'OFFLINE',
-        homeDeck: 'deck_coder',
-        room: 'deck_coder',
-        currentTask: 'Synthesizer in standby (Pod 01)',
+        homeWing: 'quantum_lab',
+        defaultStation: 'ide',
+        currentTask: 'Pod Hibernation (Recreation Bay)',
         cpu: 0,
         memory: '0 GB',
         capabilities: ['fs.write', 'git.commit', 'ide.edit'],
@@ -172,10 +152,10 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
     const [hostTelemetry, setHostTelemetry] = useState({ hostMemory: '1.4 GB / 7.8 GB (19%)' });
     const [houseStats, setHouseStats] = useState({ workingCount: 0, idleCount: 3, offlineCount: 1 });
     const [selectedAgent, setSelectedAgent] = useState(null);
-    const [activeDeckFilter, setActiveDeckFilter] = useState(null);
+    const [activeWingFilter, setActiveWingFilter] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Dynamic wandering states, paths and animation loop
+    // Positions, velocities and animation states for Sims roaming personas
     const agentSimStatesRef = useRef({});
     const animFrameRef = useRef(null);
     const [tick, setTick] = useState(0);
@@ -185,7 +165,6 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
         try {
             const data = await agentApi.getLiveAgents();
             if (data && data.agents && data.agents.length > 0) {
-                // Strictly keep ONLY canonical planned agents
                 const canonicalAgents = data.agents.filter(a => CANONICAL_IDS.includes(a.id));
                 setAgents(canonicalAgents);
                 setHouseStats({
@@ -215,49 +194,49 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
     // Initialize or steer agent targets
     const syncAgentWaypoints = (agentList) => {
         agentList.forEach((a, idx) => {
-            const deck = DECKS[a.homeDeck] || DECKS.deck_core;
-            const primaryStation = deck.stations[0];
+            const wingKey = a.homeWing || (a.id === 'agent-core-1' ? 'bridge' : a.id === 'agent-coder-x' ? 'quantum_lab' : 'data_radar');
+            const wing = WINGS[wingKey];
+            const defStationKey = a.id === 'agent-research-1' ? 'recon' : a.id === 'agent-db-worker' ? 'sql' : Object.keys(wing.stations)[0];
+            const station = wing.stations[defStationKey] || Object.values(wing.stations)[0];
 
             if (!agentSimStatesRef.current[a.id]) {
-                const initX = a.status === 'OFFLINE' ? deck.stations[1].x : primaryStation.x;
-                const initY = a.status === 'OFFLINE' ? deck.stations[1].y : primaryStation.y;
+                const isOffline = a.status === 'OFFLINE';
+                const initialPos = isOffline ? WINGS.lounge.stations.pod : station;
 
                 agentSimStatesRef.current[a.id] = {
-                    x: initX,
-                    y: initY,
-                    targetX: initX,
-                    targetY: initY,
+                    x: initialPos.x,
+                    y: initialPos.y,
+                    targetX: initialPos.x,
+                    targetY: initialPos.y,
                     pathQueue: [],
-                    currentAction: a.status === 'OFFLINE' ? 'hibernating' : 'commanding',
-                    currentDeck: a.homeDeck,
+                    currentWing: isOffline ? 'lounge' : wingKey,
                     facing: 'down',
-                    thought: a.status === 'BUSY' ? '⚡' : a.status === 'OFFLINE' ? '💤' : '💻',
-                    nextWanderTime: Date.now() + 14000 + idx * 4000, // Generous dwell time (14-26s)
+                    thought: isOffline ? '💤' : a.status === 'BUSY' ? '⚡' : station.thought,
+                    nextWanderTime: Date.now() + 16000 + idx * 5000,
                     walkCycle: 0
                 };
             } else {
                 const sim = agentSimStatesRef.current[a.id];
-                // If agent is working, immediately guide them back to their home desk
-                if (a.status === 'BUSY' && sim.currentAction !== 'working') {
+                if (a.status === 'BUSY') {
+                    // Lock into home station immediately
                     sim.pathQueue = [
-                        { x: sim.x, y: 230 }, // move to central hall
-                        { x: deck.door.x, y: deck.door.y }, // deck door
-                        { x: primaryStation.x, y: primaryStation.y } // work desk
+                        { x: sim.x, y: 200 },
+                        { x: wing.door.x, y: wing.door.y },
+                        { x: station.x, y: station.y }
                     ];
-                    sim.currentAction = 'working';
                     sim.thought = '⚡';
-                    sim.currentDeck = a.homeDeck;
+                    sim.currentWing = wingKey;
                 } else if (a.status === 'OFFLINE') {
-                    sim.targetX = DECKS.deck_coder.stations[1].x;
-                    sim.targetY = DECKS.deck_coder.stations[1].y;
-                    sim.currentAction = 'hibernating';
+                    sim.targetX = WINGS.lounge.stations.pod.x;
+                    sim.targetY = WINGS.lounge.stations.pod.y;
                     sim.thought = '💤';
+                    sim.currentWing = 'lounge';
                 }
             }
         });
     };
 
-    // Autonomous Roaming Game Loop with Corridor Navigation & Realistic Dwell Times
+    // Autonomous Roaming Game Loop: agents dwell 18-30s at stations, then visit the Grand Recreation Haven!
     useEffect(() => {
         let lastTime = performance.now();
 
@@ -270,56 +249,68 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                 const sim = agentSimStatesRef.current[agent.id];
                 if (!sim) return;
 
-                const homeDeck = DECKS[agent.homeDeck] || DECKS.deck_core;
+                const homeWingKey = agent.homeWing || (agent.id === 'agent-core-1' ? 'bridge' : agent.id === 'agent-coder-x' ? 'quantum_lab' : 'data_radar');
+                const homeWing = WINGS[homeWingKey];
 
-                // 1. Check if agent should pick a new autonomous roaming destination
-                // Generous dwell time: 16 to 28 seconds spent at destination!
+                // 1. Pick a roaming target when dwell timer elapses
                 if (agent.status === 'ONLINE' && now > sim.nextWanderTime && sim.pathQueue.length === 0) {
-                    const isAtHome = sim.currentDeck === agent.homeDeck;
+                    const isAtHome = sim.currentWing === homeWingKey;
 
                     if (isAtHome) {
-                        // 60% chance to roam to Coffee Bar or Arcade for a social break
-                        const socialSpot = SOCIAL_WAYPOINTS[Math.floor(Math.random() * SOCIAL_WAYPOINTS.length)];
-                        // Route: Room Station -> Room Doorway -> Hallway Center -> Social Spot
-                        sim.pathQueue = [
-                            { x: homeDeck.door.x, y: homeDeck.door.y },
-                            { x: socialSpot.x, y: 230 },
-                            { x: socialSpot.x, y: socialSpot.y }
+                        // 65% chance to wander into the Grand Recreation Haven for coffee, games, or sofa!
+                        const loungeStations = [
+                            WINGS.lounge.stations.coffee_bar,
+                            WINGS.lounge.stations.arcade,
+                            WINGS.lounge.stations.sofa
                         ];
-                        sim.targetDeck = 'plaza';
-                        sim.thought = socialSpot.thought;
-                        sim.nextWanderTime = now + 12000 + Math.random() * 8000; // Stay at coffee/arcade for 12-20s
+                        const chosenActivity = loungeStations[Math.floor(Math.random() * loungeStations.length)];
+
+                        // Route through doorways and central atrium:
+                        sim.pathQueue = [
+                            { x: homeWing.door.x, y: homeWing.door.y },
+                            { x: 210, y: 200 }, // Central Atrium nexus
+                            { x: WINGS.lounge.door.x, y: WINGS.lounge.door.y },
+                            { x: chosenActivity.x, y: chosenActivity.y }
+                        ];
+                        sim.targetWing = 'lounge';
+                        sim.thought = chosenActivity.thought;
+                        sim.nextWanderTime = now + 14000 + Math.random() * 8000; // Stay at recreation lounge for 14-22s
                     } else {
-                        // Return to home specialized deck and work
-                        const station = homeDeck.stations[Math.floor(Math.random() * homeDeck.stations.length)];
+                        // Return to home workstation
+                        const stationKeys = Object.keys(homeWing.stations);
+                        const chosenKey = (agent.id === 'agent-db-worker') ? 'sql' :
+                                          (agent.id === 'agent-research-1') ? 'recon' : stationKeys[0];
+                        const station = homeWing.stations[chosenKey];
+
                         sim.pathQueue = [
-                            { x: 200, y: 230 }, // Hallway center
-                            { x: homeDeck.door.x, y: homeDeck.door.y }, // Enter home door
-                            { x: station.x, y: station.y } // Work at specialized machine
+                            { x: WINGS.lounge.door.x, y: WINGS.lounge.door.y },
+                            { x: 210, y: 200 }, // Central Atrium nexus
+                            { x: homeWing.door.x, y: homeWing.door.y },
+                            { x: station.x, y: station.y }
                         ];
-                        sim.targetDeck = agent.homeDeck;
-                        sim.thought = homeDeck.icon;
-                        sim.nextWanderTime = now + 18000 + Math.random() * 12000; // Dwell at home station for 18-30s!
+                        sim.targetWing = homeWingKey;
+                        sim.thought = station.thought;
+                        sim.nextWanderTime = now + 20000 + Math.random() * 12000; // Dwell at work station for 20-32s
                     }
                 }
 
-                // 2. Consume path queue nodes
+                // 2. Consume path queue
                 if (sim.pathQueue.length > 0 && Math.hypot(sim.targetX - sim.x, sim.targetY - sim.y) < 3) {
                     const nextNode = sim.pathQueue.shift();
                     sim.targetX = nextNode.x;
                     sim.targetY = nextNode.y;
-                    if (sim.pathQueue.length === 0 && sim.targetDeck) {
-                        sim.currentDeck = sim.targetDeck;
+                    if (sim.pathQueue.length === 0 && sim.targetWing) {
+                        sim.currentWing = sim.targetWing;
                     }
                 }
 
-                // 3. Move smoothly towards target coordinate
+                // 3. Move smoothly towards target
                 const dx = sim.targetX - sim.x;
                 const dy = sim.targetY - sim.y;
                 const dist = Math.hypot(dx, dy);
 
                 if (dist > 1.5) {
-                    const speed = 36; // comfortable walking speed
+                    const speed = 36;
                     sim.x += (dx / dist) * speed * dt;
                     sim.y += (dy / dist) * speed * dt;
                     sim.walkCycle = (sim.walkCycle + dt * 6) % 1;
@@ -338,7 +329,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
     }, [agents]);
 
     return (
-        <div className="w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0b101d] via-[#090d16] to-[#070b12] border border-white/15 p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.85)] overflow-hidden select-none">
+        <div className="w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0a0f1b] via-[#080d16] to-[#060a11] border border-white/15 p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.85)] overflow-hidden select-none">
             {/* Header: Roof-Off Title & Telemetry Counters */}
             <div className="flex justify-between items-center px-1 pb-1.5 border-b border-white/5 flex-shrink-0">
                 <div className="flex items-center gap-2">
@@ -347,7 +338,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                         <h3 className="text-xs font-bold text-white tracking-wider uppercase mb-0 flex items-center gap-1.5">
                             AEGIS SMART HQ
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-500/30 font-mono">
-                                ROOF-OFF 3D
+                                3 WINGS + RECREATION
                             </span>
                         </h3>
                     </div>
@@ -369,269 +360,278 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                 </div>
             </div>
 
-            {/* 3D / Isometric Roof-Off House SVG Canvas */}
-            <div className="flex-1 relative w-full h-full min-h-0 my-1 rounded-2xl bg-[#060911] border border-white/10 overflow-hidden shadow-inner flex items-center justify-center">
+            {/* Architectural 3D Roof-Off SVG Canvas */}
+            <div className="flex-1 relative w-full h-full min-h-0 my-1 rounded-2xl bg-[#060910] border border-white/10 overflow-hidden shadow-inner flex items-center justify-center">
                 <svg
-                    viewBox="0 0 400 460"
+                    viewBox="0 0 420 460"
                     className="w-full h-full object-contain"
                     preserveAspectRatio="xMidYMid meet"
                 >
                     <defs>
-                        {/* Floor isometric grid */}
-                        <pattern id="cyberGrid3D" width="20" height="20" patternUnits="userSpaceOnUse">
-                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255, 255, 255, 0.025)" strokeWidth="0.8" />
+                        {/* Floor textures */}
+                        <pattern id="hexGrid" width="16" height="16" patternUnits="userSpaceOnUse">
+                            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(0, 210, 255, 0.04)" strokeWidth="0.8" />
                         </pattern>
-                        {/* Gradients for contextual decks */}
-                        <linearGradient id="coreDeckGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#00d2ff" stopOpacity="0.14" />
-                            <stop offset="100%" stopColor="#00d2ff" stopOpacity="0.02" />
-                        </linearGradient>
-                        <linearGradient id="dbDeckGlow" x1="100%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.14" />
-                            <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
-                        </linearGradient>
-                        <linearGradient id="radarDeckGlow" x1="0%" y1="100%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.14" />
-                            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.02" />
-                        </linearGradient>
-                        <linearGradient id="coderDeckGlow" x1="100%" y1="100%" x2="0%" y2="0%">
-                            <stop offset="0%" stopColor="#a855f7" stopOpacity="0.14" />
-                            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.02" />
+                        <pattern id="matrixGrid" width="14" height="14" patternUnits="userSpaceOnUse">
+                            <path d="M 14 0 L 0 0 0 14" fill="none" stroke="rgba(16, 185, 129, 0.04)" strokeWidth="0.8" />
+                        </pattern>
+                        <pattern id="woodPlanks" width="30" height="10" patternUnits="userSpaceOnUse">
+                            <rect width="30" height="10" fill="#140f0c" />
+                            <line x1="0" y1="10" x2="30" y2="10" stroke="rgba(245, 158, 11, 0.08)" strokeWidth="0.8" />
+                            <line x1="30" y1="0" x2="30" y2="10" stroke="rgba(245, 158, 11, 0.06)" strokeWidth="0.8" />
+                        </pattern>
+                        <linearGradient id="atriumGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#00d2ff" stopOpacity="0.08" />
+                            <stop offset="50%" stopColor="#ec4899" stopOpacity="0.03" />
+                            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.06" />
                         </linearGradient>
                     </defs>
 
-                    {/* Dark Cyber Ground & Grid */}
-                    <rect width="400" height="460" fill="#060911" />
-                    <rect width="400" height="460" fill="url(#cyberGrid3D)" />
+                    {/* Outer Smart House Architectural Walls */}
+                    <rect x="6" y="6" width="408" height="448" rx="20" fill="#070a13" stroke="rgba(0, 210, 255, 0.35)" strokeWidth="2.5" />
 
-                    {/* Outer Architectural Perimeter Wall */}
-                    <rect 
-                        x="6" y="6" width="388" height="448" 
-                        rx="16" fill="none" 
-                        stroke="rgba(0, 210, 255, 0.3)" strokeWidth="2.5" 
+                    {/* Central Glass Atrium Linking All Wings */}
+                    <path 
+                        d="M 180 14 L 240 14 L 240 446 L 180 446 Z" 
+                        fill="url(#atriumGlow)" 
+                    />
+                    <path 
+                        d="M 14 185 L 406 185 L 406 215 L 14 215 Z" 
+                        fill="url(#atriumGlow)" 
                     />
 
-                    {/* Central Connecting Corridor Paths (Walkways) */}
-                    {/* Horizontal Main Corridor */}
-                    <rect x="8" y="210" width="384" height="40" fill="rgba(255, 255, 255, 0.015)" />
-                    <line x1="8" y1="210" x2="392" y2="210" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1="8" y1="250" x2="392" y2="250" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" strokeDasharray="3 3" />
-
-                    {/* Vertical Central Corridor */}
-                    <rect x="190" y="8" width="20" height="444" fill="rgba(255, 255, 255, 0.015)" />
-                    <line x1="190" y1="8" x2="190" y2="452" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1="210" y1="8" x2="210" y2="452" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" strokeDasharray="3 3" />
-
-                    {/* Central Plaza Energy Nexus Hub */}
-                    <circle cx="200" cy="230" r="16" fill="#090e1a" stroke="rgba(0, 210, 255, 0.5)" strokeWidth="1.5" />
-                    <circle cx="200" cy="230" r="7" fill="#00d2ff" opacity="0.3" className="animate-ping" />
-                    <circle cx="200" cy="230" r="3.5" fill="#00d2ff" />
-
-                    {/* --- CENTRAL SOCIAL AMENITIES --- */}
-                    {/* 1. Espresso Bar (Situated in Left Hallway) */}
-                    <g transform="translate(130, 214)">
-                        <rect x="0" y="0" width="32" height="15" rx="3" fill="#1c1917" stroke="#f59e0b" strokeWidth="0.8" />
-                        <rect x="4" y="2" width="10" height="11" rx="2" fill="#44403c" stroke="#f59e0b" strokeWidth="0.6" />
-                        <circle cx="9" cy="8" r="2" fill="#fbbf24" />
-                        <text x="7" y="1" fill="#fef08a" fontSize="6" className="animate-bounce">~</text>
-                        <circle cx="24" cy="8" r="3" fill="#78350f" stroke="#fbbf24" strokeWidth="0.5" />
-                        <text x="2" y="22" fill="#d97706" fontSize="5.5" fontFamily="monospace">COFFEE</text>
-                    </g>
-
-                    {/* 2. Retro Arcade Machine (Situated in Right Hallway) */}
-                    <g transform="translate(242, 214)">
-                        <rect x="0" y="0" width="22" height="24" rx="3" fill="#2e1065" stroke="#c084fc" strokeWidth="1" />
-                        <rect x="3" y="3" width="16" height="10" rx="1" fill="#ec4899" className="animate-pulse" />
-                        <circle cx="11" cy="18" r="2" fill="#f43f5e" />
-                        <text x="0" y="30" fill="#c084fc" fontSize="5.5" fontFamily="monospace">ARCADE</text>
-                    </g>
+                    {/* Center Nexus Circle with Orbiting Power Core */}
+                    <circle cx="210" cy="200" r="18" fill="#090e1a" stroke="rgba(0, 210, 255, 0.5)" strokeWidth="1.5" />
+                    <circle cx="210" cy="200" r="9" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-spin" strokeDasharray="4 2" />
+                    <circle cx="210" cy="200" r="3.5" fill="#00d2ff" className="animate-pulse" />
 
                     {/* =========================================================================
-                        DECK 1: COMMAND OPS DECK (Top-Left) -> AEGIS Core Orchestrator (#00d2ff)
+                        WING 1 (Top-Left): MASTER COMMAND BRIDGE (AEGIS Core Orchestrator)
                        ========================================================================= */}
                     <g 
                         className="cursor-pointer"
-                        onClick={() => setActiveDeckFilter(activeDeckFilter === 'deck_core' ? null : 'deck_core')}
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'bridge' ? null : 'bridge')}
                     >
-                        <rect 
-                            x="12" y="12" width="176" height="196" rx="10" 
-                            fill={activeDeckFilter === 'deck_core' ? 'rgba(0, 210, 255, 0.2)' : 'url(#coreDeckGlow)'} 
-                            stroke={activeDeckFilter === 'deck_core' ? '#00d2ff' : 'rgba(0, 210, 255, 0.35)'} 
-                            strokeWidth="1.2" 
+                        {/* Floor Boundary with Hex Texture */}
+                        <path 
+                            d="M 14 14 L 185 14 L 185 185 L 14 185 Z" 
+                            fill={activeWingFilter === 'bridge' ? 'rgba(0, 210, 255, 0.18)' : 'rgba(0, 210, 255, 0.05)'} 
                         />
-                        {/* Deck Title */}
-                        <text x="22" y="28" fill="#38bdf8" fontSize="9" fontWeight="bold" fontFamily="monospace">
-                            💻 COMMAND OPS DECK
-                        </text>
-                        <text x="22" y="38" fill="rgba(56, 189, 248, 0.6)" fontSize="6.5" fontFamily="monospace">
-                            AEGIS CORE ORCHESTRATOR
+                        <path d="M 14 14 L 185 14 L 185 185 L 14 185 Z" fill="url(#hexGrid)" />
+                        
+                        {/* Glass Partition Wall & Open Archway */}
+                        <line x1="185" y1="14" x2="185" y2="135" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
+                        <line x1="185" y1="175" x2="185" y2="185" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="2" />
+                        <line x1="14" y1="185" x2="185" y2="185" stroke="rgba(0, 210, 255, 0.3)" strokeWidth="1.5" />
+
+                        {/* Title Badge */}
+                        <rect x="22" y="24" width="130" height="15" rx="3" fill="rgba(0, 210, 255, 0.15)" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="0.8" />
+                        <text x="28" y="35" fill="#38bdf8" fontSize="8" fontWeight="bold" fontFamily="monospace">
+                            💻 COMMAND BRIDGE
                         </text>
 
                         {/* Master Dual-Curved Console */}
-                        <rect x="45" y="55" width="60" height="26" rx="4" fill="#0f172a" stroke="#00d2ff" strokeWidth="0.8" />
-                        <rect x="52" y="60" width="20" height="7" rx="1" fill="#00d2ff" opacity="0.9" />
-                        <rect x="76" y="60" width="20" height="7" rx="1" fill="#38bdf8" opacity="0.9" />
-                        {/* Commander Swivel Chair */}
-                        <circle cx="75" cy="94" r="7" fill="#1e293b" stroke="#00d2ff" strokeWidth="0.8" />
+                        <path d="M 45 65 Q 80 50 115 65 L 115 78 Q 80 63 45 78 Z" fill="#0f172a" stroke="#00d2ff" strokeWidth="1" />
+                        <rect x="52" y="58" width="22" height="7" rx="1" fill="#00d2ff" opacity="0.9" />
+                        <rect x="84" y="58" width="22" height="7" rx="1" fill="#38bdf8" opacity="0.9" />
+                        {/* Commander Chair */}
+                        <circle cx="80" cy="90" r="7.5" fill="#1e293b" stroke="#00d2ff" strokeWidth="1" />
 
-                        {/* Tactical Holo-Table with Planetary Projection */}
-                        <circle cx="60" cy="155" r="16" fill="#090e1a" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="0.8" strokeDasharray="3 2" />
-                        <circle cx="60" cy="155" r="9" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-spin" />
-                        <circle cx="60" cy="155" r="3" fill="#38bdf8" className="animate-ping" opacity="0.4" />
+                        {/* Tactical Holo-Globe Projector */}
+                        <circle cx="140" cy="115" r="18" fill="#080f1d" stroke="rgba(0, 210, 255, 0.4)" strokeWidth="0.8" />
+                        <circle cx="140" cy="115" r="11" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-spin" strokeDasharray="3 3" />
+                        <circle cx="140" cy="115" r="4" fill="#38bdf8" className="animate-ping" opacity="0.5" />
 
-                        {/* Strategic Wall Radar Display */}
-                        <rect x="125" y="55" width="48" height="32" rx="3" fill="#0b1120" stroke="#0284c7" strokeWidth="0.7" />
-                        <circle cx="149" cy="71" r="10" fill="none" stroke="#38bdf8" strokeWidth="0.6" strokeDasharray="2 2" />
-                        <line x1="149" y1="61" x2="149" y2="81" stroke="#38bdf8" strokeWidth="0.5" />
-                        <line x1="139" y1="71" x2="159" y2="71" stroke="#38bdf8" strokeWidth="0.5" />
-
-                        {/* Deck Doorway Marker */}
-                        <line x1="150" y1="208" x2="175" y2="208" stroke="#00d2ff" strokeWidth="2.5" />
+                        {/* Strategic HUD Screen on Wall */}
+                        <rect x="25" y="125" width="45" height="25" rx="3" fill="#091322" stroke="#0284c7" strokeWidth="0.7" />
+                        <path d="M 30 137 L 42 131 L 52 142 L 64 133" fill="none" stroke="#38bdf8" strokeWidth="1" />
                     </g>
 
                     {/* =========================================================================
-                        DECK 2: DATA VAULT & SQL MATRIX (Top-Right) -> Database Agent (#10b981)
+                        WING 2 (Top-Right): QUANTUM SYNTHESIS LAB (Antigravity Coder)
                        ========================================================================= */}
                     <g 
                         className="cursor-pointer"
-                        onClick={() => setActiveDeckFilter(activeDeckFilter === 'deck_db' ? null : 'deck_db')}
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'quantum_lab' ? null : 'quantum_lab')}
                     >
-                        <rect 
-                            x="212" y="12" width="176" height="196" rx="10" 
-                            fill={activeDeckFilter === 'deck_db' ? 'rgba(16, 185, 129, 0.2)' : 'url(#dbDeckGlow)'} 
-                            stroke={activeDeckFilter === 'deck_db' ? '#10b981' : 'rgba(16, 185, 129, 0.35)'} 
-                            strokeWidth="1.2" 
+                        {/* Floor Boundary */}
+                        <path 
+                            d="M 235 14 L 406 14 L 406 185 L 235 185 Z" 
+                            fill={activeWingFilter === 'quantum_lab' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(168, 85, 247, 0.05)'} 
                         />
-                        {/* Deck Title */}
-                        <text x="222" y="28" fill="#34d399" fontSize="9" fontWeight="bold" fontFamily="monospace">
-                            🗄️ DATA VAULT & SQL
+                        {/* Glass Partition Wall & Open Archway */}
+                        <line x1="235" y1="14" x2="235" y2="135" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
+                        <line x1="235" y1="175" x2="235" y2="185" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="2" />
+                        <line x1="235" y1="185" x2="406" y2="185" stroke="rgba(168, 85, 247, 0.3)" strokeWidth="1.5" />
+
+                        {/* Title Badge */}
+                        <rect x="245" y="24" width="130" height="15" rx="3" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.8" />
+                        <text x="251" y="35" fill="#c084fc" fontSize="8" fontWeight="bold" fontFamily="monospace">
+                            ⚡ QUANTUM LAB
                         </text>
-                        <text x="222" y="38" fill="rgba(52, 211, 153, 0.6)" fontSize="6.5" fontFamily="monospace">
-                            DATABASE ARCHITECT BAY
+
+                        {/* Quantum IDE Terminal (Dual vertical screens) */}
+                        <rect x="260" y="55" width="55" height="26" rx="4" fill="#1e1b4b" stroke="#a855f7" strokeWidth="0.9" />
+                        <rect x="267" y="58" width="18" height="12" rx="1" fill="#c084fc" opacity="0.9" />
+                        <rect x="289" y="58" width="18" height="12" rx="1" fill="#e879f9" opacity="0.9" />
+                        {/* Coder Gaming Chair */}
+                        <circle cx="287" cy="94" r="7.5" fill="#3b0764" stroke="#a855f7" strokeWidth="1" />
+
+                        {/* Synthesizer Hardware Bench with Oscillo Screen */}
+                        <rect x="335" y="55" width="55" height="30" rx="3" fill="#181126" stroke="#9333ea" strokeWidth="0.8" />
+                        <rect x="342" y="60" width="22" height="10" rx="1" fill="#10b981" opacity="0.8" />
+                        <path d="M 344 65 Q 348 61 352 65 T 360 65" fill="none" stroke="#34d399" strokeWidth="0.8" />
+                        {/* Power Conduits */}
+                        <line x1="335" y1="120" x2="385" y2="120" stroke="#a855f7" strokeWidth="1" strokeDasharray="3 2" />
+                    </g>
+
+                    {/* =========================================================================
+                        WING 3 (Bottom-Left): DATA & RADAR INTELLIGENCE WING (DB + Research)
+                       ========================================================================= */}
+                    <g 
+                        className="cursor-pointer"
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'data_radar' ? null : 'data_radar')}
+                    >
+                        {/* Floor Boundary with Matrix Grid */}
+                        <path 
+                            d="M 14 215 L 185 215 L 185 446 L 14 446 Z" 
+                            fill={activeWingFilter === 'data_radar' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(16, 185, 129, 0.05)'} 
+                        />
+                        <path d="M 14 215 L 185 215 L 185 446 L 14 446 Z" fill="url(#matrixGrid)" />
+                        
+                        {/* Corridor Divider & Open Archway */}
+                        <line x1="185" y1="215" x2="185" y2="230" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="2" />
+                        <line x1="185" y1="265" x2="185" y2="446" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
+
+                        {/* Title Badge */}
+                        <rect x="22" y="222" width="150" height="15" rx="3" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="0.8" />
+                        <text x="28" y="233" fill="#34d399" fontSize="7.5" fontWeight="bold" fontFamily="monospace">
+                            🗄️ DATA & RADAR WING
                         </text>
 
-                        {/* High Density Server Racks with Blinking LEDs */}
-                        <rect x="230" y="55" width="55" height="28" rx="3" fill="#062d21" stroke="#10b981" strokeWidth="0.8" />
-                        <circle cx="238" cy="65" r="2" fill="#10b981" className="animate-pulse" />
-                        <circle cx="248" cy="65" r="2" fill="#34d399" />
-                        <circle cx="258" cy="65" r="2" fill="#10b981" className="animate-pulse" />
-                        <circle cx="268" cy="65" r="2" fill="#6ee7b7" />
-                        <circle cx="276" cy="65" r="2" fill="#10b981" />
+                        {/* --- Section A: SQL Data Vault --- */}
+                        {/* Server Towers with Cascading LEDs */}
+                        <rect x="25" y="250" width="45" height="34" rx="3" fill="#042017" stroke="#10b981" strokeWidth="0.9" />
+                        <circle cx="33" cy="260" r="2" fill="#10b981" className="animate-pulse" />
+                        <circle cx="43" cy="260" r="2" fill="#34d399" />
+                        <circle cx="53" cy="260" r="2" fill="#6ee7b7" />
+                        <circle cx="33" cy="272" r="2" fill="#34d399" />
+                        <circle cx="43" cy="272" r="2" fill="#10b981" className="animate-pulse" />
 
-                        {/* SQL Matrix Query Terminal */}
-                        <rect x="300" y="55" width="65" height="26" rx="4" fill="#061d18" stroke="#10b981" strokeWidth="0.8" />
-                        <rect x="308" y="60" width="22" height="7" rx="1" fill="#34d399" opacity="0.9" />
-                        <rect x="335" y="60" width="22" height="7" rx="1" fill="#10b981" opacity="0.9" />
-                        {/* Swivel Chair */}
-                        <circle cx="328" cy="94" r="7" fill="#064e3b" stroke="#34d399" strokeWidth="0.8" />
+                        {/* SQL Matrix Terminal */}
+                        <rect x="80" y="248" width="55" height="26" rx="4" fill="#061f18" stroke="#10b981" strokeWidth="0.8" />
+                        <rect x="86" y="252" width="20" height="8" rx="1" fill="#34d399" opacity="0.9" />
+                        <rect x="110" y="252" width="20" height="8" rx="1" fill="#10b981" opacity="0.9" />
+                        <circle cx="107" cy="284" r="7" fill="#064e3b" stroke="#34d399" strokeWidth="0.8" />
 
-                        {/* Levitating Holographic Data Cube */}
-                        <g transform="translate(280, 150)">
-                            <rect x="-10" y="-10" width="20" height="20" rx="3" fill="none" stroke="#10b981" strokeWidth="1" className="animate-pulse" />
-                            <rect x="-6" y="-6" width="12" height="12" rx="2" fill="rgba(16, 185, 129, 0.4)" />
+                        {/* Levitating Emerald Data-Cube */}
+                        <g transform="translate(155, 270)">
+                            <rect x="-8" y="-8" width="16" height="16" rx="2" fill="none" stroke="#10b981" strokeWidth="1" className="animate-pulse" />
                             <circle cx="0" cy="0" r="2" fill="#6ee7b7" />
                         </g>
 
-                        {/* Deck Doorway Marker */}
-                        <line x1="225" y1="208" x2="250" y2="208" stroke="#10b981" strokeWidth="2.5" />
-                    </g>
+                        {/* Sub-Divider line within wing */}
+                        <line x1="20" y1="315" x2="175" y2="315" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" strokeDasharray="3 3" />
 
-                    {/* =========================================================================
-                        DECK 3: GLOBAL CYBER RADAR (Bottom-Left) -> Web Research Agent (#f59e0b)
-                       ========================================================================= */}
-                    <g 
-                        className="cursor-pointer"
-                        onClick={() => setActiveDeckFilter(activeDeckFilter === 'deck_research' ? null : 'deck_research')}
-                    >
-                        <rect 
-                            x="12" y="252" width="176" height="196" rx="10" 
-                            fill={activeDeckFilter === 'deck_research' ? 'rgba(245, 158, 11, 0.2)' : 'url(#radarDeckGlow)'} 
-                            stroke={activeDeckFilter === 'deck_research' ? '#f59e0b' : 'rgba(245, 158, 11, 0.35)'} 
-                            strokeWidth="1.2" 
-                        />
-                        {/* Deck Title */}
-                        <text x="22" y="268" fill="#fbbf24" fontSize="9" fontWeight="bold" fontFamily="monospace">
-                            📡 GLOBAL CYBER RADAR
-                        </text>
-                        <text x="22" y="278" fill="rgba(251, 191, 36, 0.6)" fontSize="6.5" fontFamily="monospace">
-                            WEB & NETWORK EXPLORER
-                        </text>
-
-                        {/* Phased Array Satellite Radar Dish */}
-                        <g transform="translate(60, 335)">
-                            <circle cx="0" cy="0" r="18" fill="#1c1917" stroke="#f59e0b" strokeWidth="1" />
-                            <ellipse cx="0" cy="0" rx="14" ry="7" fill="none" stroke="#fbbf24" strokeWidth="0.8" className="animate-spin" />
-                            <line x1="0" y1="0" x2="12" y2="-12" stroke="#f59e0b" strokeWidth="1.2" />
-                            <circle cx="12" cy="-12" r="2.5" fill="#fef08a" className="animate-ping" opacity="0.6" />
+                        {/* --- Section B: Cyber Radar & Web Recon --- */}
+                        {/* Phased Satellite Radar Dish */}
+                        <g transform="translate(50, 365)">
+                            <circle cx="0" cy="0" r="17" fill="#1c1917" stroke="#f59e0b" strokeWidth="1" />
+                            <ellipse cx="0" cy="0" rx="13" ry="6" fill="none" stroke="#fbbf24" strokeWidth="0.8" className="animate-spin" />
+                            <circle cx="8" cy="-8" r="2" fill="#fef08a" className="animate-ping" opacity="0.6" />
                         </g>
 
-                        {/* Tri-Monitor Recon Desk */}
-                        <rect x="98" y="305" width="65" height="26" rx="4" fill="#292524" stroke="#f59e0b" strokeWidth="0.8" />
-                        <rect x="104" y="310" width="16" height="7" rx="1" fill="#fbbf24" opacity="0.9" />
-                        <rect x="123" y="310" width="16" height="7" rx="1" fill="#d97706" opacity="0.9" />
-                        <rect x="142" y="310" width="16" height="7" rx="1" fill="#fbbf24" opacity="0.9" />
-                        {/* Swivel Chair */}
-                        <circle cx="130" cy="344" r="7" fill="#44403c" stroke="#f59e0b" strokeWidth="0.8" />
+                        {/* Recon Desk */}
+                        <rect x="85" y="348" width="60" height="26" rx="4" fill="#292524" stroke="#f59e0b" strokeWidth="0.8" />
+                        <rect x="91" y="352" width="14" height="8" rx="1" fill="#fbbf24" opacity="0.9" />
+                        <rect x="108" y="352" width="14" height="8" rx="1" fill="#d97706" opacity="0.9" />
+                        <rect x="125" y="352" width="14" height="8" rx="1" fill="#fbbf24" opacity="0.9" />
+                        <circle cx="115" cy="384" r="7" fill="#44403c" stroke="#f59e0b" strokeWidth="0.8" />
 
-                        {/* Live Network Ticker Display */}
-                        <rect x="35" y="405" width="125" height="18" rx="3" fill="#1c1917" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="0.7" />
-                        <text x="45" y="417" fill="#fbbf24" fontSize="6.5" fontFamily="monospace">
-                            FEED: 48.2 GB/s • GLOBAL INDEXING
+                        {/* Global Feed Ticker */}
+                        <rect x="25" y="415" width="145" height="16" rx="3" fill="#181512" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="0.7" />
+                        <text x="32" y="426" fill="#fbbf24" fontSize="6" fontFamily="monospace">
+                            RECON: 48.2 GB/s • GLOBAL INDEXING
                         </text>
-
-                        {/* Deck Doorway Marker */}
-                        <line x1="150" y1="252" x2="175" y2="252" stroke="#f59e0b" strokeWidth="2.5" />
                     </g>
 
                     {/* =========================================================================
-                        DECK 4: QUANTUM SYNTHESIS & SLEEP POD (Bottom-Right) -> Coder (#a855f7)
+                        WING 4 (Bottom-Right): GRAND RECREATION & LIVING HAVEN (Entire Zone!)
                        ========================================================================= */}
                     <g 
                         className="cursor-pointer"
-                        onClick={() => setActiveDeckFilter(activeDeckFilter === 'deck_coder' ? null : 'deck_coder')}
+                        onClick={() => setActiveWingFilter(activeWingFilter === 'lounge' ? null : 'lounge')}
                     >
-                        <rect 
-                            x="212" y="252" width="176" height="196" rx="10" 
-                            fill={activeDeckFilter === 'deck_coder' ? 'rgba(168, 85, 247, 0.2)' : 'url(#coderDeckGlow)'} 
-                            stroke={activeDeckFilter === 'deck_coder' ? '#a855f7' : 'rgba(168, 85, 247, 0.35)'} 
-                            strokeWidth="1.2" 
+                        {/* Warm Hardwood Cyber Floor */}
+                        <path 
+                            d="M 235 215 L 406 215 L 406 446 L 235 446 Z" 
+                            fill="url(#woodPlanks)" 
                         />
-                        {/* Deck Title */}
-                        <text x="222" y="268" fill="#c084fc" fontSize="9" fontWeight="bold" fontFamily="monospace">
-                            ⚡ QUANTUM SYNTHESIS
-                        </text>
-                        <text x="222" y="278" fill="rgba(192, 132, 252, 0.6)" fontSize="6.5" fontFamily="monospace">
-                            ANTIGRAVITY CODER LAB
+                        <path 
+                            d="M 235 215 L 406 215 L 406 446 L 235 446 Z" 
+                            fill={activeWingFilter === 'lounge' ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.05)'} 
+                        />
+
+                        {/* Corridor Archway & Warm Glow Barrier */}
+                        <line x1="235" y1="215" x2="235" y2="230" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="2" />
+                        <line x1="235" y1="265" x2="235" y2="446" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="2" strokeDasharray="6 3" />
+
+                        {/* Title Badge */}
+                        <rect x="245" y="222" width="150" height="15" rx="3" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="0.8" />
+                        <text x="251" y="233" fill="#fbbf24" fontSize="7.5" fontWeight="bold" fontFamily="monospace">
+                            ☕ GRAND RECREATION HAVEN
                         </text>
 
-                        {/* Quantum IDE Terminal (Tall vertical monitors) */}
-                        <rect x="235" y="305" width="55" height="26" rx="4" fill="#1e1b4b" stroke="#a855f7" strokeWidth="0.8" />
-                        <rect x="242" y="308" width="18" height="11" rx="1" fill="#c084fc" opacity="0.9" />
-                        <rect x="264" y="308" width="18" height="11" rx="1" fill="#e879f9" opacity="0.9" />
-                        {/* Swivel Chair */}
-                        <circle cx="262" cy="344" r="7" fill="#3b0764" stroke="#a855f7" strokeWidth="0.8" />
+                        {/* --- 1. Gourmet Cyber Espresso Bar --- */}
+                        <rect x="245" y="248" width="55" height="18" rx="4" fill="#291a13" stroke="#f59e0b" strokeWidth="0.8" />
+                        <rect x="250" y="251" width="12" height="12" rx="2" fill="#44403c" stroke="#f59e0b" strokeWidth="0.6" />
+                        <circle cx="256" cy="257" r="2" fill="#fbbf24" />
+                        <text x="254" y="248" fill="#fef08a" fontSize="6" className="animate-bounce">~</text>
+                        {/* Bar Stools */}
+                        <circle cx="270" cy="275" r="5" fill="#78350f" stroke="#fbbf24" strokeWidth="0.6" />
+                        <circle cx="290" cy="275" r="5" fill="#78350f" stroke="#fbbf24" strokeWidth="0.6" />
 
-                        {/* Cryo-Hibernation Sleep Capsule Pod */}
-                        <g transform="translate(315, 298)">
-                            <rect x="0" y="0" width="45" height="72" rx="12" fill="#0f172a" stroke="#a855f7" strokeWidth="1" />
-                            <rect x="6" y="8" width="33" height="42" rx="8" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.8" />
-                            <circle cx="22" cy="60" r="3" fill="#c084fc" className="animate-ping" opacity="0.4" />
-                            <circle cx="22" cy="60" r="1.8" fill="#c084fc" />
+                        {/* --- 2. Retro Arcade Corner --- */}
+                        <g transform="translate(330, 246)">
+                            {/* Arcade Cabinet 1: Galaxia */}
+                            <rect x="0" y="0" width="22" height="26" rx="3" fill="#2e1065" stroke="#c084fc" strokeWidth="1" />
+                            <rect x="3" y="3" width="16" height="11" rx="1" fill="#ec4899" className="animate-pulse" />
+                            <circle cx="11" cy="20" r="1.8" fill="#f43f5e" />
+                            {/* Arcade Cabinet 2: Cyber Fighter */}
+                            <rect x="28" y="0" width="22" height="26" rx="3" fill="#1e1b4b" stroke="#38bdf8" strokeWidth="1" />
+                            <rect x="31" y="3" width="16" height="11" rx="1" fill="#00d2ff" className="animate-pulse" />
+                            <circle cx="39" cy="20" r="1.8" fill="#38bdf8" />
+                        </g>
+
+                        {/* --- 3. Living Room Lounge Area --- */}
+                        {/* Sectional Cyber Sofa */}
+                        <rect x="245" y="315" width="60" height="24" rx="6" fill="#1c1f2e" stroke="#60a5fa" strokeWidth="0.8" />
+                        <rect x="290" y="339" width="15" height="26" rx="4" fill="#1c1f2e" stroke="#60a5fa" strokeWidth="0.8" />
+                        
+                        {/* Lounge Rug */}
+                        <rect x="240" y="348" width="46" height="30" rx="4" fill="rgba(245, 158, 11, 0.12)" stroke="rgba(245, 158, 11, 0.3)" strokeWidth="0.6" />
+                        
+                        {/* Glass Coffee Table with Holographic Centerpiece */}
+                        <rect x="250" y="354" width="26" height="16" rx="3" fill="#0b1120" stroke="#38bdf8" strokeWidth="0.7" />
+                        <circle cx="263" cy="362" r="3" fill="#38bdf8" className="animate-ping" opacity="0.4" />
+
+                        {/* Potted Cyber Bonsai Flora */}
+                        <circle cx="250" cy="415" r="9" fill="#064e3b" stroke="#10b981" strokeWidth="0.8" />
+                        <circle cx="250" cy="415" r="4" fill="#34d399" />
+
+                        {/* --- 4. Acoustic Cryo-Sleep Pod Nook --- */}
+                        <g transform="translate(328, 335)">
+                            <rect x="0" y="0" width="45" height="74" rx="12" fill="#0c1220" stroke="#a855f7" strokeWidth="1" />
+                            <rect x="6" y="8" width="33" height="44" rx="8" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.8" />
+                            <circle cx="22" cy="62" r="2.5" fill="#c084fc" className="animate-ping" opacity="0.4" />
+                            <circle cx="22" cy="62" r="1.5" fill="#c084fc" />
                             <text x="22" y="32" textAnchor="middle" fill="#c084fc" fontSize="6.5" fontFamily="monospace">POD 01</text>
+                            <text x="22" y="70" textAnchor="middle" fill="#64748b" fontSize="5" fontFamily="monospace">CRYO-BAY</text>
                         </g>
-
-                        {/* Recharge Docking Platform */}
-                        <rect x="245" y="405" width="85" height="18" rx="3" fill="#1e1b4b" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="0.7" />
-                        <text x="256" y="417" fill="#c084fc" fontSize="6.5" fontFamily="monospace">
-                            SYNTH DOCK: RECHARGING
-                        </text>
-
-                        {/* Deck Doorway Marker */}
-                        <line x1="225" y1="252" x2="250" y2="252" stroke="#a855f7" strokeWidth="2.5" />
                     </g>
 
                     {/* =========================================================================
-                        RENDER THE 4 CANONICAL AGENT PERSONAS (Sims Animated Sprites)
+                        RENDER THE 4 CANONICAL AGENT PERSONAS (Walking, Thinking & Relaxing)
                        ========================================================================= */}
                     {agents.map((agent) => {
                         const sim = agentSimStatesRef.current[agent.id] || { x: 100, y: 100, thought: '☕', walkCycle: 0 };
@@ -650,7 +650,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                                 transform={`translate(${sim.x}, ${sim.y + bobOffset})`}
                                 onClick={() => setSelectedAgent(agent)}
                             >
-                                {/* Active Selection Reticle */}
+                                {/* Selection Reticle */}
                                 {isSelected && (
                                     <ellipse 
                                         cx="0" cy="10" rx="14" ry="7" 
@@ -666,7 +666,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                                 <rect x="-5" y="4" width="3" height="7" rx="1" fill="#0f172a" />
                                 <rect x="2" y="4" width="3" height="7" rx="1" fill="#0f172a" />
 
-                                {/* Persona Torso / Outfit */}
+                                {/* Persona Torso with Outfit Color */}
                                 <rect 
                                     x="-8" y="-7" width="16" height="13" 
                                     rx="3" fill={outfitColor} 
@@ -686,7 +686,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                                 <circle cx="-2.5" cy="-13" r="0.9" fill="#0f172a" />
                                 <circle cx="2.5" cy="-13" r="0.9" fill="#0f172a" />
 
-                                {/* Working Energy Halo */}
+                                {/* Active Task Halo Glow */}
                                 {isWorking && (
                                     <circle cx="0" cy="-13" r="10" fill="none" stroke="#00d2ff" strokeWidth="1" className="animate-ping" opacity="0.7" />
                                 )}
@@ -700,7 +700,7 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                                     </text>
                                 </g>
 
-                                {/* Name Tag Label */}
+                                {/* Name Tag Label Below Persona */}
                                 <rect 
                                     x="-32" y="15" width="64" height="12" 
                                     rx="3" fill="rgba(11, 15, 25, 0.9)" 
@@ -718,32 +718,32 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                 </svg>
             </div>
 
-            {/* Bottom Room Navigation & Status Footer */}
+            {/* Bottom Wing Navigation & Status Footer */}
             <div className="flex justify-between items-center px-1 pt-1 border-t border-white/5 text-[10px] font-mono text-gray-400 flex-shrink-0">
                 <div className="flex gap-1.5">
                     <span 
-                        onClick={() => setActiveDeckFilter('deck_core')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeDeckFilter === 'deck_core' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter('bridge')}
+                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'bridge' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
-                        💻 Ops
+                        💻 Bridge
                     </span>
                     <span 
-                        onClick={() => setActiveDeckFilter('deck_db')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeDeckFilter === 'deck_db' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter('quantum_lab')}
+                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'quantum_lab' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
-                        🗄️ SQL
+                        ⚡ Quantum Lab
                     </span>
                     <span 
-                        onClick={() => setActiveDeckFilter('deck_research')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeDeckFilter === 'deck_research' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter('data_radar')}
+                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'data_radar' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
-                        📡 Radar
+                        🗄️ Data & Radar
                     </span>
                     <span 
-                        onClick={() => setActiveDeckFilter('deck_coder')}
-                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeDeckFilter === 'deck_coder' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
+                        onClick={() => setActiveWingFilter('lounge')}
+                        className={`cursor-pointer px-2 py-0.5 rounded transition-colors ${activeWingFilter === 'lounge' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-white/5 hover:bg-white/10 text-gray-300'}`}
                     >
-                        ⚡ Coder
+                        ☕ Recreation Haven
                     </span>
                 </div>
 
@@ -782,9 +782,9 @@ const SimsAgentHouse = ({ liveTasks = [] }) => {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-[10px] text-gray-400 font-mono">DEDICATED DECK</div>
+                                <div className="text-[10px] text-gray-400 font-mono">PRIMARY WING</div>
                                 <div className="text-xs font-bold text-white capitalize">
-                                    {DECKS[selectedAgent.homeDeck]?.name || 'Command Matrix'}
+                                    {WINGS[selectedAgent.homeWing || 'bridge']?.name || 'Smart HQ'}
                                 </div>
                             </div>
                         </div>

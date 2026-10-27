@@ -16,10 +16,10 @@ const { Title, Text } = Typography;
 const CANONICAL_IDS = ['agent-core-1', 'agent-db-worker', 'agent-research-1', 'agent-coder-x'];
 
 const ROOM_NAMES = {
-    deck_core: { name: 'Command Ops Deck', icon: '💻', color: 'text-cyan-400' },
-    deck_db: { name: 'Data Vault & SQL Matrix', icon: '🗄️', color: 'text-emerald-400' },
-    deck_research: { name: 'Global Cyber Radar', icon: '📡', color: 'text-amber-400' },
-    deck_coder: { name: 'Quantum Synthesis Lab', icon: '⚡', color: 'text-purple-400' }
+    bridge: { name: 'Master Command Bridge', icon: '💻', color: 'text-cyan-400' },
+    quantum_lab: { name: 'Quantum Synthesis Lab', icon: '⚡', color: 'text-purple-400' },
+    data_radar: { name: 'Data & Radar Wing', icon: '🗄️', color: 'text-emerald-400' },
+    lounge: { name: 'Recreation Haven', icon: '☕', color: 'text-amber-400' }
 };
 
 const DEFAULT_AGENTS = [
@@ -29,9 +29,9 @@ const DEFAULT_AGENTS = [
         role: 'Mission Lead & System Orchestrator',
         type: 'System',
         status: 'ONLINE',
-        homeDeck: 'deck_core',
-        room: 'deck_core',
-        currentTask: 'Command matrix synchronized',
+        homeWing: 'bridge',
+        room: 'bridge',
+        currentTask: 'Command bridge synchronized',
         cpu: 14,
         memory: '1.4 GB / 7.8 GB',
         capabilities: ['plan', 'execute', 'reason', 'orchestrate'],
@@ -44,8 +44,8 @@ const DEFAULT_AGENTS = [
         role: 'Data Architect & SQL Engine',
         type: 'Specialized',
         status: 'ONLINE',
-        homeDeck: 'deck_db',
-        room: 'deck_db',
+        homeWing: 'data_radar',
+        room: 'data_radar',
         currentTask: 'Database connection pool active',
         cpu: 11,
         memory: '1.8 GB allocated',
@@ -59,8 +59,8 @@ const DEFAULT_AGENTS = [
         role: 'Realtime Web & API Explorer',
         type: 'Specialized',
         status: 'ONLINE',
-        homeDeck: 'deck_research',
-        room: 'deck_research',
+        homeWing: 'data_radar',
+        room: 'data_radar',
         currentTask: 'Global network scanner standby',
         cpu: 8,
         memory: '2.4 GB allocated',
@@ -74,9 +74,9 @@ const DEFAULT_AGENTS = [
         role: 'Autonomous Code Synthesis',
         type: 'External',
         status: 'OFFLINE',
-        homeDeck: 'deck_coder',
-        room: 'deck_coder',
-        currentTask: 'Synthesizer in standby (Pod 01)',
+        homeWing: 'quantum_lab',
+        room: 'quantum_lab',
+        currentTask: 'Pod Hibernation (Recreation Bay)',
         cpu: 0,
         memory: '0 GB',
         capabilities: ['fs.write', 'git.commit', 'ide.edit'],
@@ -179,7 +179,8 @@ const AgentsPage = () => {
             {/* Agent Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {agents.map((agent) => {
-                    const roomInfo = ROOM_NAMES[agent.room] || { name: 'Smart HQ', icon: '📍', color: 'text-gray-400' };
+                    const wingKey = agent.homeWing || agent.room;
+                    const roomInfo = ROOM_NAMES[wingKey] || { name: 'Smart HQ', icon: '📍', color: 'text-gray-400' };
                     const outfitColor = agent.persona?.outfitColor || '#00d2ff';
 
                     return (
