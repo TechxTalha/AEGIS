@@ -205,9 +205,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     ];
 
     return (
-        <div className="w-full h-full flex justify-center">
-            {/* Clean Assistant Card */}
-            <div className="relative w-full max-w-[380px] h-[640px] xl:h-[660px] rounded-3xl bg-[#0c101c] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col p-3.5 transition-all">
+        <div className="relative w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0e1424]/90 via-[#0B0F19] to-[#0B0F19] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col p-3.5 transition-all">
                 {/* Header Status Bar - Clean and meaningful */}
                 <div className="flex justify-between items-center px-2 pt-1 pb-2 border-b border-white/5 mb-2.5">
                     <div className="flex items-center gap-2">
@@ -402,7 +400,6 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                         </form>
                     </div>
                 )}
-            </div>
         </div>
     );
 };

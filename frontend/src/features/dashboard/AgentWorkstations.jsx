@@ -85,7 +85,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
     };
 
     return (
-        <div className="w-full h-[640px] xl:h-[660px] rounded-3xl bg-gradient-to-b from-[#0e1424]/90 via-[#0B0F19] to-[#0B0F19] border border-white/15 p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden">
+        <div className="w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0e1424]/90 via-[#0B0F19] to-[#0B0F19] border border-white/15 p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden">
             {/* Header */}
             <div className="flex justify-between items-center px-1 pb-1.5 border-b border-white/5">
                 <div className="flex items-center gap-2">
@@ -104,12 +104,12 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
             </div>
 
             {/* 4 Agent Workstation Cards in Vertical Stack */}
-            <div className="flex-1 flex flex-col justify-between gap-2 pt-2">
+            <div className="flex-1 flex flex-col justify-between gap-1.5 pt-1.5">
                 {agents.map((agent) => (
                     <div
                         key={agent.id}
                         onClick={() => setSelectedAgent(agent)}
-                        className={`relative rounded-xl p-2.5 transition-all duration-200 cursor-pointer overflow-hidden border flex-1 flex flex-col justify-between ${
+                        className={`relative rounded-xl p-2 transition-all duration-200 cursor-pointer overflow-hidden border flex-1 flex flex-col justify-between ${
                             isWorking(agent)
                                 ? 'bg-gradient-to-r from-[#11192e] to-[#0c1221] border-cyan-500/50 shadow-[0_0_15px_rgba(0,210,255,0.18)] hover:border-cyan-400'
                                 : isFree(agent)
@@ -118,7 +118,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                         }`}
                     >
                         {/* Card Header */}
-                        <div className="flex justify-between items-center mb-1">
+                        <div className="flex justify-between items-center mb-0.5">
                             <div className="flex items-center gap-2 min-w-0 pr-1">
                                 <span className="text-cyan-400 text-sm flex-shrink-0">{getAgentIcon(agent.id)}</span>
                                 <div className="truncate">
@@ -146,7 +146,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                         </div>
 
                         {/* Visual Animation Scene */}
-                        <div className="w-full h-16 rounded-lg bg-black/50 border border-white/5 relative flex items-center justify-center overflow-hidden my-1">
+                        <div className="w-full h-[50px] rounded-lg bg-black/50 border border-white/5 relative flex items-center justify-center overflow-hidden my-0.5">
                             
                             {/* --- STATE 1: WORKING (LOCKED IN) --- */}
                             {isWorking(agent) && (

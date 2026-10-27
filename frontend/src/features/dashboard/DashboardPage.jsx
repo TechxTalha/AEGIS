@@ -68,43 +68,11 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="animate-fade-in w-full pb-2 px-1 lg:px-3 flex flex-col justify-start">
-            {/* Top Command Center Bar */}
-            <div className="mb-2.5 flex justify-between items-center border-b border-white/5 pb-2">
-                <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#00d2ff] shadow-neon animate-pulse" />
-                    <h1 className="text-xl font-bold tracking-tight text-white mb-0">
-                        AEGIS Command
-                    </h1>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 font-mono tracking-wider">
-                        Online • 169.58.232.237
-                    </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Button 
-                        size="small"
-                        icon={<ReloadOutlined spin={loading} />} 
-                        onClick={() => { setLoading(true); fetchTasks().finally(() => setLoading(false)); }} 
-                        className="border-white/10 text-gray-300 hover:text-white bg-white/5"
-                        title="Refresh Tasks"
-                    />
-                    <Button 
-                        size="small"
-                        type="primary" 
-                        icon={<PlusOutlined />} 
-                        onClick={() => navigate('/tasks')} 
-                        className="bg-primary text-[#0B0F19] font-bold border-none shadow-neon hover:bg-primary/90 text-xs px-3"
-                    >
-                        Launch Task
-                    </Button>
-                </div>
-            </div>
-
-            {/* 3-Column Symmetrical Command Layout: Left (Chat), Center (Globe), Right (Agents) */}
+        <div className="animate-fade-in w-full pb-2 px-1 lg:px-2 flex flex-col justify-start">
+            {/* 3-Column Symmetrical Command Layout: Left (Chat/Voice), Center (Globe), Right (Agents) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 xl:gap-4 items-stretch w-full">
-                {/* Column 1 (LEFT): Live Talk & Cyber Chat Phone */}
-                <div className="lg:col-span-3 xl:col-span-3 2xl:col-span-3 flex justify-center">
+                {/* Column 1 (LEFT): Live Talk & Comms Session */}
+                <div className="lg:col-span-3 xl:col-span-3 2xl:col-span-3 flex flex-col">
                     <LiveTalkSession 
                         onSpeakingChange={handleSpeakingChange} 
                     />

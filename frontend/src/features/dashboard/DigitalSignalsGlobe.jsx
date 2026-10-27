@@ -318,7 +318,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
 
     return (
         <div 
-            className="relative w-full h-[640px] xl:h-[660px] flex items-center justify-center rounded-3xl bg-gradient-to-b from-[#0e1424]/90 via-[#0B0F19] to-[#0B0F19] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden select-none"
+            className="relative w-full h-[650px] flex items-center justify-center rounded-3xl bg-gradient-to-b from-[#0e1424]/90 via-[#0B0F19] to-[#0B0F19] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden select-none"
             onMouseLeave={handleMouseUp}
         >
             {/* Top Telemetry HUD */}
