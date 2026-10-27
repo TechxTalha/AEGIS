@@ -71,7 +71,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                     ...a,
                     status: newStatus,
                     cpu: newStatus === 'BUSY' ? Math.floor(70 + Math.random() * 25) : newStatus === 'ONLINE' ? 14 : 0,
-                    currentTask: newStatus === 'BUSY' ? 'Locked Into Mainframe Operations' : newStatus === 'ONLINE' ? 'Resting on Cyber Lounge Sofa' : 'Disconnected // Absent'
+                    currentTask: newStatus === 'BUSY' ? 'Processing active workflow' : newStatus === 'ONLINE' ? 'Idle - standing by' : 'Disconnected'
                 };
             }
             return a;
@@ -95,11 +95,11 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                     </h3>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] font-mono">
-                    <span className="text-cyan-400 font-semibold">{agents.filter(isWorking).length} Locked</span>
+                    <span className="text-cyan-400 font-semibold">{agents.filter(isWorking).length} Working</span>
                     <span className="text-gray-500">•</span>
-                    <span className="text-amber-400 font-semibold">{agents.filter(isFree).length} Rest</span>
+                    <span className="text-amber-400 font-semibold">{agents.filter(isFree).length} Idle</span>
                     <span className="text-gray-500">•</span>
-                    <span className="text-gray-400">{agents.filter(isOffline).length} Off</span>
+                    <span className="text-gray-400">{agents.filter(isOffline).length} Offline</span>
                 </div>
             </div>
 
@@ -130,12 +130,12 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                             {/* State Tag */}
                             {isWorking(agent) && (
                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-neon animate-pulse flex-shrink-0">
-                                    LOCKED IN
+                                    WORKING
                                 </span>
                             )}
                             {isFree(agent) && (
                                 <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 flex-shrink-0">
-                                    RESTING ☕
+                                    IDLE
                                 </span>
                             )}
                             {isOffline(agent) && (
@@ -159,14 +159,14 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                         </div>
                                         <div className="w-14 h-10 rounded bg-[#071927] border border-cyan-400 p-0.5 flex flex-col justify-between overflow-hidden shadow-[0_0_10px_rgba(0,210,255,0.5)]">
                                             <div className="flex justify-between items-center text-[5px] text-cyan-300 font-mono">
-                                                <span>EXEC</span>
+                                                <span>RUNNING</span>
                                                 <span className="w-1 h-1 rounded-full bg-cyan-400 animate-ping" />
                                             </div>
                                             <div className="space-y-0.5">
                                                 <div className="w-full h-0.5 bg-cyan-400 animate-pulse" />
                                                 <div className="w-4/5 h-0.5 bg-cyan-300" />
                                             </div>
-                                            <div className="text-[5px] font-mono text-cyan-400 truncate">SYS.RUN(0x8F)</div>
+                                            <div className="text-[5px] font-mono text-cyan-400 truncate">Processing...</div>
                                         </div>
                                         <div className="w-7 h-8 rounded bg-[#160b29] border border-purple-500/60 p-0.5 flex flex-col justify-around overflow-hidden shadow-[0_0_6px_rgba(168,85,247,0.3)]">
                                             <div className="w-full h-0.5 bg-purple-400" />
@@ -218,15 +218,15 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                 <div className="w-full h-full relative flex items-center justify-center gap-3 opacity-60">
                                     <div className="w-16 h-8 rounded border border-dashed border-gray-700 bg-gray-900/40 flex flex-col items-center justify-center p-0.5">
                                         <PoweroffOutlined className="text-xs text-gray-600 mb-0.5" />
-                                        <span className="text-[7px] font-mono text-gray-500 uppercase tracking-widest">
-                                            NO SIGNAL
+                                        <span className="text-[7px] font-mono text-gray-400 uppercase tracking-wider">
+                                            OFFLINE
                                         </span>
                                     </div>
                                     <div className="w-5 h-5 rounded-full border border-gray-700 bg-gray-800/40 flex items-center justify-center">
-                                        <span className="text-[6px] text-gray-500 font-mono">VACANT</span>
+                                        <span className="text-[6px] text-gray-500 font-mono">STANDBY</span>
                                     </div>
-                                    <span className="text-[8px] font-mono text-gray-500 italic">
-                                        Absent from desk
+                                    <span className="text-[8px] font-mono text-gray-500">
+                                        Agent Disconnected
                                     </span>
                                 </div>
                             )}
@@ -261,7 +261,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                     title={
                         <div className="flex items-center gap-2 text-white">
                             <span className="text-cyan-400">{getAgentIcon(selectedAgent.id)}</span>
-                            <span>{selectedAgent.name} // Workstation Terminal</span>
+                            <span>{selectedAgent.name} • Workstation Details</span>
                         </div>
                     }
                     className="cyber-modal"
@@ -276,18 +276,18 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                     <div className="py-2 space-y-3 text-gray-200">
                         <div className="flex justify-between items-center bg-[#151d32] p-2.5 rounded-xl border border-white/10">
                             <div>
-                                <div className="text-[10px] text-gray-400 font-mono">OPERATIONAL STATUS</div>
+                                <div className="text-[10px] text-gray-400 font-mono">STATUS</div>
                                 <div className="text-xs font-bold text-cyan-400">{selectedAgent.status}</div>
                             </div>
                             <div>
-                                <div className="text-[10px] text-gray-400 font-mono">HARDWARE UTILIZATION</div>
+                                <div className="text-[10px] text-gray-400 font-mono">RESOURCES</div>
                                 <div className="text-xs font-bold text-white">{selectedAgent.cpu}% CPU • {selectedAgent.vram}</div>
                             </div>
                         </div>
 
                         <div>
                             <label className="text-[10px] font-mono text-gray-400 mb-1.5 block uppercase tracking-wider">
-                                Override Agent Physical State:
+                                Set Agent Status:
                             </label>
                             <div className="grid grid-cols-3 gap-2">
                                 <Button
@@ -297,7 +297,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                     icon={<LaptopOutlined />}
                                     size="small"
                                 >
-                                    Locked In
+                                    Working
                                 </Button>
                                 <Button
                                     type={isFree(selectedAgent) ? 'primary' : 'default'}
@@ -306,7 +306,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                     icon={<CoffeeOutlined />}
                                     size="small"
                                 >
-                                    Resting (Sofa)
+                                    Idle
                                 </Button>
                                 <Button
                                     type={isOffline(selectedAgent) ? 'primary' : 'default'}
@@ -315,16 +315,16 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                     icon={<PoweroffOutlined />}
                                     size="small"
                                 >
-                                    Go Offline
+                                    Offline
                                 </Button>
                             </div>
                         </div>
 
-                        <div className="bg-black/80 rounded-xl p-2.5 border border-white/10 font-mono text-[11px] space-y-0.5">
-                            <div className="text-cyan-400">[TELEMETRY] Node: 169.58.232.237</div>
-                            <div className="text-gray-400">[BOUND] {selectedAgent.id} • {selectedAgent.type}</div>
-                            <div className="text-emerald-400">[STATE] {selectedAgent.status} // {selectedAgent.currentTask}</div>
-                            <div className="text-gray-400">[CAPABILITIES] {selectedAgent.capabilities.join(', ')}</div>
+                        <div className="bg-black/80 rounded-xl p-2.5 border border-white/10 font-mono text-[11px] space-y-1">
+                            <div className="text-cyan-400">Server: 169.58.232.237</div>
+                            <div className="text-gray-300">Agent: {selectedAgent.id} ({selectedAgent.type})</div>
+                            <div className="text-emerald-400">Task: {selectedAgent.currentTask}</div>
+                            <div className="text-gray-400">Capabilities: {selectedAgent.capabilities.join(', ')}</div>
                         </div>
                     </div>
                 </Modal>

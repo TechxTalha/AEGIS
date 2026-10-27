@@ -325,12 +325,12 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             <div className="absolute top-4 left-6 right-6 flex justify-between items-center z-10 pointer-events-none">
                 <div className="flex items-center gap-2">
                     <span className={`w-2.5 h-2.5 rounded-full ${isSpeaking ? 'bg-[#00d2ff] animate-ping' : 'bg-green-400'}`} />
-                    <span className="text-xs font-mono tracking-widest uppercase font-semibold text-gray-200">
-                        {isSpeaking ? 'TRANSMISSION ACTIVE // 1420.4 MHz' : 'GLOBAL SIGNALS // ACTIVE MONITORING'}
+                    <span className="text-xs font-mono tracking-wider uppercase font-semibold text-gray-200">
+                        {isSpeaking ? 'AI Voice Active' : 'Signals Visualizer'}
                     </span>
                 </div>
                 <div className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/40 shadow-sm">
-                    LATENCY: 12ms • 150 NODES
+                    Interactive 3D View
                 </div>
             </div>
 
@@ -355,10 +355,10 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                     <span className="text-xs font-mono text-gray-300 font-medium">
                         {isSpeaking ? (
                             <span className="text-cyan-400 font-semibold animate-pulse tracking-wide">
-                                AI TRANSMITTING SPEECH AUDIO
+                                Speaking...
                             </span>
                         ) : (
-                            'AI VOICE STANDBY // SPEAK TO ENGAGE'
+                            'Ready for Voice Input'
                         )}
                     </span>
                 </div>
@@ -369,7 +369,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                         className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-[#00d2ff] border border-cyan-500/40 hover:border-cyan-400 transition-all flex items-center gap-2 shadow-neon cursor-pointer"
                     >
                         <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                        Test AI Voice Pulse
+                        Test Voice Output
                     </button>
                 </div>
             </div>

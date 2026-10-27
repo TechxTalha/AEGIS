@@ -6,10 +6,10 @@ export const DEFAULT_AGENTS = [
         id: 'agent-core-1',
         name: 'AEGIS Core Orchestrator',
         type: 'System',
-        status: 'ONLINE', // 'ONLINE' (Free/Resting) | 'BUSY' (Working/Locked In) | 'OFFLINE'
+        status: 'ONLINE', // 'ONLINE' (Free/Idle) | 'BUSY' (Working/Locked In) | 'OFFLINE'
         capabilities: ['plan', 'execute', 'reason'],
-        drink: 'Quantum Espresso',
-        currentTask: 'Directing Task Orchestration & Neural Graph',
+        drink: 'Coffee',
+        currentTask: 'Idle - ready for new tasks',
         cpu: 18,
         vram: '4.8 GB'
     },
@@ -17,10 +17,10 @@ export const DEFAULT_AGENTS = [
         id: 'agent-db-worker',
         name: 'Database Agent',
         type: 'Specialized',
-        status: 'ONLINE', // 'ONLINE' (Free/Resting)
+        status: 'ONLINE', // 'ONLINE' (Free/Idle)
         capabilities: ['sql.read', 'sql.write', 'schema.analyze'],
-        drink: 'Cold-Brew Synth Latte',
-        currentTask: 'Standby: Replicating Vector Cache',
+        drink: 'Tea',
+        currentTask: 'Idle - database connected',
         cpu: 12,
         vram: '2.1 GB'
     },
@@ -30,8 +30,8 @@ export const DEFAULT_AGENTS = [
         type: 'Specialized',
         status: 'BUSY', // 'BUSY' (Working/Locked In)
         capabilities: ['web.search', 'web.scrape'],
-        drink: 'Matcha Bio-Fuel',
-        currentTask: 'Scraping Web Targets & Ingesting KB',
+        drink: 'Water',
+        currentTask: 'Processing web documentation search',
         cpu: 86,
         vram: '6.4 GB'
     },
@@ -42,7 +42,7 @@ export const DEFAULT_AGENTS = [
         status: 'OFFLINE', // 'OFFLINE' (Absent / Not Present)
         capabilities: ['fs.write', 'git.commit', 'ide.edit'],
         drink: 'None',
-        currentTask: 'Disconnected // Absent from Desk',
+        currentTask: 'Disconnected',
         cpu: 0,
         vram: '0 GB'
     }
@@ -56,7 +56,12 @@ export const getStoredAgents = () => {
         if (saved) {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length === 4) {
-                return parsed;
+                // If any agent still has old goofy drink or task text, update it
+                return parsed.map((a, i) => ({
+                    ...DEFAULT_AGENTS[i],
+                    ...a,
+                    drink: DEFAULT_AGENTS[i].drink
+                }));
             }
         }
     } catch (e) {

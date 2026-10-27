@@ -5,46 +5,32 @@ import {
     PhoneOutlined, 
     SendOutlined, 
     MessageOutlined, 
-    SoundOutlined,
-    WifiOutlined,
-    ThunderboltOutlined
+    SoundOutlined
 } from '@ant-design/icons';
 
 /**
- * LiveTalkSession (Left Column Smartphone Comms)
- * Form factor: High-end Cyber Smartphone
- * Mode: Live Voice Talk (ChatGPT Voice/Siri style) + Cyber Chat Feed
+ * LiveTalkSession (Left Column Assistant)
+ * Clean, sensible Voice Assistant & Chat interface without fake gimmicks (no fake 5G, fake battery, or sci-fi filler).
  */
 const LiveTalkSession = ({ onSpeakingChange }) => {
     const [mode, setMode] = useState('voice'); // 'voice' | 'chat'
     const [isMicActive, setIsMicActive] = useState(false);
     const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-    const [transcript, setTranscript] = useState('AEGIS Voice Uplink ready. Tap microphone or speak.');
+    const [transcript, setTranscript] = useState('Tap the microphone to speak, or switch to chat.');
     const [inputMessage, setInputMessage] = useState('');
-    const [currentTime, setCurrentTime] = useState('');
 
     const [messages, setMessages] = useState([
         {
             id: 1,
             sender: 'ai',
-            text: 'AEGIS Command Live Comms established. Systems nominal. Standing by for directives.',
-            time: '15:00'
+            text: 'Hello Hunter, how can I help you today?',
+            time: 'Now'
         }
     ]);
 
     const messagesEndRef = useRef(null);
     const speechRecognitionRef = useRef(null);
     const audioIntervalRef = useRef(null);
-
-    useEffect(() => {
-        const updateClock = () => {
-            const now = new Date();
-            setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        };
-        updateClock();
-        const timer = setInterval(updateClock, 1000);
-        return () => clearInterval(timer);
-    }, []);
 
     useEffect(() => {
         if (mode === 'chat') {
@@ -60,8 +46,8 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.05;
-        utterance.pitch = 0.95;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
 
         const voices = window.speechSynthesis.getVoices();
         const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha')));
@@ -92,7 +78,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         setIsAiSpeaking(true);
         startWaveformAnimation();
         onSpeakingChange?.(true, 0.8);
-        const duration = Math.min(5000, Math.max(2400, text.length * 50));
+        const duration = Math.min(5000, Math.max(2200, text.length * 45));
         setTimeout(() => {
             setIsAiSpeaking(false);
             stopWaveformAnimation();
@@ -121,7 +107,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            setTranscript('Speech recognition unavailable. Use Cyber Chat below.');
+            setTranscript('Speech recognition unavailable in this browser. Please use Chat.');
             return;
         }
 
@@ -149,7 +135,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
             recognition.onerror = () => {
                 setIsMicActive(false);
-                setTranscript('Microphone interrupted. Tap to try again.');
+                setTranscript('Microphone stopped. Tap to speak again.');
             };
 
             recognition.onend = () => {
@@ -176,15 +162,19 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         setMessages(prev => [...prev, newMsg]);
 
         setTimeout(() => {
-            let aiReply = "Command acknowledged. Telemetry verified and systems synchronized.";
+            let aiReply = "I received your request and everything is running properly.";
             const lower = userText.toLowerCase();
 
             if (lower.includes('space') || lower.includes('disk') || lower.includes('storage')) {
-                aiReply = "File system inspection complete. Root partition is at 44% capacity with 21 Gigabytes free.";
-            } else if (lower.includes('agent') || lower.includes('working') || lower.includes('lock in')) {
-                aiReply = "Synchronizing agent states. Active agents locked into workstations, free agents at lounge sofa.";
-            } else if (lower.includes('status') || lower.includes('health') || lower.includes('diagnostics')) {
-                aiReply = "Command Center operating nominally. Neural link latency is 12 milliseconds.";
+                aiReply = "The server root disk has 21 GB of available space out of 40 GB total.";
+            } else if (lower.includes('agent') || lower.includes('working') || lower.includes('online')) {
+                aiReply = "There are 4 agents configured: Web Research Agent is active, Core and Database agents are idle, and Antigravity Coder is offline.";
+            } else if (lower.includes('task') || lower.includes('running')) {
+                aiReply = "The system is executing background workflows. You can review all details in the Tasks tab.";
+            } else if (lower.includes('status') || lower.includes('health')) {
+                aiReply = "All services are running normally with no errors reported.";
+            } else if (lower.includes('hello') || lower.includes('hi')) {
+                aiReply = "Hello Hunter! How can I assist you today?";
             }
 
             const aiMsg = {
@@ -196,7 +186,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             setMessages(prev => [...prev, aiMsg]);
             setTranscript(aiReply);
             speakText(aiReply);
-        }, 500);
+        }, 400);
     };
 
     const handleSendText = (e) => {
@@ -208,32 +198,28 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     };
 
     const quickChips = [
-        "System status report",
-        "Inspect server storage",
-        "Lock in active agents"
+        "System status",
+        "Check disk space",
+        "Show connected agents",
+        "What tasks are running?"
     ];
 
     return (
         <div className="w-full h-full flex justify-center">
-            {/* Cyber Smartphone Chassis - Scaled for 3-Column Height */}
-            <div className="relative w-full max-w-[380px] h-[640px] xl:h-[660px] rounded-[38px] bg-[#0c101c] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col p-3.5 transition-all">
-                {/* Dynamic Island & Phone Status Bar */}
-                <div className="flex justify-between items-center px-3 pt-1 pb-2">
-                    <span className="text-xs font-semibold text-gray-300 font-mono">{currentTime || '15:00'}</span>
-                    
-                    {/* Dynamic Island Pill */}
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/85 border border-white/10 shadow-inner">
+            {/* Clean Assistant Card */}
+            <div className="relative w-full max-w-[380px] h-[640px] xl:h-[660px] rounded-3xl bg-[#0c101c] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col p-3.5 transition-all">
+                {/* Header Status Bar - Clean and meaningful */}
+                <div className="flex justify-between items-center px-2 pt-1 pb-2 border-b border-white/5 mb-2.5">
+                    <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${isAiSpeaking ? 'bg-cyan-400 animate-ping' : isMicActive ? 'bg-red-400 animate-pulse' : 'bg-green-400'}`} />
-                        <span className="text-[10px] font-mono text-gray-300 uppercase tracking-wider font-semibold">
-                            {isAiSpeaking ? 'AI Speaking' : isMicActive ? 'Listening' : 'AEGIS 5G'}
+                        <span className="text-xs font-semibold text-gray-200">
+                            Voice Assistant
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                        <WifiOutlined className="text-[11px]" />
-                        <ThunderboltOutlined className="text-[11px] text-green-400" />
-                        <span className="text-[10px] font-mono">100%</span>
-                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300">
+                        {isAiSpeaking ? 'Speaking' : isMicActive ? 'Listening' : 'Ready'}
+                    </span>
                 </div>
 
                 {/* Mode Selector Tab */}
@@ -246,7 +232,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
-                        <PhoneOutlined /> Live Voice Talk
+                        <PhoneOutlined /> Voice Talk
                     </button>
                     <button
                         onClick={() => setMode('chat')}
@@ -256,16 +242,16 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
-                        <MessageOutlined /> Cyber Chat
+                        <MessageOutlined /> Chat
                     </button>
                 </div>
 
-                {/* 1. Live Voice Talk Mode */}
+                {/* 1. Voice Talk Mode */}
                 {mode === 'voice' && (
                     <div className="flex-1 flex flex-col justify-between items-center py-4 px-2">
                         <div className="text-center">
-                            <h3 className="text-base font-bold text-white tracking-tight mb-0.5">AEGIS Neural Voice</h3>
-                            <p className="text-[11px] text-cyan-400/90 font-mono mb-0">QUANTUM UPLINK ACTIVE</p>
+                            <h3 className="text-sm font-bold text-white tracking-tight mb-0.5">AEGIS Assistant</h3>
+                            <p className="text-[11px] text-gray-400 mb-0">Live Voice Session</p>
                         </div>
 
                         {/* Animated Voice Orb */}
@@ -303,7 +289,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                     <AudioOutlined className="text-3xl text-white/90" />
                                 )}
                                 <span className="text-[10px] font-bold text-white/90 mt-1 uppercase tracking-wider">
-                                    {isAiSpeaking ? 'Speaking' : isMicActive ? 'Listening' : 'Tap to Talk'}
+                                    {isAiSpeaking ? 'Speaking' : isMicActive ? 'Listening' : 'Tap to Speak'}
                                 </span>
                             </div>
                         </div>
@@ -319,28 +305,28 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                         <div className="w-full flex justify-around items-center pt-1">
                             <button
                                 onClick={toggleMic}
-                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                                     isMicActive 
                                         ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.7)]' 
                                         : 'bg-white/10 hover:bg-white/20 text-gray-200'
                                 }`}
-                                title={isMicActive ? "Mute Microphone" : "Unmute Microphone"}
+                                title={isMicActive ? "Mute Microphone" : "Turn on Microphone"}
                             >
                                 {isMicActive ? <AudioOutlined className="text-lg" /> : <AudioMutedOutlined className="text-lg" />}
                             </button>
 
                             <button
-                                onClick={() => speakText("Testing AEGIS voice carrier frequency. Signal reception clear.")}
-                                className="w-14 h-14 rounded-full bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-[#0B0F19] flex items-center justify-center font-bold shadow-neon transition-all"
-                                title="Synthesize Voice Response"
+                                onClick={() => speakText("Voice output is functioning properly. All systems are operational.")}
+                                className="w-14 h-14 rounded-full bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-[#0B0F19] flex items-center justify-center font-bold shadow-neon transition-all cursor-pointer"
+                                title="Test Voice Output"
                             >
                                 <SoundOutlined className="text-xl" />
                             </button>
 
                             <button
                                 onClick={() => setMode('chat')}
-                                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 flex items-center justify-center transition-all"
-                                title="Open Text Chat"
+                                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 flex items-center justify-center transition-all cursor-pointer"
+                                title="Open Chat Feed"
                             >
                                 <MessageOutlined className="text-lg" />
                             </button>
@@ -348,7 +334,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                     </div>
                 )}
 
-                {/* 2. Cyber Chat Mode */}
+                {/* 2. Chat Mode */}
                 {mode === 'chat' && (
                     <div className="flex-1 flex flex-col justify-between overflow-hidden">
                         {/* Messages Feed */}
@@ -381,7 +367,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                 <button
                                     key={idx}
                                     onClick={() => handleUserSpeechSubmission(chip)}
-                                    className="whitespace-nowrap px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 text-[11px] border border-white/10 transition-colors"
+                                    className="whitespace-nowrap px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 text-[11px] border border-white/10 transition-colors cursor-pointer"
                                 >
                                     {chip}
                                 </button>
@@ -393,9 +379,10 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                             <button
                                 type="button"
                                 onClick={toggleMic}
-                                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors text-sm ${
+                                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors text-sm cursor-pointer ${
                                     isMicActive ? 'bg-red-500 text-white' : 'bg-white/10 hover:bg-white/20 text-gray-300'
                                 }`}
+                                title="Voice Input"
                             >
                                 <AudioOutlined />
                             </button>
@@ -403,12 +390,12 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                 type="text"
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
-                                placeholder="Message AEGIS..."
+                                placeholder="Message assistant..."
                                 className="flex-1 bg-[#13192b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400"
                             />
                             <button
                                 type="submit"
-                                className="w-9 h-9 rounded-xl bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-[#0B0F19] flex items-center justify-center font-bold transition-all shadow-neon text-sm"
+                                className="w-9 h-9 rounded-xl bg-[#00d2ff] hover:bg-[#00d2ff]/90 text-[#0B0F19] flex items-center justify-center font-bold transition-all shadow-neon text-sm cursor-pointer"
                             >
                                 <SendOutlined />
                             </button>

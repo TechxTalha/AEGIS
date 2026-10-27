@@ -47,9 +47,9 @@ const DashboardPage = () => {
 
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance("AEGIS Central Signals Hub active. Audio transmission confirmed.");
-            utterance.rate = 1.05;
-            utterance.pitch = 0.95;
+            const utterance = new SpeechSynthesisUtterance("Hello Hunter, AEGIS system is online and ready for your commands.");
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
             utterance.onend = () => {
                 setIsAiSpeaking(false);
                 setAudioLevel(0);
@@ -63,7 +63,7 @@ const DashboardPage = () => {
             setTimeout(() => {
                 setIsAiSpeaking(false);
                 setAudioLevel(0);
-            }, 3000);
+            }, 2500);
         }
     };
 
@@ -74,10 +74,10 @@ const DashboardPage = () => {
                 <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#00d2ff] shadow-neon animate-pulse" />
                     <h1 className="text-xl font-bold tracking-tight text-white mb-0">
-                        AEGIS Command Matrix
+                        AEGIS Command
                     </h1>
                     <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 font-mono tracking-wider">
-                        v2.4 • NODE 169.58.232.237
+                        Online • 169.58.232.237
                     </span>
                 </div>
 
@@ -87,7 +87,7 @@ const DashboardPage = () => {
                         icon={<ReloadOutlined spin={loading} />} 
                         onClick={() => { setLoading(true); fetchTasks().finally(() => setLoading(false)); }} 
                         className="border-white/10 text-gray-300 hover:text-white bg-white/5"
-                        title="Sync Telemetry"
+                        title="Refresh Tasks"
                     />
                     <Button 
                         size="small"
