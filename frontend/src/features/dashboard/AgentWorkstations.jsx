@@ -156,7 +156,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                         </div>
 
                         {/* Visual Animation Scene */}
-                        <div className="w-full h-26 rounded-lg bg-black/50 border border-white/5 relative flex items-center justify-center overflow-hidden mb-2">
+                        <div className="w-full h-28 rounded-lg bg-black/50 border border-white/5 relative flex items-center justify-center overflow-hidden mb-2">
                             
                             {/* --- STATE 1: WORKING (LOCKED IN) --- */}
                             {isWorking(agent) && (
@@ -189,7 +189,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                     </div>
 
                                     {/* Agent Avatar - Fast Typing */}
-                                    <div className="absolute bottom-1 flex flex-col items-center">
+                                    <div className="absolute bottom-1.5 flex flex-col items-center">
                                         <div className="relative">
                                             <div className="w-6 h-6 rounded-full bg-cyan-900 border border-cyan-400 flex items-center justify-center shadow-neon">
                                                 <div className="w-4 h-1 rounded-full bg-cyan-300 animate-pulse shadow-[0_0_6px_#00d2ff]" />
@@ -210,7 +210,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                             {/* --- STATE 2: FREE (RESTING / DRINK / SOFA) --- */}
                             {isFree(agent) && (
                                 <div className="w-full h-full relative flex flex-col items-center justify-center">
-                                    <div className="w-32 h-13 bg-gradient-to-r from-[#2a241b] via-[#382e1e] to-[#2a241b] rounded-t-xl border-t border-amber-500/40 shadow-inner flex items-center justify-center relative">
+                                    <div className="w-32 h-14 bg-gradient-to-r from-[#2a241b] via-[#382e1e] to-[#2a241b] rounded-t-xl border-t border-amber-500/40 shadow-inner flex items-center justify-center relative">
                                         <div className="flex items-center gap-2.5">
                                             <div className="w-6 h-6 rounded-full bg-amber-950 border border-amber-400 flex items-center justify-center">
                                                 <span className="text-[10px] text-amber-300">^‿^</span>
@@ -237,7 +237,7 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                             {/* --- STATE 3: OFFLINE (NOT PRESENT / ABSENT) --- */}
                             {isOffline(agent) && (
                                 <div className="w-full h-full relative flex flex-col items-center justify-center opacity-60">
-                                    <div className="w-20 h-10 rounded border border-dashed border-gray-700 bg-gray-900/40 flex flex-col items-center justify-center p-1 mb-1">
+                                    <div className="w-20 h-11 rounded border border-dashed border-gray-700 bg-gray-900/40 flex flex-col items-center justify-center p-1 mb-1">
                                         <PoweroffOutlined className="text-base text-gray-600 mb-0.5" />
                                         <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest">
                                             NO SIGNAL
