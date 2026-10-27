@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 1024px) {
+  html, body, #root {
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+}
+
 @layer base {
   body {
     @apply antialiased text-white bg-[#0B0F19];

@@ -43,11 +43,11 @@ const MainLayout = () => {
     };
 
     return (
-        <Layout className="min-h-screen flex flex-col bg-[#0B0F19] text-white">
+        <Layout className="h-screen max-h-screen overflow-hidden flex flex-col bg-[#0B0F19] text-white">
             {/* Top Navigation Bar with Grand Centered Logo & Aligned Command Branding */}
             <Header
                 style={{ padding: '0 24px', background: 'rgba(11, 15, 25, 0.85)' }}
-                className="flex justify-between items-center sticky top-0 z-50 h-20 backdrop-blur-lg border-b border-white/5 relative"
+                className="flex justify-between items-center sticky top-0 z-50 h-20 flex-shrink-0 backdrop-blur-lg border-b border-white/5 relative"
             >
                 {/* Left: AEGIS Command Branding & Status */}
                 <div className="flex items-center gap-2.5 z-20">
@@ -100,8 +100,8 @@ const MainLayout = () => {
                 </div>
             </Header>
 
-            {/* Main Content Area - padded at bottom for fixed nav */}
-            <Content className="flex-1 overflow-y-auto pb-16 pt-2 px-3 lg:px-5">
+            {/* Main Content Area - padded at bottom for fixed nav, zero-scroll on desktop */}
+            <Content className="flex-1 overflow-y-auto lg:overflow-hidden pb-18 pt-1 px-3 lg:px-5 flex flex-col justify-center">
                 <Outlet />
             </Content>
 
