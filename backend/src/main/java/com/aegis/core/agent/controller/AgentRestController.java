@@ -79,22 +79,23 @@ public class AgentRestController {
         Task activeTask = isTaskRunning ? runningTasks.get(0) : null;
         String activeTaskTitle = activeTask != null ? activeTask.getTitle() : null;
 
-        // 3. Assemble live agents
+        // 3. Assemble canonical plan agents (Each has their dedicated specialized deck)
         List<Map<String, Object>> agentsList = new ArrayList<>();
 
-        // Agent 1: AEGIS Core Orchestrator
+        // Agent 1: AEGIS Core Orchestrator -> Command Ops Deck
         Map<String, Object> coreAgent = new HashMap<>();
         coreAgent.put("id", "agent-core-1");
         coreAgent.put("name", "AEGIS Core Orchestrator");
         coreAgent.put("role", "Mission Lead & System Orchestrator");
         coreAgent.put("type", "System");
         coreAgent.put("status", isTaskRunning ? "BUSY" : "ONLINE");
-        coreAgent.put("room", isTaskRunning ? "workstation" : "lounge");
-        coreAgent.put("currentTask", isTaskRunning ? "Executing: " + activeTaskTitle : "Reviewing system telemetry");
+        coreAgent.put("homeDeck", "deck_core");
+        coreAgent.put("room", isTaskRunning ? "deck_core" : "deck_core");
+        coreAgent.put("currentTask", isTaskRunning ? "Executing: " + activeTaskTitle : "Command matrix synchronized");
         coreAgent.put("cpu", isTaskRunning ? 68 : 14);
         coreAgent.put("memory", memoryUsage);
         coreAgent.put("capabilities", Arrays.asList("plan", "execute", "reason", "orchestrate"));
-        coreAgent.put("drink", "Coffee");
+        coreAgent.put("drink", "Espresso");
         coreAgent.put("persona", Map.of(
             "outfitColor", "#00d2ff",
             "hairColor", "#1e293b",
@@ -103,16 +104,17 @@ public class AgentRestController {
         ));
         agentsList.add(coreAgent);
 
-        // Agent 2: Database Agent
+        // Agent 2: Database Agent -> Data Vault & SQL Matrix Deck
         Map<String, Object> dbAgent = new HashMap<>();
         dbAgent.put("id", "agent-db-worker");
         dbAgent.put("name", "Database Agent");
         dbAgent.put("role", "Data Architect & SQL Engine");
         dbAgent.put("type", "Specialized");
-        dbAgent.put("status", "ONLINE");
-        dbAgent.put("room", "kitchen"); // hanging out by coffee machine
-        dbAgent.put("currentTask", "Database connection pool active");
-        dbAgent.put("cpu", 11);
+        dbAgent.put("status", isTaskRunning ? "BUSY" : "ONLINE");
+        dbAgent.put("homeDeck", "deck_db");
+        dbAgent.put("room", "deck_db");
+        dbAgent.put("currentTask", isTaskRunning ? "Indexing execution records" : "Database connection pool active");
+        dbAgent.put("cpu", isTaskRunning ? 38 : 11);
         dbAgent.put("memory", "1.8 GB allocated");
         dbAgent.put("capabilities", Arrays.asList("sql.read", "sql.write", "schema.analyze", "indexing"));
         dbAgent.put("drink", "Green Tea");
@@ -124,19 +126,20 @@ public class AgentRestController {
         ));
         agentsList.add(dbAgent);
 
-        // Agent 3: Web Research Agent
+        // Agent 3: Web Research Agent -> Global Cyber Radar Hub
         Map<String, Object> researchAgent = new HashMap<>();
         researchAgent.put("id", "agent-research-1");
         researchAgent.put("name", "Web Research Agent");
         researchAgent.put("role", "Realtime Web & API Explorer");
         researchAgent.put("type", "Specialized");
         researchAgent.put("status", "ONLINE");
-        researchAgent.put("room", "lounge"); // playing arcade
-        researchAgent.put("currentTask", "Standby for web inquiries");
+        researchAgent.put("homeDeck", "deck_research");
+        researchAgent.put("room", "deck_research");
+        researchAgent.put("currentTask", "Global network scanner standby");
         researchAgent.put("cpu", 8);
         researchAgent.put("memory", "2.4 GB allocated");
         researchAgent.put("capabilities", Arrays.asList("web.search", "web.scrape", "doc.parse"));
-        researchAgent.put("drink", "Espresso");
+        researchAgent.put("drink", "Iced Latte");
         researchAgent.put("persona", Map.of(
             "outfitColor", "#f59e0b",
             "hairColor", "#78350f",
@@ -145,54 +148,27 @@ public class AgentRestController {
         ));
         agentsList.add(researchAgent);
 
-        // Agent 4: Antigravity Coder
+        // Agent 4: Antigravity Coder -> Code Synthesis Lab & Rest Pod
         Map<String, Object> coderAgent = new HashMap<>();
         coderAgent.put("id", "agent-coder-x");
         coderAgent.put("name", "Antigravity Coder");
         coderAgent.put("role", "Autonomous Code Synthesis");
         coderAgent.put("type", "External");
         coderAgent.put("status", "OFFLINE");
-        coderAgent.put("room", "rest_pod"); // resting in pod
-        coderAgent.put("currentTask", "Sleeping in Pod 01 (Recharging)");
+        coderAgent.put("homeDeck", "deck_coder");
+        coderAgent.put("room", "deck_coder");
+        coderAgent.put("currentTask", "Synthesizer in standby (Pod 01)");
         coderAgent.put("cpu", 0);
         coderAgent.put("memory", "0 GB");
         coderAgent.put("capabilities", Arrays.asList("fs.write", "git.commit", "ide.edit", "lint.fix"));
         coderAgent.put("drink", "None");
         coderAgent.put("persona", Map.of(
-            "outfitColor", "#8b5cf6",
+            "outfitColor", "#a855f7",
             "hairColor", "#4c1d95",
             "accessory", "hoodie",
             "title", "Hacker"
         ));
         agentsList.add(coderAgent);
-
-        // 4. Also append any dynamic agents registered via AgentManager
-        List<AgentInfo> dynamicAgents = agentManager.getActiveAgents();
-        if (dynamicAgents != null) {
-            for (AgentInfo dyn : dynamicAgents) {
-                if (agentsList.stream().noneMatch(a -> a.get("id").equals(dyn.getId()))) {
-                    Map<String, Object> dynMap = new HashMap<>();
-                    dynMap.put("id", dyn.getId());
-                    dynMap.put("name", "Node Agent (" + dyn.getHostname() + ")");
-                    dynMap.put("role", "Host Runner • " + dyn.getOs());
-                    dynMap.put("type", "Host");
-                    dynMap.put("status", "ONLINE");
-                    dynMap.put("room", "workstation");
-                    dynMap.put("currentTask", "Listening for host jobs");
-                    dynMap.put("cpu", 15);
-                    dynMap.put("memory", memoryUsage);
-                    dynMap.put("capabilities", dyn.getCapabilities());
-                    dynMap.put("drink", "Energy Drink");
-                    dynMap.put("persona", Map.of(
-                        "outfitColor", "#ec4899",
-                        "hairColor", "#831843",
-                        "accessory", "antenna",
-                        "title", "Node"
-                    ));
-                    agentsList.add(dynMap);
-                }
-            }
-        }
 
         response.put("agents", agentsList);
         response.put("timestamp", System.currentTimeMillis());

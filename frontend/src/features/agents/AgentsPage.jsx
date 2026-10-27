@@ -13,11 +13,13 @@ import { agentApi } from '../../api/agentApi';
 
 const { Title, Text } = Typography;
 
+const CANONICAL_IDS = ['agent-core-1', 'agent-db-worker', 'agent-research-1', 'agent-coder-x'];
+
 const ROOM_NAMES = {
-    workstation: { name: 'Command Deck', icon: '💻', color: 'text-cyan-400' },
-    kitchen: { name: 'Coffee Bar', icon: '☕', color: 'text-amber-400' },
-    lounge: { name: 'Arcade Lounge', icon: '🎮', color: 'text-purple-400' },
-    rest_pod: { name: 'Sleep Pods', icon: '💤', color: 'text-gray-400' }
+    deck_core: { name: 'Command Ops Deck', icon: '💻', color: 'text-cyan-400' },
+    deck_db: { name: 'Data Vault & SQL Matrix', icon: '🗄️', color: 'text-emerald-400' },
+    deck_research: { name: 'Global Cyber Radar', icon: '📡', color: 'text-amber-400' },
+    deck_coder: { name: 'Quantum Synthesis Lab', icon: '⚡', color: 'text-purple-400' }
 };
 
 const DEFAULT_AGENTS = [
@@ -27,12 +29,13 @@ const DEFAULT_AGENTS = [
         role: 'Mission Lead & System Orchestrator',
         type: 'System',
         status: 'ONLINE',
-        room: 'workstation',
-        currentTask: 'Reviewing system telemetry',
+        homeDeck: 'deck_core',
+        room: 'deck_core',
+        currentTask: 'Command matrix synchronized',
         cpu: 14,
         memory: '1.4 GB / 7.8 GB',
         capabilities: ['plan', 'execute', 'reason', 'orchestrate'],
-        drink: 'Coffee',
+        drink: 'Espresso',
         persona: { outfitColor: '#00d2ff', hairColor: '#1e293b', accessory: 'headset', title: 'Commander' }
     },
     {
@@ -41,7 +44,8 @@ const DEFAULT_AGENTS = [
         role: 'Data Architect & SQL Engine',
         type: 'Specialized',
         status: 'ONLINE',
-        room: 'kitchen',
+        homeDeck: 'deck_db',
+        room: 'deck_db',
         currentTask: 'Database connection pool active',
         cpu: 11,
         memory: '1.8 GB allocated',
@@ -55,12 +59,13 @@ const DEFAULT_AGENTS = [
         role: 'Realtime Web & API Explorer',
         type: 'Specialized',
         status: 'ONLINE',
-        room: 'lounge',
-        currentTask: 'Standby for web inquiries',
+        homeDeck: 'deck_research',
+        room: 'deck_research',
+        currentTask: 'Global network scanner standby',
         cpu: 8,
         memory: '2.4 GB allocated',
         capabilities: ['web.search', 'web.scrape', 'doc.parse'],
-        drink: 'Espresso',
+        drink: 'Iced Latte',
         persona: { outfitColor: '#f59e0b', hairColor: '#78350f', accessory: 'goggles', title: 'Scout' }
     },
     {
@@ -69,13 +74,14 @@ const DEFAULT_AGENTS = [
         role: 'Autonomous Code Synthesis',
         type: 'External',
         status: 'OFFLINE',
-        room: 'rest_pod',
-        currentTask: 'Sleeping in Pod 01 (Recharging)',
+        homeDeck: 'deck_coder',
+        room: 'deck_coder',
+        currentTask: 'Synthesizer in standby (Pod 01)',
         cpu: 0,
         memory: '0 GB',
         capabilities: ['fs.write', 'git.commit', 'ide.edit'],
         drink: 'None',
-        persona: { outfitColor: '#8b5cf6', hairColor: '#4c1d95', accessory: 'hoodie', title: 'Hacker' }
+        persona: { outfitColor: '#a855f7', hairColor: '#4c1d95', accessory: 'hoodie', title: 'Hacker' }
     }
 ];
 
@@ -89,8 +95,13 @@ const AgentsPage = () => {
         try {
             const data = await agentApi.getLiveAgents();
             if (data && data.agents && data.agents.length > 0) {
-                setAgents(data.agents);
-                setHouseStats(data.houseStats || { workingCount: 0, idleCount: 3, offlineCount: 1 });
+                const canonicalAgents = data.agents.filter(a => CANONICAL_IDS.includes(a.id));
+                setAgents(canonicalAgents);
+                setHouseStats({
+                    workingCount: canonicalAgents.filter(a => a.status === 'BUSY').length,
+                    idleCount: canonicalAgents.filter(a => a.status === 'ONLINE').length,
+                    offlineCount: canonicalAgents.filter(a => a.status === 'OFFLINE').length
+                });
                 setHostTelemetry({
                     hostMemory: data.hostMemory,
                     activeTask: data.activeTask,
