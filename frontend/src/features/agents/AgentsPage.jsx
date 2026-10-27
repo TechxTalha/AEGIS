@@ -20,18 +20,77 @@ const ROOM_NAMES = {
     rest_pod: { name: 'Sleep Pods', icon: '💤', color: 'text-gray-400' }
 };
 
+const DEFAULT_AGENTS = [
+    {
+        id: 'agent-core-1',
+        name: 'AEGIS Core Orchestrator',
+        role: 'Mission Lead & System Orchestrator',
+        type: 'System',
+        status: 'ONLINE',
+        room: 'workstation',
+        currentTask: 'Reviewing system telemetry',
+        cpu: 14,
+        memory: '1.4 GB / 7.8 GB',
+        capabilities: ['plan', 'execute', 'reason', 'orchestrate'],
+        drink: 'Coffee',
+        persona: { outfitColor: '#00d2ff', hairColor: '#1e293b', accessory: 'headset', title: 'Commander' }
+    },
+    {
+        id: 'agent-db-worker',
+        name: 'Database Agent',
+        role: 'Data Architect & SQL Engine',
+        type: 'Specialized',
+        status: 'ONLINE',
+        room: 'kitchen',
+        currentTask: 'Database connection pool active',
+        cpu: 11,
+        memory: '1.8 GB allocated',
+        capabilities: ['sql.read', 'sql.write', 'schema.analyze'],
+        drink: 'Green Tea',
+        persona: { outfitColor: '#10b981', hairColor: '#064e3b', accessory: 'datapad', title: 'Archivist' }
+    },
+    {
+        id: 'agent-research-1',
+        name: 'Web Research Agent',
+        role: 'Realtime Web & API Explorer',
+        type: 'Specialized',
+        status: 'ONLINE',
+        room: 'lounge',
+        currentTask: 'Standby for web inquiries',
+        cpu: 8,
+        memory: '2.4 GB allocated',
+        capabilities: ['web.search', 'web.scrape', 'doc.parse'],
+        drink: 'Espresso',
+        persona: { outfitColor: '#f59e0b', hairColor: '#78350f', accessory: 'goggles', title: 'Scout' }
+    },
+    {
+        id: 'agent-coder-x',
+        name: 'Antigravity Coder',
+        role: 'Autonomous Code Synthesis',
+        type: 'External',
+        status: 'OFFLINE',
+        room: 'rest_pod',
+        currentTask: 'Sleeping in Pod 01 (Recharging)',
+        cpu: 0,
+        memory: '0 GB',
+        capabilities: ['fs.write', 'git.commit', 'ide.edit'],
+        drink: 'None',
+        persona: { outfitColor: '#8b5cf6', hairColor: '#4c1d95', accessory: 'hoodie', title: 'Hacker' }
+    }
+];
+
 const AgentsPage = () => {
-    const [agents, setAgents] = useState([]);
-    const [hostTelemetry, setHostTelemetry] = useState(null);
-    const [houseStats, setHouseStats] = useState({ workingCount: 0, idleCount: 0, offlineCount: 0 });
+    const [agents, setAgents] = useState(DEFAULT_AGENTS);
+    const [hostTelemetry, setHostTelemetry] = useState({ hostMemory: '1.4 GB / 7.8 GB (19%)' });
+    const [houseStats, setHouseStats] = useState({ workingCount: 0, idleCount: 3, offlineCount: 1 });
     const [loading, setLoading] = useState(false);
 
     const fetchLiveAgents = async () => {
         try {
             const data = await agentApi.getLiveAgents();
-            if (data && data.agents) {
+            if (data && data.agents && data.agents.length > 0) {
                 setAgents(data.agents);
-                setHouseStats(data.houseStats || { workingCount: 0, idleCount: 0, offlineCount: 0 });
+                setHouseStats(data.houseStats || { workingCount: 0, idleCount: 3, offlineCount: 1 });
                 setHostTelemetry({
                     hostMemory: data.hostMemory,
                     activeTask: data.activeTask,
