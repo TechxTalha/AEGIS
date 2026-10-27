@@ -37,8 +37,8 @@ const MainLayout = () => {
         <Layout className="min-h-screen flex flex-col bg-[#0B0F19] text-white">
             {/* Top Navigation Bar */}
             <Header
-                style={{ padding: '0 16px', background: 'rgba(11, 15, 25, 0.65)' }}
-                className="flex justify-between items-center sticky top-0 z-50 h-20 backdrop-blur-lg border-b border-white/5 relative"
+                style={{ padding: '0 16px', background: 'rgba(11, 15, 25, 0.75)' }}
+                className="flex justify-between items-center sticky top-0 z-50 h-14 backdrop-blur-lg border-b border-white/5 relative"
             >
                 {/* Left side spacer */}
                 <div className="w-10"></div>
@@ -46,25 +46,25 @@ const MainLayout = () => {
                 {/* Centered Logo */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
                     <div className="relative flex items-center justify-center">
-                        <div className="absolute inset-0 bg-[#00d2ff] rounded-full blur-[20px] opacity-25 pointer-events-none"></div>
+                        <div className="absolute inset-0 bg-[#00d2ff] rounded-full blur-[16px] opacity-25 pointer-events-none"></div>
                         <img
                             src="/apple-touch-icon.png"
                             alt="AEGIS Logo"
-                            className="h-14 w-14 object-contain relative z-10 drop-shadow-[0_0_16px_rgba(0,210,255,0.7)] hover:scale-105 transition-transform duration-300 select-none"
+                            className="h-10 w-10 object-contain relative z-10 drop-shadow-[0_0_12px_rgba(0,210,255,0.7)] hover:scale-105 transition-transform duration-300 select-none"
                         />
                     </div>
                 </div>
 
                 <Button
                     type="text"
-                    icon={<LogoutOutlined className="text-lg" />}
+                    icon={<LogoutOutlined className="text-base" />}
                     onClick={handleLogout}
-                    className="flex items-center text-gray-400 hover:text-red-500 transition-colors hover:shadow-neon hover:bg-red-500/10 h-10 w-10 flex-shrink-0"
+                    className="flex items-center text-gray-400 hover:text-red-500 transition-colors hover:shadow-neon hover:bg-red-500/10 h-8 w-8 flex-shrink-0"
                 />
             </Header>
 
             {/* Main Content Area - padded at bottom for fixed nav */}
-            <Content className="flex-1 overflow-y-auto pb-24 pt-4 px-3">
+            <Content className="flex-1 overflow-y-auto pb-16 pt-2 px-3 lg:px-6">
                 <Outlet />
             </Content>
 

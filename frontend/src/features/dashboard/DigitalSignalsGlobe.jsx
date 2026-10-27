@@ -2,10 +2,9 @@ import React, { useRef, useEffect, useState } from 'react';
 
 /**
  * DigitalSignalsGlobe
- * Renders a 3D holographic digital signals globe on HTML5 Canvas.
+ * Full-width 3D holographic digital signals globe on HTML5 Canvas.
  * Reacts dynamically to `isSpeaking` and `audioLevel` with glowing waveforms,
  * harmonic coordinate distortion, expanding sonar pulse rings, and orbiting signal vectors.
- * Optimized height for zero-scroll desktop viewports.
  */
 const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpeakTest }) => {
     const canvasRef = useRef(null);
@@ -31,7 +30,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
         window.addEventListener('resize', updateDimensions);
 
         // Precompute Fibonacci sphere points
-        const numNodes = 130;
+        const numNodes = 140;
         const nodes = [];
         const goldenRatio = (1 + Math.sqrt(5)) / 2;
         for (let i = 0; i < numNodes; i++) {
@@ -71,13 +70,13 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             const height = rect.height;
             const cx = width / 2;
             const cy = height / 2;
-            const R = Math.min(width, height) * 0.35;
-            const fov = 380;
+            const R = Math.min(width * 0.4, height * 0.38);
+            const fov = 400;
 
             ctx.clearRect(0, 0, width, height);
 
             // 1. Ambient Glow Core
-            const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.5);
+            const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.55);
             if (isSpeaking) {
                 const glowIntensity = 0.22 + (audioLevel || 0.5) * 0.25;
                 coreGlow.addColorStop(0, `rgba(0, 210, 255, ${glowIntensity})`);
@@ -91,7 +90,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             }
             ctx.fillStyle = coreGlow;
             ctx.beginPath();
-            ctx.arc(cx, cy, R * 1.5, 0, Math.PI * 2);
+            ctx.arc(cx, cy, R * 1.55, 0, Math.PI * 2);
             ctx.fill();
 
             // 2. Audio-Reactive Sonar Pulse Waves
@@ -99,7 +98,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                 lastPulseTime = Date.now();
                 wavePulses.push({
                     radius: R * 0.8,
-                    maxRadius: R * 2.1,
+                    maxRadius: R * 2.2,
                     alpha: 0.85,
                     speed: 2.5 + (audioLevel || 0.4) * 3,
                     color: Math.random() > 0.5 ? 'rgba(0, 210, 255, ' : 'rgba(56, 189, 248, '
@@ -147,12 +146,12 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             };
 
             // 3. Latitude Rings
-            const numLatitudes = 9;
+            const numLatitudes = 10;
             for (let i = 1; i < numLatitudes; i++) {
                 const lat = (i / numLatitudes - 0.5) * Math.PI;
                 const rLat = R * Math.cos(lat);
                 const yLat = R * Math.sin(lat);
-                const numSteps = 42;
+                const numSteps = 48;
 
                 ctx.beginPath();
                 let started = false;
@@ -181,10 +180,10 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             }
 
             // 4. Longitude Meridians
-            const numLongitudes = 10;
+            const numLongitudes = 12;
             for (let i = 0; i < numLongitudes; i++) {
                 const lon = (i / numLongitudes) * Math.PI;
-                const numSteps = 32;
+                const numSteps = 36;
 
                 ctx.beginPath();
                 let started = false;
@@ -254,7 +253,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
 
                 // Orbital path
                 ctx.beginPath();
-                const steps = 36;
+                const steps = 40;
                 for (let j = 0; j <= steps; j++) {
                     const a = (j / steps) * Math.PI * 2;
                     const ox = Math.cos(a) * satDist;
@@ -322,19 +321,19 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
 
     return (
         <div 
-            className="relative w-full h-[330px] lg:h-[365px] flex items-center justify-center rounded-2xl bg-gradient-to-b from-[#0e1424]/90 via-[#0B0F19] to-[#0B0F19] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden select-none"
+            className="relative w-full h-[360px] xl:h-[385px] flex items-center justify-center rounded-2xl bg-gradient-to-b from-[#0e1424]/90 via-[#0B0F19] to-[#0B0F19] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden select-none"
             onMouseLeave={handleMouseUp}
         >
             {/* Top Telemetry HUD */}
-            <div className="absolute top-3 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
+            <div className="absolute top-3 left-5 right-5 flex justify-between items-center z-10 pointer-events-none">
                 <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-[#00d2ff] animate-ping' : 'bg-green-400'}`} />
-                    <span className="text-[11px] font-mono tracking-widest uppercase font-semibold text-gray-300">
+                    <span className="text-xs font-mono tracking-widest uppercase font-semibold text-gray-300">
                         {isSpeaking ? 'TRANSMISSION ACTIVE // 1420.4 MHz' : 'GLOBAL SIGNALS // MONITORING'}
                     </span>
                 </div>
-                <div className="text-[10px] font-mono text-cyan-400/90 bg-cyan-950/50 px-2.5 py-0.5 rounded-full border border-cyan-500/30">
-                    LATENCY: 12ms • 130 NODES
+                <div className="text-[11px] font-mono text-cyan-400/90 bg-cyan-950/50 px-3 py-0.5 rounded-full border border-cyan-500/30">
+                    LATENCY: 12ms • 140 NODES
                 </div>
             </div>
 
@@ -348,15 +347,15 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             />
 
             {/* Bottom HUD Bar */}
-            <div className="absolute bottom-2.5 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
+            <div className="absolute bottom-3 left-5 right-5 flex justify-between items-center z-10 pointer-events-none">
                 <div className="flex items-center gap-2">
-                    <div className="flex items-end gap-1 h-4 px-1.5 py-0.5 bg-black/50 rounded border border-white/5">
+                    <div className="flex items-end gap-1 h-4 px-2 py-0.5 bg-black/50 rounded border border-white/5">
                         <span className={`w-1 bg-[#00d2ff] rounded-full transition-all ${isSpeaking ? 'h-4 animate-pulse' : 'h-1'}`} />
                         <span className={`w-1 bg-[#00d2ff] rounded-full transition-all ${isSpeaking ? 'h-2.5' : 'h-1.5'}`} />
                         <span className={`w-1 bg-[#00d2ff] rounded-full transition-all ${isSpeaking ? 'h-3.5 animate-pulse' : 'h-1'}`} />
                         <span className={`w-1 bg-[#38bdf8] rounded-full transition-all ${isSpeaking ? 'h-3 animate-bounce' : 'h-1.5'}`} />
                     </div>
-                    <span className="text-[11px] font-mono text-gray-400">
+                    <span className="text-xs font-mono text-gray-400">
                         {isSpeaking ? (
                             <span className="text-cyan-400 font-semibold animate-pulse">
                                 AI TRANSMITTING SPEECH AUDIO
@@ -370,7 +369,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                 <div className="pointer-events-auto">
                     <button
                         onClick={onTriggerSpeakTest}
-                        className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00d2ff] border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1.5 shadow-sm"
+                        className="px-3 py-1 text-xs font-medium rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00d2ff] border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1.5 shadow-sm"
                     >
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
                         Test AI Voice Pulse

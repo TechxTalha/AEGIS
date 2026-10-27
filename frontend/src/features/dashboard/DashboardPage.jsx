@@ -8,13 +8,14 @@ import LiveTalkSession from './LiveTalkSession';
 import AgentWorkstations from './AgentWorkstations';
 
 /**
- * DashboardPage (Optimized Zero-Scroll Command Matrix)
+ * DashboardPage (Widescreen Full-Bleed Command Matrix)
  * - Zero summaries.
+ * - Utilizes 100% of the screen width (no max-w-7xl restriction).
+ * - Perfectly scaled to fit desktop screen without vertical scrolling.
+ * - Spacious components with rich aesthetics that don't feel squished.
  * - Central 3D Digital Signals Globe with audio-reactive waveforms.
  * - Smartphone-styled Live Voice Talk & Cyber Chat.
- * - Animated Agent Workstations (100% consistent with Agents tab: AEGIS Core, Database, Web Research, Antigravity Coder).
- * - No text description under headings.
- * - Perfectly scaled to fit desktop screens without scrolling.
+ * - Animated Agent Workstations (AEGIS Core, Database, Web Research, Antigravity Coder).
  */
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -70,15 +71,15 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="animate-fade-in pb-2 px-1 max-w-7xl mx-auto flex flex-col justify-start">
-            {/* Top Command Center Header - Clean, No description */}
-            <div className="mb-3 flex justify-between items-center border-b border-white/5 pb-2.5">
-                <div className="flex items-center gap-2">
+        <div className="animate-fade-in w-full pb-2 px-1 lg:px-3 flex flex-col justify-start">
+            {/* Top Command Center Header */}
+            <div className="mb-2.5 flex justify-between items-center border-b border-white/5 pb-2">
+                <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#00d2ff] shadow-neon animate-pulse" />
                     <h1 className="text-xl font-bold tracking-tight text-white mb-0">
                         AEGIS Command Matrix
                     </h1>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 font-mono">
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 font-mono tracking-wider">
                         v2.4 • NODE 169.58.232.237
                     </span>
                 </div>
@@ -96,17 +97,17 @@ const DashboardPage = () => {
                         type="primary" 
                         icon={<PlusOutlined />} 
                         onClick={() => navigate('/tasks')} 
-                        className="bg-primary text-[#0B0F19] font-bold border-none shadow-neon hover:bg-primary/90 text-xs"
+                        className="bg-primary text-[#0B0F19] font-bold border-none shadow-neon hover:bg-primary/90 text-xs px-3"
                     >
                         Launch Task
                     </Button>
                 </div>
             </div>
 
-            {/* Main Stage: Digital Signals Globe & Phone Comms Session */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
-                {/* Central Digital Signals Holographic Globe */}
-                <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
+            {/* Main Stage: Widescreen Globe & Phone Comms Session */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+                {/* Central Digital Signals Holographic Globe (Wide viewport) */}
+                <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 flex flex-col h-full">
                     <DigitalSignalsGlobe 
                         isSpeaking={isAiSpeaking} 
                         audioLevel={audioLevel} 
@@ -115,7 +116,7 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Smartphone Live Talk & Cyber Chat */}
-                <div className="lg:col-span-5 xl:col-span-4 flex justify-center">
+                <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 flex justify-center h-full">
                     <LiveTalkSession 
                         onSpeakingChange={handleSpeakingChange} 
                     />
@@ -123,7 +124,7 @@ const DashboardPage = () => {
             </div>
 
             {/* Bottom Operations Hub: Animated Agents & Desktops / Cyber Lounge */}
-            <div className="mt-3.5">
+            <div className="mt-3">
                 <AgentWorkstations liveTasks={tasks} />
             </div>
         </div>

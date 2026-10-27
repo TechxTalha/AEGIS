@@ -12,7 +12,7 @@ import {
 import { getStoredAgents, saveStoredAgents } from '../agents/agentsData';
 
 /**
- * AgentWorkstations
+ * AgentWorkstations (Widescreen Full-Bleed Lounge)
  * 100% consistent with the Agents tab:
  * 1. AEGIS Core Orchestrator (agent-core-1)
  * 2. Database Agent (agent-db-worker)
@@ -65,7 +65,6 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
         }
     };
 
-    // State mapping helpers
     const isWorking = (agent) => agent.status === 'BUSY';
     const isFree = (agent) => agent.status === 'ONLINE';
     const isOffline = (agent) => agent.status === 'OFFLINE';
@@ -92,15 +91,15 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
 
     return (
         <div className="w-full">
-            {/* Header - No text description under heading */}
-            <div className="flex justify-between items-center mb-2.5">
+            {/* Header - Clean, No subtitle */}
+            <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-neon" />
-                    <h3 className="text-sm font-bold text-white tracking-tight uppercase tracking-wider mb-0">
+                    <h3 className="text-xs font-bold text-white tracking-wider uppercase mb-0">
                         Agent Operations Hub & Cyber Lounge
                     </h3>
                 </div>
-                <div className="flex items-center gap-2 text-[11px] font-mono">
+                <div className="flex items-center gap-2 text-xs font-mono">
                     <span className="text-cyan-400 flex items-center gap-1 font-semibold">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
                         {agents.filter(isWorking).length} Locked In
@@ -112,13 +111,13 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                 </div>
             </div>
 
-            {/* 4 Agent Workstation Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* 4 Agent Workstation Cards - Wide, Spacious & Non-Squished */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 {agents.map((agent) => (
                     <div
                         key={agent.id}
                         onClick={() => setSelectedAgent(agent)}
-                        className={`relative rounded-xl p-2.5 transition-all duration-200 cursor-pointer overflow-hidden border ${
+                        className={`relative rounded-xl p-3 transition-all duration-200 cursor-pointer overflow-hidden border ${
                             isWorking(agent)
                                 ? 'bg-gradient-to-b from-[#11192e] to-[#0c1221] border-cyan-500/50 shadow-[0_0_15px_rgba(0,210,255,0.18)] hover:border-cyan-400 hover:scale-[1.01]'
                                 : isFree(agent)
@@ -127,51 +126,51 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                         }`}
                     >
                         {/* Card Header */}
-                        <div className="flex justify-between items-start mb-1.5">
+                        <div className="flex justify-between items-start mb-2">
                             <div className="pr-1 min-w-0">
                                 <h4 className="text-xs font-bold text-white flex items-center gap-1.5 mb-0 truncate">
-                                    <span className="text-cyan-400 text-xs">{getAgentIcon(agent.id)}</span>
+                                    <span className="text-cyan-400 text-sm">{getAgentIcon(agent.id)}</span>
                                     <span className="truncate">{agent.name}</span>
                                 </h4>
-                                <span className="text-[9px] text-gray-400 font-mono">
+                                <span className="text-[10px] text-gray-400 font-mono">
                                     {agent.id} • {agent.type}
                                 </span>
                             </div>
 
                             {/* State Tag */}
                             {isWorking(agent) && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-neon animate-pulse flex-shrink-0">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-neon animate-pulse flex-shrink-0">
                                     LOCKED IN
                                 </span>
                             )}
                             {isFree(agent) && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 flex-shrink-0">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 flex-shrink-0">
                                     RESTING ☕
                                 </span>
                             )}
                             {isOffline(agent) && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-gray-800 text-gray-400 border border-white/10 flex-shrink-0">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-800 text-gray-400 border border-white/10 flex-shrink-0">
                                     OFFLINE
                                 </span>
                             )}
                         </div>
 
                         {/* Visual Animation Scene */}
-                        <div className="w-full h-24 rounded-lg bg-black/50 border border-white/5 relative flex items-center justify-center overflow-hidden mb-2">
+                        <div className="w-full h-26 rounded-lg bg-black/50 border border-white/5 relative flex items-center justify-center overflow-hidden mb-2">
                             
                             {/* --- STATE 1: WORKING (LOCKED IN) --- */}
                             {isWorking(agent) && (
                                 <div className="w-full h-full relative flex flex-col items-center justify-center">
                                     {/* Triple Glowing Monitors */}
-                                    <div className="absolute top-1.5 w-full flex justify-center items-center gap-1 px-2">
-                                        <div className="w-9 h-10 rounded bg-[#041c1b] border border-emerald-500/60 p-0.5 flex flex-col justify-around overflow-hidden shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                                    <div className="absolute top-2 w-full flex justify-center items-center gap-1.5 px-3">
+                                        <div className="w-12 h-12 rounded bg-[#041c1b] border border-emerald-500/60 p-1 flex flex-col justify-around overflow-hidden shadow-[0_0_8px_rgba(16,185,129,0.3)]">
                                             <div className="w-full h-0.5 bg-emerald-400 animate-pulse" />
                                             <div className="w-3/4 h-0.5 bg-emerald-400/70" />
                                             <div className="w-full h-0.5 bg-emerald-400 animate-pulse" />
                                         </div>
 
-                                        <div className="w-16 h-12 rounded bg-[#071927] border border-cyan-400 p-1 flex flex-col justify-between overflow-hidden shadow-[0_0_12px_rgba(0,210,255,0.5)]">
-                                            <div className="flex justify-between items-center text-[6px] text-cyan-300 font-mono">
+                                        <div className="w-20 h-14 rounded bg-[#071927] border border-cyan-400 p-1 flex flex-col justify-between overflow-hidden shadow-[0_0_12px_rgba(0,210,255,0.5)]">
+                                            <div className="flex justify-between items-center text-[7px] text-cyan-300 font-mono">
                                                 <span>EXEC</span>
                                                 <span className="w-1 h-1 rounded-full bg-cyan-400 animate-ping" />
                                             </div>
@@ -179,10 +178,10 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                                 <div className="w-full h-0.5 bg-cyan-400 animate-pulse" />
                                                 <div className="w-4/5 h-0.5 bg-cyan-300" />
                                             </div>
-                                            <div className="text-[5px] font-mono text-cyan-400 truncate">SYS.PROCESS(0x1F)</div>
+                                            <div className="text-[6px] font-mono text-cyan-400 truncate">SYS.PROCESS(0x1F)</div>
                                         </div>
 
-                                        <div className="w-9 h-10 rounded bg-[#160b29] border border-purple-500/60 p-0.5 flex flex-col justify-around overflow-hidden shadow-[0_0_8px_rgba(168,85,247,0.3)]">
+                                        <div className="w-12 h-12 rounded bg-[#160b29] border border-purple-500/60 p-1 flex flex-col justify-around overflow-hidden shadow-[0_0_8px_rgba(168,85,247,0.3)]">
                                             <div className="w-full h-0.5 bg-purple-400" />
                                             <div className="w-2/3 h-0.5 bg-purple-400 animate-pulse" />
                                             <div className="w-4/5 h-0.5 bg-purple-400" />
@@ -192,17 +191,17 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                                     {/* Agent Avatar - Fast Typing */}
                                     <div className="absolute bottom-1 flex flex-col items-center">
                                         <div className="relative">
-                                            <div className="w-5 h-5 rounded-full bg-cyan-900 border border-cyan-400 flex items-center justify-center shadow-neon">
-                                                <div className="w-3.5 h-1 rounded-full bg-cyan-300 animate-pulse shadow-[0_0_6px_#00d2ff]" />
+                                            <div className="w-6 h-6 rounded-full bg-cyan-900 border border-cyan-400 flex items-center justify-center shadow-neon">
+                                                <div className="w-4 h-1 rounded-full bg-cyan-300 animate-pulse shadow-[0_0_6px_#00d2ff]" />
                                             </div>
                                             <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-gradient-to-t from-cyan-400 to-transparent animate-pulse" />
                                         </div>
-                                        <div className="w-9 h-3 bg-gray-800 rounded-t-sm mt-0.5 flex justify-between px-1 items-end">
-                                            <div className="w-2 h-1.5 bg-cyan-400 rounded-xs animate-bounce" />
-                                            <div className="w-2 h-1.5 bg-cyan-400 rounded-xs animate-bounce" style={{ animationDelay: '0.15s' }} />
+                                        <div className="w-10 h-3 bg-gray-800 rounded-t-sm mt-0.5 flex justify-between px-1 items-end">
+                                            <div className="w-2.5 h-1.5 bg-cyan-400 rounded-xs animate-bounce" />
+                                            <div className="w-2.5 h-1.5 bg-cyan-400 rounded-xs animate-bounce" style={{ animationDelay: '0.15s' }} />
                                         </div>
-                                        <div className="w-12 h-1.5 rounded-xs bg-cyan-950 border border-cyan-400/80 flex items-center justify-center">
-                                            <div className="w-8 h-0.5 bg-cyan-300/80" />
+                                        <div className="w-14 h-1.5 rounded-xs bg-cyan-950 border border-cyan-400/80 flex items-center justify-center">
+                                            <div className="w-10 h-0.5 bg-cyan-300/80" />
                                         </div>
                                     </div>
                                 </div>
@@ -211,24 +210,24 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                             {/* --- STATE 2: FREE (RESTING / DRINK / SOFA) --- */}
                             {isFree(agent) && (
                                 <div className="w-full h-full relative flex flex-col items-center justify-center">
-                                    <div className="w-24 h-11 bg-gradient-to-r from-[#2a241b] via-[#382e1e] to-[#2a241b] rounded-t-xl border-t border-amber-500/40 shadow-inner flex items-center justify-center relative">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-5 h-5 rounded-full bg-amber-950 border border-amber-400 flex items-center justify-center">
-                                                <span className="text-[8px] text-amber-300">^‿^</span>
+                                    <div className="w-32 h-13 bg-gradient-to-r from-[#2a241b] via-[#382e1e] to-[#2a241b] rounded-t-xl border-t border-amber-500/40 shadow-inner flex items-center justify-center relative">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-6 h-6 rounded-full bg-amber-950 border border-amber-400 flex items-center justify-center">
+                                                <span className="text-[10px] text-amber-300">^‿^</span>
                                             </div>
                                             <div className="relative flex flex-col items-center">
                                                 <div className="flex gap-0.5 -mt-2">
-                                                    <span className="text-[7px] text-amber-200/80 animate-pulse">~</span>
-                                                    <span className="text-[8px] text-amber-200/90 animate-bounce">~</span>
+                                                    <span className="text-[8px] text-amber-200/80 animate-pulse">~</span>
+                                                    <span className="text-[9px] text-amber-200/90 animate-bounce">~</span>
                                                 </div>
-                                                <div className="w-4 h-4 rounded bg-amber-600 border border-amber-300 flex items-center justify-center text-[8px] text-white">
+                                                <div className="w-5 h-5 rounded bg-amber-600 border border-amber-300 flex items-center justify-center text-[10px] text-white">
                                                     ☕
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="absolute bottom-1 text-center">
-                                        <span className="text-[8px] font-mono text-amber-300/90 bg-amber-950/60 px-1.5 py-0.5 rounded-full border border-amber-500/30">
+                                        <span className="text-[9px] font-mono text-amber-300/90 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30">
                                             Resting • {agent.drink}
                                         </span>
                                     </div>
@@ -238,17 +237,17 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                             {/* --- STATE 3: OFFLINE (NOT PRESENT / ABSENT) --- */}
                             {isOffline(agent) && (
                                 <div className="w-full h-full relative flex flex-col items-center justify-center opacity-60">
-                                    <div className="w-16 h-9 rounded border border-dashed border-gray-700 bg-gray-900/40 flex flex-col items-center justify-center p-1 mb-1">
-                                        <PoweroffOutlined className="text-sm text-gray-600 mb-0.5" />
-                                        <span className="text-[7px] font-mono text-gray-500 uppercase tracking-widest">
+                                    <div className="w-20 h-10 rounded border border-dashed border-gray-700 bg-gray-900/40 flex flex-col items-center justify-center p-1 mb-1">
+                                        <PoweroffOutlined className="text-base text-gray-600 mb-0.5" />
+                                        <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest">
                                             NO SIGNAL
                                         </span>
                                     </div>
-                                    <div className="w-6 h-6 rounded-full border border-gray-700 bg-gray-800/40 flex items-center justify-center">
-                                        <span className="text-[6px] text-gray-500 font-mono">VACANT</span>
+                                    <div className="w-7 h-7 rounded-full border border-gray-700 bg-gray-800/40 flex items-center justify-center">
+                                        <span className="text-[7px] text-gray-500 font-mono">VACANT</span>
                                     </div>
-                                    <div className="absolute bottom-0.5">
-                                        <span className="text-[8px] font-mono text-gray-500 italic">
+                                    <div className="absolute bottom-1">
+                                        <span className="text-[9px] font-mono text-gray-500 italic">
                                             Agent absent from desk
                                         </span>
                                     </div>
@@ -259,14 +258,14 @@ const AgentWorkstations = ({ liveTasks = [] }) => {
                         {/* Capabilities & Telemetry */}
                         <div className="space-y-1">
                             <div className="flex flex-wrap gap-1">
-                                {agent.capabilities.slice(0, 3).map(cap => (
-                                    <span key={cap} className="text-[8px] font-mono px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-gray-300">
+                                {agent.capabilities.map(cap => (
+                                    <span key={cap} className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/5 border border-white/10 text-gray-300">
                                         {cap}
                                     </span>
                                 ))}
                             </div>
                             <div className="flex justify-between items-center text-[10px] font-mono pt-0.5">
-                                <span className="text-gray-400">CPU:</span>
+                                <span className="text-gray-400">CPU Load:</span>
                                 <span className={isWorking(agent) ? 'text-cyan-400 font-bold' : 'text-gray-500'}>
                                     {agent.cpu}%
                                 </span>
