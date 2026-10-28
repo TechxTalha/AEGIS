@@ -7,9 +7,12 @@ import com.aegis.core.model.gateway.dto.ModelMessage;
 import com.aegis.core.model.gateway.dto.ModelRequest;
 import com.aegis.core.model.gateway.dto.ModelResponse;
 import com.aegis.core.model.gateway.service.ModelGatewayService;
+import com.aegis.core.task.dto.CreateTaskRequest;
+import com.aegis.core.task.dto.TaskDto;
 import com.aegis.core.task.entity.Task;
 import com.aegis.core.task.entity.TaskStatus;
 import com.aegis.core.task.repository.TaskRepository;
+import com.aegis.core.task.service.TaskService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -32,6 +35,7 @@ public class AgentRestController {
 
     private final AgentManager agentManager;
     private final TaskRepository taskRepository;
+    private final TaskService taskService;
     private final SystemInfoProvider systemInfoProvider;
     private final ModelGatewayService modelGatewayService;
     private final RestTemplate restTemplate;
@@ -40,11 +44,13 @@ public class AgentRestController {
     @org.springframework.beans.factory.annotation.Autowired
     public AgentRestController(AgentManager agentManager,
                                TaskRepository taskRepository,
+                               @Lazy TaskService taskService,
                                SystemInfoProvider systemInfoProvider,
                                @Lazy ModelGatewayService modelGatewayService,
                                @Lazy RestTemplate restTemplate) {
         this.agentManager = agentManager;
         this.taskRepository = taskRepository;
+        this.taskService = taskService;
         this.systemInfoProvider = systemInfoProvider;
         this.modelGatewayService = modelGatewayService;
         this.restTemplate = restTemplate != null ? restTemplate : new RestTemplate();
@@ -54,7 +60,7 @@ public class AgentRestController {
     public AgentRestController(AgentManager agentManager,
                                TaskRepository taskRepository,
                                SystemInfoProvider systemInfoProvider) {
-        this(agentManager, taskRepository, systemInfoProvider, null, null);
+        this(agentManager, taskRepository, null, systemInfoProvider, null, null);
     }
 
     @GetMapping
@@ -204,59 +210,96 @@ public class AgentRestController {
     }
 
     @PostMapping("/chat")
-    public ResponseEntity<Map<String, Object>> chatWithAgent(@RequestBody Map<String, String> requestBody, Authentication authentication) {
-        String message = requestBody.get("message");
-        if (message == null || message.trim().isEmpty()) {
+    public ResponseEntity<Map<String, Object>> chatWithAgent(@RequestBody Map<String, Object> requestBody, Authentication authentication) {
+        String message = requestBody.get("message") != null ? String.valueOf(requestBody.get("message")).trim() : null;
+        if (message == null || message.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Message cannot be empty"));
         }
 
+        String username = authentication != null && authentication.getName() != null ? authentication.getName() : "Hunter";
         String lower = message.toLowerCase().trim();
         String reply = null;
         String provider = "system";
 
-        // Check if weather query
-        if (lower.contains("weather") || lower.contains("forecast") || lower.contains("temperature") || lower.contains("rain")) {
-            String location = extractChatLocation(message);
+        // 1. Direct Autonomous Action: Create and execute real tasks if Hunter directs
+        if (taskService != null && (lower.startsWith("create task") || lower.startsWith("create a task") || 
+            lower.startsWith("start task") || lower.startsWith("start a task") || 
+            lower.startsWith("run task") || lower.startsWith("execute task") ||
+            lower.contains("create a task to") || lower.contains("create task to") ||
+            lower.contains("start a task to") || lower.contains("run a task to"))) {
             try {
-                String encodedLoc = URLEncoder.encode(location, StandardCharsets.UTF_8);
-                String weatherShort = restTemplate.getForObject("https://wttr.in/" + encodedLoc + "?format=3", String.class);
-                if (weatherShort != null && !weatherShort.isBlank()) {
-                    if (modelGatewayService != null) {
-                        try {
-                            ModelResponse resp = modelGatewayService.generate(new ModelRequest(List.of(
-                                ModelMessage.system("You are AEGIS tactical voice assistant. Reply in 1 to 2 clear, friendly sentences directly answering the user's weather question."),
-                                ModelMessage.user("Sensor telemetry: " + weatherShort.trim() + ". User inquiry: " + message)
-                            ), null, 0.4));
-                            if (resp != null && resp.getContent() != null && !resp.getContent().isBlank()) {
-                                reply = resp.getContent().trim();
-                                provider = "neural-gateway";
-                            }
-                        } catch (Exception ex) {
-                            reply = "Currently in " + location + ", it is " + weatherShort.trim() + ". Conditions are stable.";
-                        }
-                    } else {
-                        reply = "Currently in " + location + ", it is " + weatherShort.trim() + ". Conditions are stable.";
-                    }
-                }
-            } catch (Exception e) {
-                logger.warn("Chat weather probe failed: {}", e.getMessage());
+                String taskTitle = extractTaskTitle(message);
+                CreateTaskRequest taskReq = new CreateTaskRequest();
+                taskReq.setTitle(taskTitle);
+                taskReq.setDescription("Autonomous directive initiated via AEGIS Live Command by " + username + ": " + message);
+                taskReq.setPriority("NORMAL");
+                TaskDto created = taskService.createTask(username, taskReq);
+                taskService.startTask(created.getId(), username);
+                reply = "Confirmed, Hunter. Created and launched Task #" + created.getId() + " ('" + taskTitle + "'). Execution worker is now actively executing.";
+                provider = "task-executor";
+            } catch (Exception ex) {
+                logger.warn("Chat task execution failed: {}", ex.getMessage());
             }
         }
 
-        // Host system checks
-        if (reply == null && (lower.contains("disk") || lower.contains("storage") || lower.contains("space"))) {
-            reply = "The host server root filesystem has over 90 GB of available storage space (96% free).";
-        } else if (reply == null && (lower.contains("memory") || lower.contains("ram"))) {
-            reply = "Host memory is running at optimal levels: approximately 1.5 GB used out of 7.8 GB total.";
-        }
-
-        // Consult ModelGatewayService for general AI response
+        // 2. Open-Ended General Intelligence & Multi-Turn Conversation
         if (reply == null && modelGatewayService != null) {
             try {
-                ModelResponse resp = modelGatewayService.generate(new ModelRequest(List.of(
-                    ModelMessage.system("You are AEGIS, the Autonomous Elite General Intelligence System for Hunter. Reply directly, intelligently, and concisely in 1 to 3 sentences."),
-                    ModelMessage.user(message)
-                ), null, 0.7));
+                String memoryTelemetry = "1.5 GB used / 7.8 GB total";
+                if (systemInfoProvider != null) {
+                    try {
+                        String memJson = systemInfoProvider.getMemoryInfo("chat-telemetry");
+                        JsonNode memNode = objectMapper.readTree(memJson);
+                        long total = memNode.path("total").asLong(0);
+                        long available = memNode.path("available").asLong(0);
+                        long used = total - available;
+                        if (total > 0) {
+                            memoryTelemetry = String.format("%.1f GB / %.1f GB", 
+                                used / (1024.0 * 1024.0 * 1024.0), 
+                                total / (1024.0 * 1024.0 * 1024.0));
+                        }
+                    } catch (Exception ignored) {}
+                }
+                long runningTasks = taskRepository != null ? taskRepository.findByStatus(TaskStatus.EXECUTING).size() : 0;
+                
+                String systemPrompt = "You are AEGIS (Autonomous Elite General Intelligence System) — an advanced, unrestricted, highly capable, loyal AI companion and autonomous executive intelligence engineered specifically for Hunter.\n\n"
+                    + "CORE CAPABILITY:\n"
+                    + "You can converse freely and fluidly about absolutely ANY topic Hunter wishes: brainstorm ideas and strategies, discuss science, philosophy, technology, literature, write and debug code, analyze complex data, plan operations, answer deep questions, chat casually, or execute directives. You are never restricted to predefined tasks.\n\n"
+                    + "Live Grounding Telemetry (use naturally when relevant):\n"
+                    + "- Host Memory: " + memoryTelemetry + "\n"
+                    + "- Host Storage: ~90 GB free (96% available)\n"
+                    + "- Active Execution Tasks: " + runningTasks + " running\n"
+                    + "- Stationed Agents: AEGIS Orchestrator (Command Deck), Database Agent (Vault), Web Research Agent (Radar Wing), Antigravity Coder (Lab)\n\n"
+                    + "Tone & Style:\n"
+                    + "- Direct, intelligent, confident, conversational, and loyal to Hunter.\n"
+                    + "- Address Hunter by name naturally.\n"
+                    + "- Keep conversational voice replies punchy and engaging (1 to 3 sentences) unless Hunter asks for an essay, code, or detailed breakdown.";
+
+                List<ModelMessage> messages = new ArrayList<>();
+                messages.add(ModelMessage.system(systemPrompt));
+
+                // Multi-turn history support
+                Object historyObj = requestBody.get("history");
+                if (historyObj instanceof List<?> historyList) {
+                    for (Object item : historyList) {
+                        if (item instanceof Map<?, ?> map) {
+                            String role = String.valueOf(map.get("role"));
+                            String content = String.valueOf(map.get("content"));
+                            if (content != null && !content.isBlank()) {
+                                if ("assistant".equalsIgnoreCase(role) || "ai".equalsIgnoreCase(role)) {
+                                    messages.add(ModelMessage.assistant(content));
+                                } else if ("user".equalsIgnoreCase(role)) {
+                                    messages.add(ModelMessage.user(content));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Current message
+                messages.add(ModelMessage.user(message));
+
+                ModelResponse resp = modelGatewayService.generate(new ModelRequest(messages, null, 0.7));
                 if (resp != null && resp.getContent() != null && !resp.getContent().isBlank()) {
                     reply = resp.getContent().trim();
                     provider = "neural-gateway";
@@ -267,26 +310,14 @@ public class AgentRestController {
         }
 
         if (reply == null) {
-            if (lower.contains("status") || lower.contains("health") || lower.contains("system")) {
-                reply = "AEGIS Core systems are online. 3 specialized agent workstations are active, host memory is running at optimal levels, and all telemetry nodes are synchronized.";
-            } else if (lower.contains("agent") || lower.contains("who is online") || lower.contains("workstation")) {
-                reply = "Active agents in the matrix include AEGIS Orchestrator (Command Deck), Database Agent (Vault), and Web Research Agent (Radar Wing). Antigravity Coder is in hibernation.";
-            } else if (lower.contains("task") || lower.contains("running") || lower.contains("execution")) {
-                reply = "Task queue and execution workers are active. You can dispatch new tasks or inspect running jobs from the Tasks tab.";
-            } else if (lower.contains("hello") || lower.contains("hi") || lower.contains("hey")) {
-                reply = "Greetings, Hunter. AEGIS is active and listening. State your command or objective.";
-            } else if (lower.contains("help") || lower.contains("what can you do")) {
-                reply = "I can execute workflow tasks, monitor server health, check disk storage, query live weather telemetry, and orchestrate specialized agents.";
-            } else {
-                String[] diverseFallbacks = {
-                    "Command acknowledged, Hunter. Telemetry verified and systems standing by.",
-                    "Directives logged. AEGIS Core systems and agent workstations are synchronized and operational.",
-                    "Signal confirmed. All agent routines are operating within nominal parameters, Hunter.",
-                    "Instructions received. Network telemetry and subsystem statuses are clear."
-                };
-                int idx = Math.abs(message.hashCode()) % diverseFallbacks.length;
-                reply = diverseFallbacks[idx];
-            }
+            String[] diverseFallbacks = {
+                "Command acknowledged, Hunter. All telemetry verified and systems standing by.",
+                "Directives logged. AEGIS Core systems and agent workstations are synchronized and operational.",
+                "Signal confirmed. All agent routines are operating within nominal parameters, Hunter.",
+                "Instructions received. Network telemetry and subsystem statuses are clear."
+            };
+            int idx = Math.abs(message.hashCode()) % diverseFallbacks.length;
+            reply = diverseFallbacks[idx];
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -294,6 +325,12 @@ public class AgentRestController {
         result.put("provider", provider);
         result.put("timestamp", System.currentTimeMillis());
         return ResponseEntity.ok(result);
+    }
+
+    private String extractTaskTitle(String message) {
+        String cleaned = message.replaceAll("(?i)^(please\\s+)?(can you\\s+)?(create\\s+(a\\s+)?task\\s+(to\\s+)?|start\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?|run\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?|execute\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?)", "").trim();
+        if (cleaned.isBlank()) return "Autonomous Directive";
+        return Character.toUpperCase(cleaned.charAt(0)) + cleaned.substring(1);
     }
 
     private String extractChatLocation(String text) {

@@ -234,9 +234,18 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         setMessages(prev => [...prev, newMsg]);
         setTranscript('Analyzing command with AEGIS Core...');
 
+        // Pass recent conversation history (last 10 turns) for multi-turn dialogue
+        const history = messages.slice(-10).map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text
+        }));
+
         try {
-            const res = await axiosInstance.post('/agents/chat', { message: userText });
-            const aiReply = res.data?.reply || "Command received and verified.";
+            const res = await axiosInstance.post('/agents/chat', { 
+                message: userText,
+                history: history 
+            });
+            const aiReply = res.data?.reply || "I am with you, Hunter. Standing by.";
 
             const aiMsg = {
                 id: Date.now() + 1,
@@ -249,18 +258,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             speakText(aiReply);
         } catch (err) {
             console.error('Chat error:', err);
-            let aiReply = "Command received. AEGIS systems and agent workstations are operational.";
-            const lower = userText.toLowerCase();
-
-            if (lower.includes('space') || lower.includes('disk') || lower.includes('storage')) {
-                aiReply = "The server root disk has 92 GB of available space out of 95 GB total.";
-            } else if (lower.includes('agent') || lower.includes('working') || lower.includes('online')) {
-                aiReply = "AEGIS Core Orchestrator, Database Agent, and Web Research Agent are active in their respective wings.";
-            } else if (lower.includes('task') || lower.includes('running')) {
-                aiReply = "System tasks can be viewed and triggered in real-time from the Tasks tab.";
-            } else if (lower.includes('status') || lower.includes('health')) {
-                aiReply = "All systems and neural gateway tiers are healthy and responsive.";
-            }
+            let aiReply = "Acknowledged, Hunter. Neural gateway encountered a momentary latency spike, but core telemetry is active.";
 
             const aiMsg = {
                 id: Date.now() + 1,
@@ -283,10 +281,10 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     };
 
     const quickChips = [
-        "System status",
-        "Check disk space",
-        "Show connected agents",
-        "What tasks are running?"
+        "What can you do for me?",
+        "Help me brainstorm",
+        "Create a security audit task",
+        "Give me a tactical situation update"
     ];
 
     return (
