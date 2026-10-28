@@ -81,6 +81,49 @@ function generateEnvContent(env) {
     ? String(env.CORS_ALLOWED_ORIGINS).trim()
     : `http://${serverHost},https://${serverHost},http://localhost,https://localhost,http://127.0.0.1,https://127.0.0.1`;
 
+  // Normalize and auto-upgrade deprecated Google Gemini model names to active endpoints
+  const normalizeModel = (name, defaultModel) => {
+    if (!name || String(name).trim() === '') return defaultModel;
+    const str = String(name).trim();
+    if (str === 'gemini-1.5-flash' || str === 'gemini-1.5-pro') return 'gemini-3.5-flash-lite';
+    return str;
+  };
+
+  // Discover if a valid Google Gemini API key is provided in any secret
+  const geminiKey = env.AEGIS_MODEL_FALLBACK2_API_KEY || 
+    (env.AEGIS_MODEL_PRIMARY_API_KEY && (env.AEGIS_MODEL_PRIMARY_API_KEY.startsWith('AQ.') || env.AEGIS_MODEL_PRIMARY_API_KEY.startsWith('AIzaSy')) ? env.AEGIS_MODEL_PRIMARY_API_KEY : null);
+
+  let primaryProvider = env.AEGIS_MODEL_PRIMARY_PROVIDER || (geminiKey ? 'gemini' : 'openai');
+  let primaryEndpoint = env.AEGIS_MODEL_PRIMARY_ENDPOINT || (geminiKey ? 'https://generativelanguage.googleapis.com/v1beta/openai/' : 'https://api.openai.com/v1');
+  let primaryApiKey = env.AEGIS_MODEL_PRIMARY_API_KEY;
+  let primaryModel = normalizeModel(env.AEGIS_MODEL_PRIMARY_NAME, geminiKey ? 'gemini-3.5-flash-lite' : 'gpt-4o');
+
+  let fallback1Provider = env.AEGIS_MODEL_FALLBACK1_PROVIDER || (geminiKey ? 'gemini' : 'groq');
+  let fallback1Endpoint = env.AEGIS_MODEL_FALLBACK1_ENDPOINT || (geminiKey ? 'https://generativelanguage.googleapis.com/v1beta/openai/' : 'https://api.groq.com/openai/v1');
+  let fallback1ApiKey = env.AEGIS_MODEL_FALLBACK1_API_KEY;
+  let fallback1Model = normalizeModel(env.AEGIS_MODEL_FALLBACK1_NAME, geminiKey ? 'gemini-3.8-flash' : 'llama-3.3-70b-versatile');
+
+  let fallback2Provider = env.AEGIS_MODEL_FALLBACK2_PROVIDER || 'gemini';
+  let fallback2Endpoint = env.AEGIS_MODEL_FALLBACK2_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/openai/';
+  let fallback2ApiKey = env.AEGIS_MODEL_FALLBACK2_API_KEY;
+  let fallback2Model = normalizeModel(env.AEGIS_MODEL_FALLBACK2_NAME, 'gemini-3.5-flash-lite');
+
+  // If a valid Gemini key is present in FALLBACK2, ensure it powers Primary & Fallback-1 when their keys are exhausted or blocked
+  if (geminiKey) {
+    if (!primaryApiKey || primaryApiKey.startsWith('sk-proj-')) {
+      primaryProvider = 'gemini';
+      primaryEndpoint = 'https://generativelanguage.googleapis.com/v1beta/openai/';
+      primaryApiKey = geminiKey;
+      primaryModel = 'gemini-3.5-flash-lite';
+    }
+    if (!fallback1ApiKey || fallback1ApiKey.startsWith('gsk_')) {
+      fallback1Provider = 'gemini';
+      fallback1Endpoint = 'https://generativelanguage.googleapis.com/v1beta/openai/';
+      fallback1ApiKey = geminiKey;
+      fallback1Model = 'gemini-3.8-flash';
+    }
+  }
+
   const lines = [
     '# =========================================================================',
     '# AEGIS Production Environment Configuration',
@@ -108,20 +151,20 @@ function generateEnvContent(env) {
     `CORS_ALLOWED_ORIGINS=${serializeSystemdValue(corsOrigins, 'CORS_ALLOWED_ORIGINS')}`,
     '',
     '# --- Multi-Model Gateway & Fallback Cascade ---',
-    `AEGIS_MODEL_PRIMARY_PROVIDER=${serializeSystemdValue(env.AEGIS_MODEL_PRIMARY_PROVIDER || 'openai', 'AEGIS_MODEL_PRIMARY_PROVIDER')}`,
-    `AEGIS_MODEL_PRIMARY_ENDPOINT=${serializeSystemdValue(env.AEGIS_MODEL_PRIMARY_ENDPOINT || 'https://api.openai.com/v1', 'AEGIS_MODEL_PRIMARY_ENDPOINT')}`,
-    `AEGIS_MODEL_PRIMARY_API_KEY=${serializeSystemdValue(env.AEGIS_MODEL_PRIMARY_API_KEY, 'AEGIS_MODEL_PRIMARY_API_KEY')}`,
-    `AEGIS_MODEL_PRIMARY_NAME=${serializeSystemdValue(env.AEGIS_MODEL_PRIMARY_NAME || 'gpt-4o', 'AEGIS_MODEL_PRIMARY_NAME')}`,
+    `AEGIS_MODEL_PRIMARY_PROVIDER=${serializeSystemdValue(primaryProvider, 'AEGIS_MODEL_PRIMARY_PROVIDER')}`,
+    `AEGIS_MODEL_PRIMARY_ENDPOINT=${serializeSystemdValue(primaryEndpoint, 'AEGIS_MODEL_PRIMARY_ENDPOINT')}`,
+    `AEGIS_MODEL_PRIMARY_API_KEY=${serializeSystemdValue(primaryApiKey, 'AEGIS_MODEL_PRIMARY_API_KEY')}`,
+    `AEGIS_MODEL_PRIMARY_NAME=${serializeSystemdValue(primaryModel, 'AEGIS_MODEL_PRIMARY_NAME')}`,
     '',
-    `AEGIS_MODEL_FALLBACK1_PROVIDER=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK1_PROVIDER || 'groq', 'AEGIS_MODEL_FALLBACK1_PROVIDER')}`,
-    `AEGIS_MODEL_FALLBACK1_ENDPOINT=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK1_ENDPOINT || 'https://api.groq.com/openai/v1', 'AEGIS_MODEL_FALLBACK1_ENDPOINT')}`,
-    `AEGIS_MODEL_FALLBACK1_API_KEY=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK1_API_KEY, 'AEGIS_MODEL_FALLBACK1_API_KEY')}`,
-    `AEGIS_MODEL_FALLBACK1_NAME=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK1_NAME || 'llama-3.3-70b-versatile', 'AEGIS_MODEL_FALLBACK1_NAME')}`,
+    `AEGIS_MODEL_FALLBACK1_PROVIDER=${serializeSystemdValue(fallback1Provider, 'AEGIS_MODEL_FALLBACK1_PROVIDER')}`,
+    `AEGIS_MODEL_FALLBACK1_ENDPOINT=${serializeSystemdValue(fallback1Endpoint, 'AEGIS_MODEL_FALLBACK1_ENDPOINT')}`,
+    `AEGIS_MODEL_FALLBACK1_API_KEY=${serializeSystemdValue(fallback1ApiKey, 'AEGIS_MODEL_FALLBACK1_API_KEY')}`,
+    `AEGIS_MODEL_FALLBACK1_NAME=${serializeSystemdValue(fallback1Model, 'AEGIS_MODEL_FALLBACK1_NAME')}`,
     '',
-    `AEGIS_MODEL_FALLBACK2_PROVIDER=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_PROVIDER || 'gemini', 'AEGIS_MODEL_FALLBACK2_PROVIDER')}`,
-    `AEGIS_MODEL_FALLBACK2_ENDPOINT=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/openai/', 'AEGIS_MODEL_FALLBACK2_ENDPOINT')}`,
-    `AEGIS_MODEL_FALLBACK2_API_KEY=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_API_KEY, 'AEGIS_MODEL_FALLBACK2_API_KEY')}`,
-    `AEGIS_MODEL_FALLBACK2_NAME=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_NAME || 'gemini-3.5-flash-lite', 'AEGIS_MODEL_FALLBACK2_NAME')}`,
+    `AEGIS_MODEL_FALLBACK2_PROVIDER=${serializeSystemdValue(fallback2Provider, 'AEGIS_MODEL_FALLBACK2_PROVIDER')}`,
+    `AEGIS_MODEL_FALLBACK2_ENDPOINT=${serializeSystemdValue(fallback2Endpoint, 'AEGIS_MODEL_FALLBACK2_ENDPOINT')}`,
+    `AEGIS_MODEL_FALLBACK2_API_KEY=${serializeSystemdValue(fallback2ApiKey, 'AEGIS_MODEL_FALLBACK2_API_KEY')}`,
+    `AEGIS_MODEL_FALLBACK2_NAME=${serializeSystemdValue(fallback2Model, 'AEGIS_MODEL_FALLBACK2_NAME')}`,
     '',
     `AEGIS_MODEL_FALLBACK3_PROVIDER=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK3_PROVIDER || 'openrouter', 'AEGIS_MODEL_FALLBACK3_PROVIDER')}`,
     `AEGIS_MODEL_FALLBACK3_ENDPOINT=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK3_ENDPOINT || 'https://openrouter.ai/api/v1', 'AEGIS_MODEL_FALLBACK3_ENDPOINT')}`,

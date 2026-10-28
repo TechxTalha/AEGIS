@@ -310,14 +310,15 @@ public class AgentRestController {
         }
 
         if (reply == null) {
-            String[] diverseFallbacks = {
-                "Command acknowledged, Hunter. All telemetry verified and systems standing by.",
-                "Directives logged. AEGIS Core systems and agent workstations are synchronized and operational.",
-                "Signal confirmed. All agent routines are operating within nominal parameters, Hunter.",
-                "Instructions received. Network telemetry and subsystem statuses are clear."
-            };
-            int idx = Math.abs(message.hashCode()) % diverseFallbacks.length;
-            reply = diverseFallbacks[idx];
+            if (lower.contains("who am i") || lower.contains("who i am")) {
+                reply = "You are Hunter—my creator, commander, and the architect of this system. I answer to your frequency and stand ready for your directives.";
+            } else if (lower.contains("who are you") || lower.contains("what are you")) {
+                reply = "I am AEGIS, your autonomous AI companion and command deck intelligence, engineered to execute your directives.";
+            } else if (lower.contains("help") || lower.contains("what can you do")) {
+                reply = "I can discuss any topic, draft code, create and execute tasks across workstations, manage storage and telemetry, and execute your directives. What shall we tackle, Hunter?";
+            } else {
+                reply = "Standing by, Hunter. Core neural link is active and ready for your command.";
+            }
         }
 
         Map<String, Object> result = new HashMap<>();

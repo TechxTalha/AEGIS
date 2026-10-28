@@ -97,11 +97,15 @@ public class ModelGatewayService {
 
     private void addIfConfigured(String endpoint, String apiKey, String modelName, String tierLabel) {
         if (apiKey != null && !apiKey.trim().isEmpty()) {
+            String resolvedModel = (modelName != null && !modelName.trim().isEmpty()) ? modelName.trim() : "gemini-3.5-flash-lite";
+            if ("gemini-1.5-flash".equalsIgnoreCase(resolvedModel) || "gemini-1.5-pro".equalsIgnoreCase(resolvedModel)) {
+                resolvedModel = "gemini-3.5-flash-lite";
+            }
             OpenAICompatibleProvider provider = new OpenAICompatibleProvider(
-                    restTemplate, objectMapper, endpoint.trim(), apiKey.trim(), modelName.trim()
+                    restTemplate, objectMapper, endpoint.trim(), apiKey.trim(), resolvedModel
             );
             providerChain.add(provider);
-            logger.info("Registered [{}] model provider: {} (model: {})", tierLabel, endpoint, modelName);
+            logger.info("Registered [{}] model provider: {} (model: {})", tierLabel, endpoint, resolvedModel);
         }
     }
 
