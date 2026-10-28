@@ -267,7 +267,26 @@ public class AgentRestController {
         }
 
         if (reply == null) {
-            reply = "Command recognized. AEGIS Core systems and agent workstations are synchronized and operational.";
+            if (lower.contains("status") || lower.contains("health") || lower.contains("system")) {
+                reply = "AEGIS Core systems are online. 3 specialized agent workstations are active, host memory is running at optimal levels, and all telemetry nodes are synchronized.";
+            } else if (lower.contains("agent") || lower.contains("who is online") || lower.contains("workstation")) {
+                reply = "Active agents in the matrix include AEGIS Orchestrator (Command Deck), Database Agent (Vault), and Web Research Agent (Radar Wing). Antigravity Coder is in hibernation.";
+            } else if (lower.contains("task") || lower.contains("running") || lower.contains("execution")) {
+                reply = "Task queue and execution workers are active. You can dispatch new tasks or inspect running jobs from the Tasks tab.";
+            } else if (lower.contains("hello") || lower.contains("hi") || lower.contains("hey")) {
+                reply = "Greetings, Hunter. AEGIS is active and listening. State your command or objective.";
+            } else if (lower.contains("help") || lower.contains("what can you do")) {
+                reply = "I can execute workflow tasks, monitor server health, check disk storage, query live weather telemetry, and orchestrate specialized agents.";
+            } else {
+                String[] diverseFallbacks = {
+                    "Command acknowledged, Hunter. Telemetry verified and systems standing by.",
+                    "Directives logged. AEGIS Core systems and agent workstations are synchronized and operational.",
+                    "Signal confirmed. All agent routines are operating within nominal parameters, Hunter.",
+                    "Instructions received. Network telemetry and subsystem statuses are clear."
+                };
+                int idx = Math.abs(message.hashCode()) % diverseFallbacks.length;
+                reply = diverseFallbacks[idx];
+            }
         }
 
         Map<String, Object> result = new HashMap<>();

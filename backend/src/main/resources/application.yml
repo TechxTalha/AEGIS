@@ -80,7 +80,7 @@ aegis:
       provider: ${AEGIS_MODEL_FALLBACK2_PROVIDER:gemini}
       endpoint: ${AEGIS_MODEL_FALLBACK2_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/openai/}
       api-key: ${AEGIS_MODEL_FALLBACK2_API_KEY:}
-      model-name: ${AEGIS_MODEL_FALLBACK2_NAME:gemini-1.5-flash}
+      model-name: ${AEGIS_MODEL_FALLBACK2_NAME:gemini-3.5-flash-lite}
     # Fallback Tier 3 (e.g. OpenRouter / Mistral free models)
     fallback3:
       provider: ${AEGIS_MODEL_FALLBACK3_PROVIDER:openrouter}

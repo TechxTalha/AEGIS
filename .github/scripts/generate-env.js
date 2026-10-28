@@ -121,7 +121,7 @@ function generateEnvContent(env) {
     `AEGIS_MODEL_FALLBACK2_PROVIDER=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_PROVIDER || 'gemini', 'AEGIS_MODEL_FALLBACK2_PROVIDER')}`,
     `AEGIS_MODEL_FALLBACK2_ENDPOINT=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/openai/', 'AEGIS_MODEL_FALLBACK2_ENDPOINT')}`,
     `AEGIS_MODEL_FALLBACK2_API_KEY=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_API_KEY, 'AEGIS_MODEL_FALLBACK2_API_KEY')}`,
-    `AEGIS_MODEL_FALLBACK2_NAME=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_NAME || 'gemini-1.5-flash', 'AEGIS_MODEL_FALLBACK2_NAME')}`,
+    `AEGIS_MODEL_FALLBACK2_NAME=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK2_NAME || 'gemini-3.5-flash-lite', 'AEGIS_MODEL_FALLBACK2_NAME')}`,
     '',
     `AEGIS_MODEL_FALLBACK3_PROVIDER=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK3_PROVIDER || 'openrouter', 'AEGIS_MODEL_FALLBACK3_PROVIDER')}`,
     `AEGIS_MODEL_FALLBACK3_ENDPOINT=${serializeSystemdValue(env.AEGIS_MODEL_FALLBACK3_ENDPOINT || 'https://openrouter.ai/api/v1', 'AEGIS_MODEL_FALLBACK3_ENDPOINT')}`,

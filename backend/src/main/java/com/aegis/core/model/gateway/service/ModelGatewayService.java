@@ -58,7 +58,7 @@ public class ModelGatewayService {
     @Value("${aegis.model.fallback2.api-key:}")
     private String fallback2ApiKey;
 
-    @Value("${aegis.model.fallback2.model-name:gemini-1.5-flash}")
+    @Value("${aegis.model.fallback2.model-name:gemini-3.5-flash-lite}")
     private String fallback2ModelName;
 
     // --- Fallback Tier 3 (e.g., OpenRouter / Mistral / Together) ---
