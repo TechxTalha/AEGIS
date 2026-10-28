@@ -1,4 +1,5 @@
 import axiosInstance from './axiosInstance';
+import { getRefreshToken } from '../utils/tokenStorage';
 
 export const authApi = {
     login: async (credentials) => {
@@ -13,8 +14,12 @@ export const authApi = {
         const response = await axiosInstance.post('/auth/logout');
         return response.data;
     },
-    refresh: async () => {
-        const response = await axiosInstance.post('/auth/refresh');
+    refresh: async (token) => {
+        const storedRefreshToken = token || getRefreshToken();
+        const response = await axiosInstance.post('/auth/refresh',
+            storedRefreshToken ? { refreshToken: storedRefreshToken } : {},
+            storedRefreshToken ? { headers: { 'X-Refresh-Token': storedRefreshToken } } : {}
+        );
         return response.data;
     }
 };

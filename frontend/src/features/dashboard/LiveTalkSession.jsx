@@ -258,7 +258,14 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             speakText(aiReply);
         } catch (err) {
             console.error('Chat error:', err);
-            let aiReply = "Acknowledged, Hunter. Neural gateway encountered a momentary latency spike, but core telemetry is active.";
+            let aiReply;
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                aiReply = "Commander Hunter, security session has expired. Please sign in again to refresh command clearance.";
+            } else if (err.response?.data?.message) {
+                aiReply = `AEGIS advisory: ${err.response.data.message}`;
+            } else {
+                aiReply = "AEGIS core telemetry is temporarily unreachable. Please check network connectivity.";
+            }
 
             const aiMsg = {
                 id: Date.now() + 1,

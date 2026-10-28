@@ -1,12 +1,19 @@
 import axios from 'axios';
-import { getAccessToken, setAccessToken, clearAccessToken } from '../utils/tokenStorage';
+import { 
+    getAccessToken, 
+    setAccessToken, 
+    clearAccessToken,
+    getRefreshToken,
+    setRefreshToken,
+    clearRefreshToken
+} from '../utils/tokenStorage';
 
 const axiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_URL || '/api',
     withCredentials: true, // Crucial for sending/receiving HTTP-Only cookies
 });
 
-// Request Interceptor: Attach Access Token from Memory
+// Request Interceptor: Attach Access Token from Memory / Storage
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = getAccessToken();
@@ -18,7 +25,7 @@ axiosInstance.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle 401 & Silent Refresh
+// Response Interceptor: Handle 401 / 403 & Silent Refresh
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -37,8 +44,17 @@ axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+        if (!originalRequest) {
+            return Promise.reject(error);
+        }
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        const status = error.response?.status;
+        const isAuthError = (status === 401 || status === 403) && 
+                            !originalRequest._retry && 
+                            !originalRequest.url?.includes('/auth/login') && 
+                            !originalRequest.url?.includes('/auth/refresh');
+
+        if (isAuthError) {
             if (isRefreshing) {
                 // If a refresh is already happening, queue this request
                 return new Promise(function(resolve, reject) {
@@ -56,16 +72,24 @@ axiosInstance.interceptors.response.use(
             originalRequest._retry = true;
             isRefreshing = true;
 
+            const storedRefreshToken = getRefreshToken();
+
             try {
-                // Attempt to refresh the token using the HttpOnly cookie
+                // Attempt to refresh the token using HttpOnly cookie and body/header fallback
                 const response = await axios.post(
                     `${import.meta.env.VITE_API_URL || '/api'}/auth/refresh`,
-                    {},
-                    { withCredentials: true }
+                    storedRefreshToken ? { refreshToken: storedRefreshToken } : {},
+                    { 
+                        withCredentials: true,
+                        headers: storedRefreshToken ? { 'X-Refresh-Token': storedRefreshToken } : {}
+                    }
                 );
 
                 const newAccessToken = response.data.accessToken;
                 setAccessToken(newAccessToken);
+                if (response.data.refreshToken) {
+                    setRefreshToken(response.data.refreshToken);
+                }
                 
                 processQueue(null, newAccessToken);
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -74,7 +98,10 @@ axiosInstance.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null);
                 clearAccessToken();
-                // Optionally trigger a logout event here to redirect to login
+                clearRefreshToken();
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('aegis:auth_expired'));
+                }
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

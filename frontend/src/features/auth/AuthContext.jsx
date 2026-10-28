@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../../api/auth';
-import { setAccessToken, clearAccessToken } from '../../utils/tokenStorage';
+import { 
+    getAccessToken, 
+    setAccessToken, 
+    clearAccessToken, 
+    getRefreshToken, 
+    setRefreshToken, 
+    clearRefreshToken 
+} from '../../utils/tokenStorage';
 
 const AuthContext = createContext(null);
 
@@ -14,21 +21,42 @@ export const AuthProvider = ({ children }) => {
             try {
                 const response = await authApi.refresh();
                 setAccessToken(response.accessToken);
+                if (response.refreshToken) {
+                    setRefreshToken(response.refreshToken);
+                }
                 setIsAuthenticated(true);
             } catch (error) {
-                clearAccessToken();
-                setIsAuthenticated(false);
+                const storedAccessToken = getAccessToken();
+                const storedRefreshToken = getRefreshToken();
+                if (storedAccessToken || storedRefreshToken) {
+                    // Keep authenticated state optimistically if credentials exist,
+                    // request interceptor will handle silent refresh on next call
+                    setIsAuthenticated(true);
+                } else {
+                    clearAccessToken();
+                    clearRefreshToken();
+                    setIsAuthenticated(false);
+                }
             } finally {
                 setIsLoading(false);
             }
         };
 
         initAuth();
+
+        const handleAuthExpired = () => {
+            setIsAuthenticated(false);
+        };
+        window.addEventListener('aegis:auth_expired', handleAuthExpired);
+        return () => window.removeEventListener('aegis:auth_expired', handleAuthExpired);
     }, []);
 
     const login = async (credentials) => {
         const response = await authApi.login(credentials);
         setAccessToken(response.accessToken);
+        if (response.refreshToken) {
+            setRefreshToken(response.refreshToken);
+        }
         setIsAuthenticated(true);
     };
 
@@ -37,6 +65,7 @@ export const AuthProvider = ({ children }) => {
             await authApi.logout();
         } finally {
             clearAccessToken();
+            clearRefreshToken();
             setIsAuthenticated(false);
         }
     };
