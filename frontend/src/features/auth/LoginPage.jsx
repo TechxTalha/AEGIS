@@ -19,8 +19,17 @@ const LoginPage = () => {
                 password: values.password
             });
         } catch (err) {
-            const msg = err.response?.data?.message || err.response?.data || 'Login failed. Please check your credentials.';
-            setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+            if (err.response?.status === 502 || err.response?.status === 503 || err.code === 'ERR_BAD_RESPONSE') {
+                setError('Backend service was temporarily restarting. Please try again now.');
+            } else {
+                const rawMsg = err.response?.data?.message || err.response?.data;
+                if (typeof rawMsg === 'string' && rawMsg.trim().startsWith('<')) {
+                    setError('Server temporarily unavailable. Please retry in a moment.');
+                } else {
+                    const msg = rawMsg || 'Login failed. Please check your credentials.';
+                    setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+                }
+            }
         } finally {
             setLoading(false);
         }
