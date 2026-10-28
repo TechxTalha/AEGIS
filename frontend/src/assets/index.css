@@ -9,13 +9,6 @@ html, body, #root {
   padding: 0;
 }
 
-@media (min-width: 1024px) {
-  html, body, #root {
-    overflow: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-  }
-}
 
 @layer base {
   body {

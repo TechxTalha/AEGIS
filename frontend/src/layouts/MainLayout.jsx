@@ -42,6 +42,8 @@ const MainLayout = () => {
         return 'dashboard';
     };
 
+    const isDashboard = location.pathname === '/' || location.pathname === '';
+
     return (
         <Layout className="h-screen max-h-screen overflow-hidden flex flex-col bg-[#0B0F19] text-white">
             {/* Top Navigation Bar with Grand Centered Logo & Aligned Command Branding */}
@@ -100,9 +102,11 @@ const MainLayout = () => {
                 </div>
             </Header>
 
-            {/* Main Content Area - padded at bottom for fixed nav, zero-scroll on desktop */}
-            <Content className="flex-1 overflow-y-auto lg:overflow-hidden pb-18 pt-1 px-3 lg:px-5 flex flex-col justify-center">
-                <Outlet />
+            {/* Main Content Area - padded at bottom for fixed nav, smooth scrolling on all views */}
+            <Content className="flex-1 min-h-0 overflow-y-auto pb-28 pt-2 px-3 lg:px-6">
+                <div className={`w-full ${isDashboard ? 'min-h-full flex flex-col' : 'max-w-7xl mx-auto'}`}>
+                    <Outlet />
+                </div>
             </Content>
 
             {/* Bottom Navigation Bar (Mobile PWA) - Floating Pill Design */}

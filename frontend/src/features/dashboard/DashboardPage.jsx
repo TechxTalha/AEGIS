@@ -68,7 +68,7 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="animate-fade-in w-full h-full flex flex-col justify-center">
+        <div className="animate-fade-in w-full my-auto">
             {/* 3-Column Symmetrical Command Layout: Left (Chat/Voice), Center (Globe), Right (Agents) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 xl:gap-4 items-stretch w-full">
                 {/* Column 1 (LEFT): Live Talk & Comms Session */}
