@@ -24,17 +24,6 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
     const hoverPosRef = useRef(null);
     const isSpeakingRef = useRef(isSpeaking);
 
-    // Dynamic HUD Telemetry state
-    const [hudData, setHudData] = useState({
-        lat: '33.68° N',
-        lon: '073.04° E',
-        yaw: '142°',
-        pitch: '16°',
-        activeStations: 5,
-        networkStatus: 'SYNCHRONIZED'
-    });
-    const [viewMode, setViewMode] = useState('ALL'); // 'ALL' | 'STATIONS' | 'ARCS'
-
     useEffect(() => {
         isSpeakingRef.current = isSpeaking;
     }, [isSpeaking]);
@@ -414,8 +403,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
             ctx.shadowBlur = 0;
 
             // --- LAYER 6: 3D GREAT-CIRCLE GEODESIC SIGNAL ARCS ---
-            if (viewMode === 'ALL' || viewMode === 'ARCS') {
-                arcConnections.forEach(arc => {
+            arcConnections.forEach(arc => {
                     arc.progress = (arc.progress + arc.speed * (isSpeakingNow ? 1.6 : 1.0)) % 1;
 
                     // Interpolate 3D parabolic geodesic arch lifting above the sphere
@@ -473,7 +461,6 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
                         ctx.restore();
                     }
                 });
-            }
 
             // --- LAYER 7: ACTIVE STATION BEACONS & 3D HUD LABELS ---
             stationPoints.forEach(st => {
@@ -507,14 +494,6 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
                     ctx.fillStyle = st.color;
                     ctx.shadowColor = st.color;
                     ctx.shadowBlur = 14;
-                    ctx.fill();
-
-                    // Station Callout Badge
-                    ctx.font = '10px "JetBrains Mono", monospace';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.shadowColor = '#000000';
-                    ctx.shadowBlur = 6;
-                    ctx.fillText(`[ ${st.id} ]`, pTop.x + 8, pTop.y + 3);
                     ctx.restore();
                 }
             });
@@ -598,27 +577,6 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
             drawBracket(Math.PI * 1.75);
             ctx.restore();
 
-            // Periodic HUD Telemetry Update (throttle to ~10Hz for smooth UI)
-            hudUpdateCounter++;
-            if (hudUpdateCounter % 6 === 0) {
-                // Calculate coordinate facing direct center of camera
-                const currentLon = (-rotRef.current.y * 180 / Math.PI + 360) % 360;
-                const currentLat = (rotRef.current.x * 180 / Math.PI);
-                
-                const latStr = `${Math.abs(currentLat).toFixed(2)}° ${currentLat >= 0 ? 'N' : 'S'}`;
-                const lonStr = `${currentLon.toFixed(2)}° E`;
-                const yawDeg = `${Math.round((-rotRef.current.y * 180 / Math.PI) % 360 + 360) % 360}°`;
-                const pitchDeg = `${Math.round(currentLat)}°`;
-
-                setHudData(prev => ({
-                    ...prev,
-                    lat: latStr,
-                    lon: lonStr,
-                    yaw: yawDeg,
-                    pitch: pitchDeg
-                }));
-            }
-
             animationFrameId = requestAnimationFrame(render);
         };
 
@@ -628,7 +586,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
             cancelAnimationFrame(animationFrameId);
             window.removeEventListener('resize', updateDimensions);
         };
-    }, [viewMode]);
+    }, []);
 
     // 2-Axis Smooth Trackball Interaction Handlers
     const handleMouseDown = (e) => {
@@ -681,78 +639,29 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
     return (
         <div 
             ref={containerRef}
-            className="relative w-full h-[650px] flex items-center justify-center rounded-3xl bg-gradient-to-b from-[#0c1222]/95 via-[#080d19] to-[#060a14] border border-cyan-500/20 shadow-[0_16px_48px_rgba(0,0,0,0.9)] overflow-hidden select-none group"
+            className="relative w-full h-[650px] flex items-center justify-center rounded-3xl bg-gradient-to-b from-[#0a0f1b] via-[#080d16] to-[#060a11] border border-white/15 shadow-[0_16px_48px_rgba(0,0,0,0.85)] overflow-hidden select-none group"
             onMouseLeave={handleMouseUp}
         >
             {/* Holographic Ambient Glow Frame */}
             <div className="absolute inset-0 bg-radial-gradient from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
 
-            {/* Futuristic Top HUD Banner */}
+            {/* Clean Top Header: Harmonious with AEGIS SMART HQ */}
             <div className="absolute top-4 left-6 right-6 flex justify-between items-center z-10 pointer-events-none">
-                <div className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-cyan-500/30">
-                    <span className={`w-2.5 h-2.5 rounded-full ${isSpeaking ? 'bg-[#00d2ff] shadow-[0_0_12px_#00d2ff] animate-ping' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]'}`} />
-                    <span className="text-xs font-mono tracking-wider uppercase font-semibold text-gray-200">
-                        {isSpeaking ? 'AEGIS Neural Transmission' : 'Holographic Planetary Radar'}
+                <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${isSpeaking ? 'bg-[#00d2ff] shadow-neon animate-ping' : 'bg-cyan-400 shadow-neon animate-pulse'}`} />
+                    <h3 className="text-xs font-bold text-white tracking-wider uppercase mb-0">
+                        GLOBAL INFRASTRUCTURE
+                    </h3>
+                </div>
+
+                <div className="flex items-center gap-2 text-[10px] font-mono">
+                    <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-semibold">
+                        5 Active Nodes
                     </span>
-                    <span className="text-[10px] text-cyan-400 font-mono hidden sm:inline-block ml-1">
-                        • 60 FPS
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        Synchronized
                     </span>
                 </div>
-
-                <div className="flex items-center gap-2 pointer-events-auto">
-                    {/* View filter chips */}
-                    <div className="flex items-center bg-black/50 backdrop-blur-md rounded-xl p-0.5 border border-white/10 text-[10px] font-mono">
-                        <button
-                            onClick={() => setViewMode('ALL')}
-                            className={`px-2.5 py-1 rounded-lg transition-all ${viewMode === 'ALL' ? 'bg-cyan-500/25 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-                        >
-                            Global
-                        </button>
-                        <button
-                            onClick={() => setViewMode('STATIONS')}
-                            className={`px-2.5 py-1 rounded-lg transition-all ${viewMode === 'STATIONS' ? 'bg-cyan-500/25 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-                        >
-                            Stations
-                        </button>
-                        <button
-                            onClick={() => setViewMode('ARCS')}
-                            className={`px-2.5 py-1 rounded-lg transition-all ${viewMode === 'ARCS' ? 'bg-cyan-500/25 text-cyan-300 font-bold border border-cyan-500/40 shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-                        >
-                            Signal Arcs
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Dynamic Telemetry Corner HUD (Left) */}
-            <div className="absolute top-16 left-6 z-10 pointer-events-none hidden md:flex flex-col gap-1 font-mono text-[10px] text-gray-400 bg-black/40 backdrop-blur-sm p-2.5 rounded-xl border border-white/5">
-                <div className="text-cyan-400 font-bold tracking-wider flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    TARGET CENTER
-                </div>
-                <div className="flex justify-between gap-4">
-                    <span>LATITUDE:</span>
-                    <span className="text-gray-200 font-semibold">{hudData.lat}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                    <span>LONGITUDE:</span>
-                    <span className="text-gray-200 font-semibold">{hudData.lon}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                    <span>BEARING:</span>
-                    <span className="text-cyan-300">{hudData.yaw} YAW / {hudData.pitch} PITCH</span>
-                </div>
-            </div>
-
-            {/* Dynamic Telemetry Corner HUD (Right) */}
-            <div className="absolute top-16 right-6 z-10 pointer-events-none hidden md:flex flex-col gap-1 font-mono text-[10px] text-gray-400 bg-black/40 backdrop-blur-sm p-2.5 rounded-xl border border-white/5 text-right">
-                <div className="text-emerald-400 font-bold tracking-wider flex items-center justify-end gap-1.5">
-                    GRID COHERENCE: 99.8%
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                </div>
-                <div>5 ACTIVE GROUND BEACONS</div>
-                <div>PARABOLIC GEODESICS: ONLINE</div>
-                <div className="text-cyan-400">TRACKBALL MOMENTUM: ACTIVE</div>
             </div>
 
             {/* 3D Canvas Viewport */}
@@ -767,33 +676,29 @@ const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
                 onTouchEnd={handleTouchEnd}
             />
 
-            {/* Bottom HUD Bar & Action Controls */}
+            {/* Clean Minimal Bottom HUD */}
             <div className="absolute bottom-4 left-6 right-6 flex justify-between items-center z-10 pointer-events-none">
                 <div className="flex items-center gap-2.5">
-                    {/* Visualizer frequency equalizer meters */}
-                    <div className="flex items-end gap-1 h-6 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 shadow-inner">
-                        <span className={`w-1 bg-[#00d2ff] rounded-full transition-all ${isSpeaking ? 'h-5 animate-pulse' : 'h-2'}`} />
-                        <span className={`w-1 bg-[#38bdf8] rounded-full transition-all ${isSpeaking ? 'h-3' : 'h-3'}`} />
-                        <span className={`w-1 bg-[#00d2ff] rounded-full transition-all ${isSpeaking ? 'h-5 animate-bounce' : 'h-2'}`} />
-                        <span className={`w-1 bg-[#a855f7] rounded-full transition-all ${isSpeaking ? 'h-4 animate-pulse' : 'h-3'}`} />
-                        <span className={`w-1 bg-[#38bdf8] rounded-full transition-all ${isSpeaking ? 'h-5.5' : 'h-1.5'}`} />
+                    <div className="flex items-end gap-1 h-5 px-2.5 py-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/10">
+                        <span className={`w-1 bg-[#00d2ff] rounded-full transition-all ${isSpeaking ? 'h-4 animate-pulse' : 'h-1.5'}`} />
+                        <span className={`w-1 bg-[#38bdf8] rounded-full transition-all ${isSpeaking ? 'h-3' : 'h-2'}`} />
+                        <span className={`w-1 bg-[#00d2ff] rounded-full transition-all ${isSpeaking ? 'h-4 animate-bounce' : 'h-1.5'}`} />
+                        <span className={`w-1 bg-[#a855f7] rounded-full transition-all ${isSpeaking ? 'h-3 animate-pulse' : 'h-2'}`} />
                     </div>
                     
-                    <span className="text-xs font-mono text-gray-300 font-medium bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5">
+                    <span className="text-[11px] font-mono text-gray-400 bg-black/40 backdrop-blur-md px-3 py-1 rounded-xl border border-white/5">
                         {isSpeaking ? (
-                            <span className="text-cyan-400 font-semibold tracking-wide flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                                Neural Signal Active • Broadcasting
+                            <span className="text-cyan-400 font-semibold flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                                Neural Voice Link Active
                             </span>
                         ) : (
-                            <span className="flex items-center gap-2 text-gray-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/50"></span>
-                                Drag to orbit • 2-Axis Momentum
+                            <span className="text-gray-400">
+                                Global Data Mesh Online
                             </span>
                         )}
                     </span>
                 </div>
-
             </div>
         </div>
     );
