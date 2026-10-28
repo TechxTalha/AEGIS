@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { notification } from 'antd';
 import { 
     AudioOutlined, 
     AudioMutedOutlined, 
@@ -8,6 +9,17 @@ import {
     SoundOutlined
 } from '@ant-design/icons';
 import axiosInstance from '../../api/axiosInstance';
+
+const isSecureOrigin = typeof window !== 'undefined' && (
+    window.isSecureContext || 
+    ['localhost', '127.0.0.1'].includes(window.location.hostname) ||
+    window.location.protocol === 'https:'
+);
+
+const switchToHttps = () => {
+    const portPart = window.location.port ? `:${window.location.port}` : '';
+    window.location.href = `https://${window.location.hostname}${portPart}${window.location.pathname}${window.location.search}`;
+};
 
 /**
  * LiveTalkSession (Left Column Assistant)
@@ -99,10 +111,20 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         clearInterval(audioIntervalRef.current);
     };
 
-    const toggleMic = () => {
+    const toggleMic = async () => {
         if (isMicActive) {
             speechRecognitionRef.current?.stop();
             setIsMicActive(false);
+            return;
+        }
+
+        if (!isSecureOrigin) {
+            setTranscript('Chrome blocks microphone access over insecure HTTP. Please switch to HTTPS or use Chat.');
+            notification.warning({
+                message: 'HTTPS Required for Microphone',
+                description: 'Browsers strictly block microphone access on HTTP. Please click "Use HTTPS" or switch to the Chat tab.',
+                duration: 6
+            });
             return;
         }
 
@@ -112,6 +134,29 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             return;
         }
 
+        // 1. Proactively prompt user for microphone permission via getUserMedia
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+            } catch (permErr) {
+                console.warn('Microphone permission error:', permErr);
+                setIsMicActive(false);
+                if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
+                    setTranscript('Microphone permission blocked. Please allow microphone in your browser address bar.');
+                    notification.error({
+                        message: 'Microphone Permission Blocked',
+                        description: 'Please click the icon in your browser address bar and set Microphone to "Allow".'
+                    });
+                    return;
+                } else if (permErr.name === 'NotFoundError' || permErr.name === 'DevicesNotFoundError') {
+                    setTranscript('No microphone found. Please connect an audio input device.');
+                    return;
+                }
+            }
+        }
+
+        // 2. Start SpeechRecognition
         try {
             const recognition = new SpeechRecognition();
             recognition.continuous = false;
@@ -134,9 +179,26 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                 }
             };
 
-            recognition.onerror = () => {
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error, event);
                 setIsMicActive(false);
-                setTranscript('Microphone stopped. Tap to speak again.');
+                if (event.error === 'not-allowed') {
+                    if (!isSecureOrigin) {
+                        setTranscript('Microphone blocked by Chrome (insecure HTTP). Click "Use HTTPS" above or use Chat.');
+                    } else {
+                        setTranscript('Microphone access blocked. Click the icon in your browser address bar to allow microphone.');
+                    }
+                } else if (event.error === 'no-speech') {
+                    setTranscript('No speech detected. Tap to speak again.');
+                } else if (event.error === 'audio-capture') {
+                    setTranscript('No microphone detected. Please check your mic connection.');
+                } else if (event.error === 'network') {
+                    setTranscript('Speech recognition network error. Please try again or use Chat.');
+                } else if (event.error === 'service-not-allowed') {
+                    setTranscript('Speech recognition service not allowed on HTTP. Switch to HTTPS or use Chat.');
+                } else {
+                    setTranscript(`Microphone stopped (${event.error || 'idle'}). Tap to speak again.`);
+                }
             };
 
             recognition.onend = () => {
@@ -148,6 +210,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         } catch (err) {
             console.error('Failed to start speech recognition:', err);
             setIsMicActive(false);
+            setTranscript('Failed to initialize speech recognition. Please use Chat.');
         }
     };
 
@@ -260,10 +323,26 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
                 {/* 1. Voice Talk Mode */}
                 {mode === 'voice' && (
-                    <div className="flex-1 flex flex-col justify-between items-center py-4 px-2">
-                        <div className="text-center">
+                    <div className="flex-1 flex flex-col justify-between items-center py-2 px-2">
+                        <div className="text-center w-full">
                             <h3 className="text-sm font-bold text-white tracking-tight mb-0.5">AEGIS Assistant</h3>
-                            <p className="text-[11px] text-gray-400 mb-0">Live Voice Session</p>
+                            <p className="text-[11px] text-gray-400 mb-1">Live Voice Session</p>
+
+                            {/* HTTPS Notice Banner if on HTTP */}
+                            {!isSecureOrigin && (
+                                <div className="w-full my-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-2 text-xs">
+                                    <div className="flex items-center gap-1.5 text-amber-300 font-medium text-[11px]">
+                                        <span>⚠️</span>
+                                        <span>Microphone requires HTTPS</span>
+                                    </div>
+                                    <button 
+                                        onClick={switchToHttps}
+                                        className="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 font-bold border border-cyan-500/40 transition-colors cursor-pointer text-[10px] uppercase tracking-wider"
+                                    >
+                                        Use HTTPS
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Animated Voice Orb */}
@@ -307,10 +386,23 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                         </div>
 
                         {/* Subtitle Pill */}
-                        <div className="w-full bg-[#151c30]/90 border border-white/10 rounded-2xl p-3 text-center mb-4 min-h-[52px] flex items-center justify-center">
+                        <div className="w-full bg-[#151c30]/90 border border-white/10 rounded-2xl p-2.5 text-center mb-2 min-h-[50px] flex items-center justify-center">
                             <p className="text-xs text-gray-200 line-clamp-2 italic mb-0">
                                 {transcript}
                             </p>
+                        </div>
+
+                        {/* Quick Voice Prompt Chips */}
+                        <div className="flex gap-1.5 overflow-x-auto py-1 mb-2 no-scrollbar max-w-full justify-center">
+                            {quickChips.map((chip, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleUserSpeechSubmission(chip)}
+                                    className="whitespace-nowrap px-2.5 py-0.5 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] border border-white/10 transition-colors cursor-pointer"
+                                >
+                                    {chip}
+                                </button>
+                            ))}
                         </div>
 
                         {/* Call Action Bar */}
