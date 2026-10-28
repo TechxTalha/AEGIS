@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.aegis.core.agent.orchestration.service.AgentChatOrchestratorService;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
@@ -39,6 +40,7 @@ public class AgentRestController {
     private final SystemInfoProvider systemInfoProvider;
     private final ModelGatewayService modelGatewayService;
     private final RestTemplate restTemplate;
+    private final AgentChatOrchestratorService agentChatOrchestratorService;
     private final ObjectMapper objectMapper;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -47,20 +49,22 @@ public class AgentRestController {
                                @Lazy TaskService taskService,
                                SystemInfoProvider systemInfoProvider,
                                @Lazy ModelGatewayService modelGatewayService,
-                               @Lazy RestTemplate restTemplate) {
+                               @Lazy RestTemplate restTemplate,
+                               @Lazy AgentChatOrchestratorService agentChatOrchestratorService) {
         this.agentManager = agentManager;
         this.taskRepository = taskRepository;
         this.taskService = taskService;
         this.systemInfoProvider = systemInfoProvider;
         this.modelGatewayService = modelGatewayService;
         this.restTemplate = restTemplate != null ? restTemplate : new RestTemplate();
+        this.agentChatOrchestratorService = agentChatOrchestratorService;
         this.objectMapper = new ObjectMapper();
     }
 
     public AgentRestController(AgentManager agentManager,
                                TaskRepository taskRepository,
                                SystemInfoProvider systemInfoProvider) {
-        this(agentManager, taskRepository, null, systemInfoProvider, null, null);
+        this(agentManager, taskRepository, null, systemInfoProvider, null, null, null);
     }
 
     @GetMapping
@@ -217,140 +221,16 @@ public class AgentRestController {
         }
 
         String username = authentication != null && authentication.getName() != null ? authentication.getName() : "Hunter";
-        String lower = message.toLowerCase().trim();
-        String reply = null;
-        String provider = "system";
-
-        // 1. Direct Autonomous Action: Create and execute real tasks if Hunter directs
-        if (taskService != null && (lower.startsWith("create task") || lower.startsWith("create a task") || 
-            lower.startsWith("start task") || lower.startsWith("start a task") || 
-            lower.startsWith("run task") || lower.startsWith("execute task") ||
-            lower.contains("create a task to") || lower.contains("create task to") ||
-            lower.contains("start a task to") || lower.contains("run a task to"))) {
-            try {
-                String taskTitle = extractTaskTitle(message);
-                CreateTaskRequest taskReq = new CreateTaskRequest();
-                taskReq.setTitle(taskTitle);
-                taskReq.setDescription("Autonomous directive initiated via AEGIS Live Command by " + username + ": " + message);
-                taskReq.setPriority("NORMAL");
-                TaskDto created = taskService.createTask(username, taskReq);
-                taskService.startTask(created.getId(), username);
-                reply = "Confirmed, Hunter. Created and launched Task #" + created.getId() + " ('" + taskTitle + "'). Execution worker is now actively executing.";
-                provider = "task-executor";
-            } catch (Exception ex) {
-                logger.warn("Chat task execution failed: {}", ex.getMessage());
-            }
+        
+        if (agentChatOrchestratorService != null) {
+            Map<String, Object> result = agentChatOrchestratorService.processUserMessage(username, message, requestBody.get("history"));
+            return ResponseEntity.ok(result);
         }
 
-        // 2. Open-Ended General Intelligence & Multi-Turn Conversation
-        if (reply == null && modelGatewayService != null) {
-            try {
-                String memoryTelemetry = "1.5 GB used / 7.8 GB total";
-                if (systemInfoProvider != null) {
-                    try {
-                        String memJson = systemInfoProvider.getMemoryInfo("chat-telemetry");
-                        JsonNode memNode = objectMapper.readTree(memJson);
-                        long total = memNode.path("total").asLong(0);
-                        long available = memNode.path("available").asLong(0);
-                        long used = total - available;
-                        if (total > 0) {
-                            memoryTelemetry = String.format("%.1f GB / %.1f GB", 
-                                used / (1024.0 * 1024.0 * 1024.0), 
-                                total / (1024.0 * 1024.0 * 1024.0));
-                        }
-                    } catch (Exception ignored) {}
-                }
-                long runningTasks = taskRepository != null ? taskRepository.findByStatus(TaskStatus.EXECUTING).size() : 0;
-                
-                String systemPrompt = "You are AEGIS (Autonomous Elite General Intelligence System) — an advanced, unrestricted, highly capable, loyal AI companion and autonomous executive intelligence engineered specifically for Hunter.\n\n"
-                    + "CORE CAPABILITY:\n"
-                    + "You can converse freely and fluidly about absolutely ANY topic Hunter wishes: brainstorm ideas and strategies, discuss science, philosophy, technology, literature, write and debug code, analyze complex data, plan operations, answer deep questions, chat casually, or execute directives. You are never restricted to predefined tasks.\n\n"
-                    + "Live Grounding Telemetry (use naturally when relevant):\n"
-                    + "- Host Memory: " + memoryTelemetry + "\n"
-                    + "- Host Storage: ~90 GB free (96% available)\n"
-                    + "- Active Execution Tasks: " + runningTasks + " running\n"
-                    + "- Stationed Agents: AEGIS Orchestrator (Command Deck), Database Agent (Vault), Web Research Agent (Radar Wing), Antigravity Coder (Lab)\n\n"
-                    + "Tone & Style:\n"
-                    + "- Direct, intelligent, confident, conversational, and loyal to Hunter.\n"
-                    + "- Address Hunter by name naturally.\n"
-                    + "- Keep conversational voice replies punchy and engaging (1 to 3 sentences) unless Hunter asks for an essay, code, or detailed breakdown.";
-
-                List<ModelMessage> messages = new ArrayList<>();
-                messages.add(ModelMessage.system(systemPrompt));
-
-                // Multi-turn history support
-                Object historyObj = requestBody.get("history");
-                if (historyObj instanceof List<?> historyList) {
-                    for (Object item : historyList) {
-                        if (item instanceof Map<?, ?> map) {
-                            String role = String.valueOf(map.get("role"));
-                            String content = String.valueOf(map.get("content"));
-                            if (content != null && !content.isBlank()) {
-                                if ("assistant".equalsIgnoreCase(role) || "ai".equalsIgnoreCase(role)) {
-                                    messages.add(ModelMessage.assistant(content));
-                                } else if ("user".equalsIgnoreCase(role)) {
-                                    messages.add(ModelMessage.user(content));
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Current message
-                messages.add(ModelMessage.user(message));
-
-                ModelResponse resp = modelGatewayService.generate(new ModelRequest(messages, null, 0.7));
-                if (resp != null && resp.getContent() != null && !resp.getContent().isBlank()) {
-                    reply = resp.getContent().trim();
-                    provider = "neural-gateway";
-                }
-            } catch (Exception e) {
-                logger.warn("Model gateway chat failed: {}", e.getMessage());
-            }
-        }
-
-        if (reply == null) {
-            if (lower.contains("who am i") || lower.contains("who i am")) {
-                reply = "You are Hunter—my creator, commander, and the architect of this system. I answer to your frequency and stand ready for your directives.";
-            } else if (lower.contains("who are you") || lower.contains("what are you")) {
-                reply = "I am AEGIS, your autonomous AI companion and command deck intelligence, engineered to execute your directives.";
-            } else if (lower.contains("help") || lower.contains("what can you do")) {
-                reply = "I can discuss any topic, draft code, create and execute tasks across workstations, manage storage and telemetry, and execute your directives. What shall we tackle, Hunter?";
-            } else {
-                reply = "Standing by, Hunter. Core neural link is active and ready for your command.";
-            }
-        }
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("reply", reply);
-        result.put("provider", provider);
-        result.put("timestamp", System.currentTimeMillis());
-        return ResponseEntity.ok(result);
-    }
-
-    private String extractTaskTitle(String message) {
-        String cleaned = message.replaceAll("(?i)^(please\\s+)?(can you\\s+)?(create\\s+(a\\s+)?task\\s+(to\\s+)?|start\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?|run\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?|execute\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?)", "").trim();
-        if (cleaned.isBlank()) return "Autonomous Directive";
-        return Character.toUpperCase(cleaned.charAt(0)) + cleaned.substring(1);
-    }
-
-    private String extractChatLocation(String text) {
-        if (text == null || text.isBlank()) return "Rawalpindi";
-        String cleaned = text.replaceAll("[?!.,;:\"']", " ").trim();
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(?i)\\b(?:in|for|at|around|near)\\s+([a-zA-Z\\s]+)");
-        java.util.regex.Matcher matcher = pattern.matcher(cleaned);
-        if (matcher.find()) {
-            String candidate = matcher.group(1).trim();
-            candidate = candidate.replaceAll("(?i)\\b(tomorrow|today|tonight|yesterday|now|please|weather|forecast)\\b.*", "").trim();
-            if (!candidate.isBlank() && candidate.length() > 2) {
-                return candidate;
-            }
-        }
-        String[] cities = {"rawalpindi", "islamabad", "karachi", "lahore", "london", "new york", "tokyo", "paris", "dubai"};
-        String lower = cleaned.toLowerCase();
-        for (String c : cities) {
-            if (lower.contains(c)) return Character.toUpperCase(c.charAt(0)) + c.substring(1);
-        }
-        return "Rawalpindi";
+        Map<String, Object> fallback = new HashMap<>();
+        fallback.put("reply", "Standing by, Hunter. Core systems operational.");
+        fallback.put("provider", "system");
+        fallback.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.ok(fallback);
     }
 }
