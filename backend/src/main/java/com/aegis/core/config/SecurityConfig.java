@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -82,12 +83,26 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        List<String> origins = (allowedOrigins != null && !allowedOrigins.isEmpty())
-                ? allowedOrigins.stream().map(String::trim).filter(s -> !s.isEmpty()).toList()
-                : List.of("http://localhost:3000");
-        configuration.setAllowedOrigins(origins);
+        List<String> patterns = new ArrayList<>();
+        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+            for (String origin : allowedOrigins) {
+                if (origin != null && !origin.trim().isEmpty()) {
+                    String clean = origin.trim();
+                    patterns.add(clean);
+                    if (clean.startsWith("http://")) {
+                        patterns.add(clean.replace("http://", "https://"));
+                    } else if (clean.startsWith("https://")) {
+                        patterns.add(clean.replace("https://", "http://"));
+                    }
+                }
+            }
+        }
+        if (patterns.isEmpty()) {
+            patterns.add("*");
+        }
+        configuration.setAllowedOriginPatterns(patterns);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -79,7 +79,7 @@ function generateEnvContent(env) {
   const serverHost = String(env.SERVER_HOST).trim();
   const corsOrigins = env.CORS_ALLOWED_ORIGINS && String(env.CORS_ALLOWED_ORIGINS).trim() !== ''
     ? String(env.CORS_ALLOWED_ORIGINS).trim()
-    : `http://${serverHost},http://localhost`;
+    : `http://${serverHost},https://${serverHost},http://localhost,https://localhost,http://127.0.0.1,https://127.0.0.1`;
 
   const lines = [
     '# =========================================================================',
