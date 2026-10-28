@@ -5,12 +5,17 @@ import React, { useRef, useEffect, useState } from 'react';
  * Sized to h-[640px] xl:h-[660px] for the 3-column command center.
  * Renders an expansive 3D spherical projection with audio-reactive waveforms.
  */
-const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpeakTest }) => {
+const DigitalSignalsGlobe = ({ isSpeaking = false, onTriggerSpeakTest }) => {
     const canvasRef = useRef(null);
-    const [rotationY, setRotationY] = useState(0);
     const isDraggingRef = useRef(false);
     const lastMouseXRef = useRef(0);
     const rotationSpeedRef = useRef(0.007);
+    const isSpeakingRef = useRef(isSpeaking);
+    const dragRotYRef = useRef(0);
+
+    useEffect(() => {
+        isSpeakingRef.current = isSpeaking;
+    }, [isSpeaking]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -60,9 +65,16 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
 
         const render = () => {
             time += 0.03;
+            const isSpeakingNow = isSpeakingRef.current;
+            const audioMod = isSpeakingNow 
+                ? (0.45 + Math.sin(time * 6.0) * 0.25 + Math.sin(time * 11.0) * 0.15) 
+                : 0;
+
             if (!isDraggingRef.current) {
-                rotY += rotationSpeedRef.current * (isSpeaking ? 1.5 : 1.0);
+                rotY += rotationSpeedRef.current * (isSpeakingNow ? 1.4 : 1.0);
             }
+            rotY += dragRotYRef.current;
+            dragRotYRef.current = 0;
 
             const rect = canvas.getBoundingClientRect();
             const width = rect.width;
@@ -76,8 +88,8 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
 
             // 1. Ambient Glow Core
             const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.6);
-            if (isSpeaking) {
-                const glowIntensity = 0.24 + (audioLevel || 0.5) * 0.25;
+            if (isSpeakingNow) {
+                const glowIntensity = 0.25 + audioMod * 0.35;
                 coreGlow.addColorStop(0, `rgba(0, 210, 255, ${glowIntensity})`);
                 coreGlow.addColorStop(0.4, `rgba(58, 123, 213, ${glowIntensity * 0.6})`);
                 coreGlow.addColorStop(0.8, `rgba(168, 85, 247, ${glowIntensity * 0.3})`);
@@ -93,13 +105,13 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             ctx.fill();
 
             // 2. Audio-Reactive Sonar Pulse Waves
-            if (isSpeaking && Date.now() - lastPulseTime > 280) {
+            if (isSpeakingNow && Date.now() - lastPulseTime > 320) {
                 lastPulseTime = Date.now();
                 wavePulses.push({
                     radius: R * 0.8,
                     maxRadius: R * 2.3,
                     alpha: 0.85,
-                    speed: 2.8 + (audioLevel || 0.4) * 3,
+                    speed: 2.8 + audioMod * 3,
                     color: Math.random() > 0.5 ? 'rgba(0, 210, 255, ' : 'rgba(56, 189, 248, '
                 });
             }
@@ -113,7 +125,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                 ctx.beginPath();
                 ctx.arc(cx, cy, pulse.radius, 0, Math.PI * 2);
                 ctx.strokeStyle = `${pulse.color}${pulse.alpha * 0.7})`;
-                ctx.lineWidth = 1.5 + (audioLevel || 0.3) * 1.5;
+                ctx.lineWidth = 1.5 + audioMod * 2;
                 ctx.setLineDash([6, 8]);
                 ctx.stroke();
                 ctx.restore();
@@ -157,8 +169,8 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                 for (let s = 0; s <= numSteps; s++) {
                     const lon = (s / numSteps) * Math.PI * 2;
                     let rPerturb = rLat;
-                    if (isSpeaking) {
-                        rPerturb += Math.sin(lon * 6 + time * 4) * (audioLevel * 4 + 1.5);
+                    if (isSpeakingNow) {
+                        rPerturb += Math.sin(lon * 6 + time * 4) * (audioMod * 6 + 1.5);
                     }
                     const px = rPerturb * Math.cos(lon);
                     const pz = rPerturb * Math.sin(lon);
@@ -171,8 +183,8 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                         ctx.lineTo(proj.x, proj.y);
                     }
                 }
-                ctx.strokeStyle = isSpeaking 
-                    ? `rgba(0, 210, 255, ${0.3 + (audioLevel || 0.4) * 0.25})`
+                ctx.strokeStyle = isSpeakingNow 
+                    ? `rgba(0, 210, 255, ${0.3 + audioMod * 0.3})`
                     : 'rgba(0, 210, 255, 0.15)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
@@ -189,8 +201,8 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                 for (let s = 0; s <= numSteps; s++) {
                     const lat = (s / numSteps - 0.5) * Math.PI;
                     let rCurrent = R;
-                    if (isSpeaking) {
-                        rCurrent += Math.cos(lat * 8 + time * 5) * (audioLevel * 3 + 1);
+                    if (isSpeakingNow) {
+                        rCurrent += Math.cos(lat * 8 + time * 5) * (audioMod * 4 + 1);
                     }
                     const px = rCurrent * Math.cos(lat) * Math.cos(lon);
                     const py = rCurrent * Math.sin(lat);
@@ -204,8 +216,8 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                         ctx.lineTo(proj.x, proj.y);
                     }
                 }
-                ctx.strokeStyle = isSpeaking 
-                    ? `rgba(58, 123, 213, ${0.32 + (audioLevel || 0.3) * 0.2})` 
+                ctx.strokeStyle = isSpeakingNow 
+                    ? `rgba(58, 123, 213, ${0.32 + audioMod * 0.25})` 
                     : 'rgba(58, 123, 213, 0.14)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
@@ -214,8 +226,8 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             // 5. Digital Surface Nodes
             nodes.forEach(node => {
                 let currentR = R;
-                if (isSpeaking) {
-                    currentR += Math.sin(time * 3 + node.pulsePhase) * (audioLevel * 5 + 2);
+                if (isSpeakingNow) {
+                    currentR += Math.sin(time * 3 + node.pulsePhase) * (audioMod * 6 + 2);
                 }
                 const px = node.baseX * currentR;
                 const py = node.baseY * currentR;
@@ -228,7 +240,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
 
                 ctx.beginPath();
                 ctx.arc(proj.x, proj.y, size, 0, Math.PI * 2);
-                if (isSpeaking) {
+                if (isSpeakingNow) {
                     ctx.fillStyle = depthAlpha > 0.5 ? node.colorShift : `rgba(0, 210, 255, ${depthAlpha * 0.8})`;
                     ctx.shadowColor = '#00d2ff';
                     ctx.shadowBlur = 8;
@@ -242,7 +254,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
 
             // 6. Orbiting Satellites
             satellites.forEach(sat => {
-                sat.angle += sat.speed * (isSpeaking ? 1.4 : 1.0);
+                sat.angle += sat.speed * (isSpeakingNow ? 1.4 : 1.0);
                 const satDist = R * sat.orbitRadius;
                 
                 const rawX = Math.cos(sat.angle) * satDist;
@@ -261,7 +273,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                     if (j === 0) ctx.moveTo(op.x, op.y);
                     else ctx.lineTo(op.x, op.y);
                 }
-                ctx.strokeStyle = `rgba(255, 255, 255, ${0.06 + (isSpeaking ? 0.08 : 0)})`;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.06 + (isSpeakingNow ? 0.08 : 0)})`;
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
@@ -269,7 +281,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
                 ctx.arc(proj.x, proj.y, sat.size * proj.scale, 0, Math.PI * 2);
                 ctx.fillStyle = sat.color;
                 ctx.shadowColor = sat.color;
-                ctx.shadowBlur = isSpeaking ? 12 : 5;
+                ctx.shadowBlur = isSpeakingNow ? 12 : 5;
                 ctx.fill();
                 ctx.shadowBlur = 0;
             });
@@ -298,7 +310,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
             cancelAnimationFrame(animationFrameId);
             window.removeEventListener('resize', updateDimensions);
         };
-    }, [isSpeaking, audioLevel]);
+    }, []);
 
     const handleMouseDown = (e) => {
         isDraggingRef.current = true;
@@ -309,7 +321,7 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, audioLevel = 0, onTriggerSpea
         if (!isDraggingRef.current) return;
         const deltaX = e.clientX - lastMouseXRef.current;
         lastMouseXRef.current = e.clientX;
-        setRotationY(prev => prev + deltaX * 0.008);
+        dragRotYRef.current += deltaX * 0.008;
     };
 
     const handleMouseUp = () => {

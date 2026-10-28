@@ -43,7 +43,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
     const messagesEndRef = useRef(null);
     const speechRecognitionRef = useRef(null);
-    const audioIntervalRef = useRef(null);
+    const activeUtteranceRef = useRef(null);
 
     useEffect(() => {
         if (mode === 'chat') {
@@ -51,64 +51,72 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         }
     }, [messages, mode]);
 
+    const getBestVoice = () => {
+        if (!('speechSynthesis' in window)) return null;
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return null;
+        // Prioritize local on-device English voices to avoid streaming buffer stutter
+        const localEn = voices.find(v => v.lang.startsWith('en') && v.localService === true);
+        const naturalEn = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Online')));
+        const anyEn = voices.find(v => v.lang.startsWith('en'));
+        return localEn || naturalEn || anyEn || voices[0];
+    };
+
     const speakText = (text) => {
         if (!('speechSynthesis' in window)) {
             simulateSpeaking(text);
             return;
         }
 
-        window.speechSynthesis.cancel();
+        try {
+            window.speechSynthesis.cancel();
+        } catch (e) {
+            console.warn(e);
+        }
+
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
 
-        const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha')));
-        if (preferredVoice) utterance.voice = preferredVoice;
+        const bestVoice = getBestVoice();
+        if (bestVoice) utterance.voice = bestVoice;
+
+        // Maintain persistent reference to prevent Chromium GC bug
+        activeUtteranceRef.current = utterance;
+        window._activeAegisUtterance = utterance;
 
         utterance.onstart = () => {
             setIsAiSpeaking(true);
-            startWaveformAnimation();
-            onSpeakingChange?.(true, 0.75);
+            onSpeakingChange?.(true);
         };
 
-        utterance.onend = () => {
+        const cleanup = () => {
             setIsAiSpeaking(false);
-            stopWaveformAnimation();
-            onSpeakingChange?.(false, 0);
+            onSpeakingChange?.(false);
+            activeUtteranceRef.current = null;
+            window._activeAegisUtterance = null;
         };
 
-        utterance.onerror = () => {
-            setIsAiSpeaking(false);
-            stopWaveformAnimation();
-            onSpeakingChange?.(false, 0);
+        utterance.onend = cleanup;
+        utterance.onerror = (err) => {
+            console.warn('Speech error:', err);
+            cleanup();
         };
 
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        }
         window.speechSynthesis.speak(utterance);
     };
 
     const simulateSpeaking = (text) => {
         setIsAiSpeaking(true);
-        startWaveformAnimation();
-        onSpeakingChange?.(true, 0.8);
+        onSpeakingChange?.(true);
         const duration = Math.min(5000, Math.max(2200, text.length * 45));
         setTimeout(() => {
             setIsAiSpeaking(false);
-            stopWaveformAnimation();
-            onSpeakingChange?.(false, 0);
+            onSpeakingChange?.(false);
         }, duration);
-    };
-
-    const startWaveformAnimation = () => {
-        clearInterval(audioIntervalRef.current);
-        audioIntervalRef.current = setInterval(() => {
-            const level = 0.3 + Math.random() * 0.7;
-            onSpeakingChange?.(true, level);
-        }, 120);
-    };
-
-    const stopWaveformAnimation = () => {
-        clearInterval(audioIntervalRef.current);
     };
 
     const toggleMic = async () => {

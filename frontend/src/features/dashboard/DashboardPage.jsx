@@ -19,7 +19,6 @@ const DashboardPage = () => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-    const [audioLevel, setAudioLevel] = useState(0);
 
     const fetchTasks = async () => {
         try {
@@ -36,33 +35,57 @@ const DashboardPage = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleSpeakingChange = (speaking, level = 0.5) => {
+    const handleSpeakingChange = (speaking) => {
         setIsAiSpeaking(speaking);
-        setAudioLevel(level);
     };
 
     const handleTestSpeak = () => {
         setIsAiSpeaking(true);
-        setAudioLevel(0.85);
 
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
+            try {
+                window.speechSynthesis.cancel();
+            } catch (e) {
+                console.warn(e);
+            }
+
             const utterance = new SpeechSynthesisUtterance("Hello Hunter, AEGIS system is online and ready for your commands.");
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
-            utterance.onend = () => {
-                setIsAiSpeaking(false);
-                setAudioLevel(0);
+
+            const voices = window.speechSynthesis.getVoices();
+            if (voices && voices.length > 0) {
+                const localEn = voices.find(v => v.lang.startsWith('en') && v.localService === true);
+                const naturalEn = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Online')));
+                const anyEn = voices.find(v => v.lang.startsWith('en'));
+                const selectedVoice = localEn || naturalEn || anyEn || voices[0];
+                if (selectedVoice) utterance.voice = selectedVoice;
+            }
+
+            window._activeAegisUtterance = utterance;
+
+            utterance.onstart = () => {
+                setIsAiSpeaking(true);
             };
-            utterance.onerror = () => {
+
+            const cleanup = () => {
                 setIsAiSpeaking(false);
-                setAudioLevel(0);
+                window._activeAegisUtterance = null;
             };
+
+            utterance.onend = cleanup;
+            utterance.onerror = (err) => {
+                console.warn('Speech test error:', err);
+                cleanup();
+            };
+
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            }
             window.speechSynthesis.speak(utterance);
         } else {
             setTimeout(() => {
                 setIsAiSpeaking(false);
-                setAudioLevel(0);
             }, 2500);
         }
     };
@@ -82,7 +105,6 @@ const DashboardPage = () => {
                 <div className="lg:col-span-6 xl:col-span-6 2xl:col-span-6 flex flex-col">
                     <DigitalSignalsGlobe 
                         isSpeaking={isAiSpeaking} 
-                        audioLevel={audioLevel} 
                         onTriggerSpeakTest={handleTestSpeak}
                     />
                 </div>
