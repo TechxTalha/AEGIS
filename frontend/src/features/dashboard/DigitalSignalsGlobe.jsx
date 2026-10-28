@@ -12,7 +12,7 @@ import React, { useRef, useEffect, useState } from 'react';
  * - Audio-reactive equatorial waveform, sonic shockwaves, and base spectrum visualizer
  * - Real-time telemetry HUD displaying live coordinate tracking
  */
-const DigitalSignalsGlobe = ({ isSpeaking = false, onTriggerSpeakTest }) => {
+const DigitalSignalsGlobe = ({ isSpeaking = false }) => {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     
@@ -794,15 +794,6 @@ const DigitalSignalsGlobe = ({ isSpeaking = false, onTriggerSpeakTest }) => {
                     </span>
                 </div>
 
-                <div className="pointer-events-auto flex items-center gap-2">
-                    <button
-                        onClick={onTriggerSpeakTest}
-                        className="px-4 py-2 text-xs font-semibold rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-[#00d2ff] border border-cyan-500/40 hover:border-cyan-400 transition-all flex items-center gap-2 shadow-[0_0_16px_rgba(0,210,255,0.25)] hover:shadow-[0_0_24px_rgba(0,210,255,0.45)] cursor-pointer backdrop-blur-md active:scale-95"
-                    >
-                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                        Test Voice Output
-                    </button>
-                </div>
             </div>
         </div>
     );
