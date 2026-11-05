@@ -4,7 +4,8 @@ import {
     AudioOutlined, 
     SendOutlined, 
     SoundOutlined,
-    StopOutlined
+    StopOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import axiosInstance from '../../api/axiosInstance';
 
@@ -19,10 +20,46 @@ const switchToHttps = () => {
     window.location.href = `https://${window.location.hostname}${portPart}${window.location.pathname}${window.location.search}`;
 };
 
+// Wake word matcher: "Hello Aegis", "Hey Aegis", "Hi Aegis", "OK Aegis", "Aegis" (including common phonetics)
+const WAKE_WORD_REGEX = /(?:hello|hey|hi|ok|okay)?\s*(?:aegis|egis|agis|ages|aigis)\b/i;
+
+// Futuristic ascending dual-tone chime (Web Audio API)
+const playWakeChime = () => {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        // High-tech ascending tonal chirp: D5 (587.33 Hz) -> A5 (880 Hz)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.32);
+    } catch (e) {
+        console.debug('Wake chime error:', e);
+    }
+};
+
 /**
  * LiveTalkSession (Left Column Command Assistant)
- * Unified single-surface voice and text interface.
- * Clean, consistent executive command aesthetic without useless clutter.
+ * Unified single-surface voice and text interface with Hands-Free "Hello Aegis" Wake Word.
+ * Clean, consistent executive command aesthetic.
  */
 const LiveTalkSession = ({ onSpeakingChange }) => {
     const [isMicActive, setIsMicActive] = useState(false);
@@ -33,18 +70,57 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     const [inputMessage, setInputMessage] = useState('');
     const [showHttpsBanner, setShowHttpsBanner] = useState(false);
 
+    // Hands-Free Wake Word State ("Hello Aegis")
+    const [isWakeWordEnabled, setIsWakeWordEnabled] = useState(() => {
+        try {
+            const stored = localStorage.getItem('aegis_wake_word_enabled');
+            return stored !== null ? stored === 'true' : true;
+        } catch (e) {
+            return true;
+        }
+    });
+    const [isAwakened, setIsAwakened] = useState(false);
+
     const [messages, setMessages] = useState([
         {
             id: 1,
             sender: 'ai',
-            text: 'AEGIS Core is online. Standing by for voice or text directives, Hunter.',
+            text: 'AEGIS Core is online. Say "Hello Aegis" or speak/type directives, Hunter.',
             time: '00:00'
         }
     ]);
 
     const messagesEndRef = useRef(null);
-    const speechRecognitionRef = useRef(null);
+    const activeRecognitionRef = useRef(null);
+    const wakeRecognitionRef = useRef(null);
+    const wakeRestartTimeoutRef = useRef(null);
+    const awakenedTimerRef = useRef(null);
     const activeUtteranceRef = useRef(null);
+
+    // State refs to prevent stale closures in recognition event handlers
+    const isWakeWordEnabledRef = useRef(isWakeWordEnabled);
+    const isMicActiveRef = useRef(isMicActive);
+    const isAiSpeakingRef = useRef(isAiSpeaking);
+    const isWaitingForAiRef = useRef(isWaitingForAi);
+
+    useEffect(() => {
+        isWakeWordEnabledRef.current = isWakeWordEnabled;
+        try {
+            localStorage.setItem('aegis_wake_word_enabled', String(isWakeWordEnabled));
+        } catch (e) {}
+    }, [isWakeWordEnabled]);
+
+    useEffect(() => {
+        isMicActiveRef.current = isMicActive;
+    }, [isMicActive]);
+
+    useEffect(() => {
+        isAiSpeakingRef.current = isAiSpeaking;
+    }, [isAiSpeaking]);
+
+    useEffect(() => {
+        isWaitingForAiRef.current = isWaitingForAi;
+    }, [isWaitingForAi]);
 
     // Auto-scroll on new messages or state changes
     useEffect(() => {
@@ -64,7 +140,10 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
     // Voice synthesis with GC protection
     const speakText = (text) => {
-        if (!isVoiceOutputEnabled) return;
+        if (!isVoiceOutputEnabled) {
+            scheduleWakeWordRestart(500);
+            return;
+        }
 
         if (!('speechSynthesis' in window)) {
             simulateSpeaking(text);
@@ -91,6 +170,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         utterance.onstart = () => {
             setIsAiSpeaking(true);
             onSpeakingChange?.(true);
+            stopWakeWordListener();
         };
 
         const cleanup = () => {
@@ -98,6 +178,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             onSpeakingChange?.(false);
             activeUtteranceRef.current = null;
             window._activeAegisUtterance = null;
+            scheduleWakeWordRestart(700);
         };
 
         utterance.onend = cleanup;
@@ -124,36 +205,135 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         onSpeakingChange?.(false);
         activeUtteranceRef.current = null;
         window._activeAegisUtterance = null;
+        scheduleWakeWordRestart(700);
     };
 
     const simulateSpeaking = (text) => {
         setIsAiSpeaking(true);
         onSpeakingChange?.(true);
+        stopWakeWordListener();
         const duration = Math.min(5000, Math.max(2200, text.length * 45));
         setTimeout(() => {
             setIsAiSpeaking(false);
             onSpeakingChange?.(false);
+            scheduleWakeWordRestart(700);
         }, duration);
     };
 
-    // Toggle Microphone (Speech-to-Text)
-    const toggleMic = async () => {
-        if (isMicActive) {
-            speechRecognitionRef.current?.stop();
-            setIsMicActive(false);
-            setListeningInterim('');
-            return;
+    // Schedule restart for continuous Wake-Word detection
+    const scheduleWakeWordRestart = (delayMs = 400) => {
+        if (wakeRestartTimeoutRef.current) {
+            clearTimeout(wakeRestartTimeoutRef.current);
         }
+        wakeRestartTimeoutRef.current = setTimeout(() => {
+            if (
+                isWakeWordEnabledRef.current &&
+                !isMicActiveRef.current &&
+                !isAiSpeakingRef.current &&
+                !isWaitingForAiRef.current
+            ) {
+                startWakeWordListener();
+            }
+        }, delayMs);
+    };
 
-        // Cancel active AI voice output to avoid feedback loop
+    const stopWakeWordListener = () => {
+        if (wakeRestartTimeoutRef.current) {
+            clearTimeout(wakeRestartTimeoutRef.current);
+            wakeRestartTimeoutRef.current = null;
+        }
+        if (wakeRecognitionRef.current) {
+            try {
+                wakeRecognitionRef.current.onend = null;
+                wakeRecognitionRef.current.onerror = null;
+                wakeRecognitionRef.current.stop();
+            } catch (e) {}
+            wakeRecognitionRef.current = null;
+        }
+    };
+
+    // Ambient Wake Word Listener ("Hello Aegis")
+    const startWakeWordListener = () => {
+        if (!isSecureOrigin || !isWakeWordEnabledRef.current) return;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        // Never run wake listener if already listening to command or AI speaking
+        if (isMicActiveRef.current || isAiSpeakingRef.current || isWaitingForAiRef.current) return;
+
+        stopWakeWordListener();
+
+        try {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                if (isMicActiveRef.current || isAiSpeakingRef.current || isWaitingForAiRef.current) return;
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript.trim();
+                    const isFinal = event.results[i].isFinal;
+
+                    const match = transcript.match(WAKE_WORD_REGEX);
+                    if (match) {
+                        playWakeChime();
+
+                        // Flash awakened indicator
+                        setIsAwakened(true);
+                        if (awakenedTimerRef.current) clearTimeout(awakenedTimerRef.current);
+                        awakenedTimerRef.current = setTimeout(() => setIsAwakened(false), 3500);
+
+                        // Extract command remainder spoken after wake word
+                        const remainder = transcript
+                            .slice(match.index + match[0].length)
+                            .replace(/^[\s,.\-—:]+/, '')
+                            .trim();
+
+                        // Cease wake listener immediately
+                        stopWakeWordListener();
+
+                        if (remainder.length > 2 && isFinal) {
+                            // Directive spoken in one breath: "Hello Aegis, check memory status"
+                            handleSendMessage(remainder, true);
+                        } else {
+                            // Standalone wake word: "Hello Aegis" -> start active command recording
+                            startActiveListening(remainder);
+                        }
+                        return;
+                    }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                if (event.error === 'not-allowed') {
+                    console.debug('Wake word permission prompt required');
+                }
+            };
+
+            recognition.onend = () => {
+                scheduleWakeWordRestart(400);
+            };
+
+            wakeRecognitionRef.current = recognition;
+            recognition.start();
+        } catch (e) {
+            console.debug('Wake word start deferred:', e);
+        }
+    };
+
+    // Start Active Command Speech Recognition
+    const startActiveListening = async (prefilledText = '') => {
         stopSpeaking();
+        stopWakeWordListener();
 
         if (!isSecureOrigin) {
             setShowHttpsBanner(true);
             notification.warning({
                 message: 'HTTPS Required for Microphone',
-                description: 'Browsers strictly block microphone access on insecure HTTP. Please switch to HTTPS or use keyboard input below.',
-                duration: 6
+                description: 'Browsers block microphone access on insecure HTTP. Please switch to HTTPS.',
+                duration: 5
             });
             return;
         }
@@ -168,7 +348,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             return;
         }
 
-        // Prompt for microphone permission
+        // Prompt for microphone permission if necessary
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -176,23 +356,17 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             } catch (permErr) {
                 console.warn('Microphone permission error:', permErr);
                 setIsMicActive(false);
+                setIsAwakened(false);
                 if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
                     notification.error({
                         message: 'Microphone Permission Blocked',
                         description: 'Please click the icon in your browser address bar and set Microphone to "Allow".'
                     });
                     return;
-                } else if (permErr.name === 'NotFoundError' || permErr.name === 'DevicesNotFoundError') {
-                    notification.error({
-                        message: 'No Microphone Detected',
-                        description: 'Please connect an audio input device.'
-                    });
-                    return;
                 }
             }
         }
 
-        // Start recognition session
         try {
             const recognition = new SpeechRecognition();
             recognition.continuous = false;
@@ -201,7 +375,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
             recognition.onstart = () => {
                 setIsMicActive(true);
-                setListeningInterim('Listening... Speak now');
+                setListeningInterim(prefilledText || 'Awakened. Listening, Hunter...');
             };
 
             recognition.onresult = (event) => {
@@ -211,35 +385,103 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
                 if (event.results[current].isFinal) {
                     setIsMicActive(false);
+                    setIsAwakened(false);
                     setListeningInterim('');
                     handleSendMessage(userSpeech, true);
                 }
             };
 
             recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
+                console.error('Active speech recognition error:', event.error);
                 setIsMicActive(false);
+                setIsAwakened(false);
                 setListeningInterim('');
-                if (event.error === 'not-allowed') {
-                    if (!isSecureOrigin) {
-                        setShowHttpsBanner(true);
-                    }
-                }
+                scheduleWakeWordRestart(700);
             };
 
             recognition.onend = () => {
                 setIsMicActive(false);
+                setIsAwakened(false);
                 setListeningInterim('');
+                scheduleWakeWordRestart(700);
             };
 
-            speechRecognitionRef.current = recognition;
+            activeRecognitionRef.current = recognition;
             recognition.start();
         } catch (err) {
-            console.error('Failed to start speech recognition:', err);
+            console.error('Failed to start active speech recognition:', err);
             setIsMicActive(false);
+            setIsAwakened(false);
             setListeningInterim('');
+            scheduleWakeWordRestart(700);
         }
     };
+
+    // Toggle Microphone (Manual Click)
+    const toggleMic = async () => {
+        if (isMicActive) {
+            try {
+                activeRecognitionRef.current?.stop();
+            } catch (e) {}
+            setIsMicActive(false);
+            setIsAwakened(false);
+            setListeningInterim('');
+            scheduleWakeWordRestart(500);
+            return;
+        }
+
+        // User explicit gesture: unlock microphone stream
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+            } catch (permErr) {
+                console.warn('Microphone permission check:', permErr);
+            }
+        }
+
+        startActiveListening();
+    };
+
+    // Toggle Hands-Free Wake Word Mode ("Hello Aegis")
+    const toggleWakeWord = async () => {
+        if (isWakeWordEnabled) {
+            stopWakeWordListener();
+            setIsWakeWordEnabled(false);
+            notification.info({
+                message: 'Wake Word Standby Disabled',
+                description: 'Hands-free "Hello Aegis" detection is paused. You can still use the mic button anytime.',
+                duration: 3
+            });
+        } else {
+            setIsWakeWordEnabled(true);
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                } catch (permErr) {
+                    console.warn('Microphone permission check:', permErr);
+                }
+            }
+            notification.success({
+                message: 'Wake Word Standby Active',
+                description: 'Say "Hello Aegis" anytime to command hands-free.',
+                duration: 4
+            });
+            scheduleWakeWordRestart(300);
+        }
+    };
+
+    // Boot Wake-Word detection on mount if enabled
+    useEffect(() => {
+        if (isWakeWordEnabled) {
+            scheduleWakeWordRestart(600);
+        }
+        return () => {
+            stopWakeWordListener();
+            if (awakenedTimerRef.current) clearTimeout(awakenedTimerRef.current);
+        };
+    }, [isWakeWordEnabled]);
 
     // Unified message dispatcher for both voice and text
     const handleSendMessage = async (rawText, isVoice = false) => {
@@ -300,6 +542,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             speakText(aiReply);
         } finally {
             setIsWaitingForAi(false);
+            scheduleWakeWordRestart(700);
         }
     };
 
@@ -309,14 +552,20 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     };
 
     return (
-        <div className="w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0a0f1b] via-[#080d16] to-[#060a11] border border-white/15 p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.85)] overflow-hidden select-none">
+        <div className={`w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0a0f1b] via-[#080d16] to-[#060a11] border p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.85)] overflow-hidden select-none transition-all duration-300 ${
+            isAwakened 
+                ? 'border-cyan-400 shadow-[0_0_35px_rgba(0,210,255,0.35)]' 
+                : 'border-white/15'
+        }`}>
             {/* Clean Header: Harmonious with AEGIS SMART HQ and GLOBAL INFRASTRUCTURE */}
             <div className="flex justify-between items-center px-1 pb-1.5 border-b border-white/5 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className={`w-2.5 h-2.5 rounded-full ${
                         isAiSpeaking ? 'bg-cyan-400 shadow-neon animate-ping' : 
                         isMicActive ? 'bg-red-500 shadow-neon animate-pulse' : 
-                        'bg-cyan-400 shadow-neon animate-pulse'
+                        isAwakened ? 'bg-cyan-400 shadow-neon animate-ping' :
+                        isWakeWordEnabled ? 'bg-cyan-400 shadow-neon animate-pulse' :
+                        'bg-gray-500'
                     }`} />
                     <h3 className="text-xs font-bold text-white tracking-wider uppercase mb-0">
                         AEGIS ASSISTANT
@@ -324,17 +573,38 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                 </div>
 
                 <div className="flex items-center gap-1.5 text-[10px] font-mono">
+                    {/* Hands-Free Wake Word Toggle Button */}
+                    <button
+                        onClick={toggleWakeWord}
+                        className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-medium flex items-center gap-1 transition-all cursor-pointer ${
+                            isWakeWordEnabled
+                                ? 'bg-cyan-500/15 border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(0,210,255,0.2)]'
+                                : 'bg-white/5 border-white/10 text-gray-500 hover:text-gray-300'
+                        }`}
+                        title={isWakeWordEnabled ? 'Wake Word Active: Say "Hello Aegis" to trigger' : 'Enable Hands-Free Wake Word ("Hello Aegis")'}
+                    >
+                        <ThunderboltOutlined className={isWakeWordEnabled ? 'text-cyan-400 animate-pulse' : 'text-gray-500'} />
+                        <span className="hidden sm:inline">{isWakeWordEnabled ? 'Wake: ON' : 'Wake: OFF'}</span>
+                    </button>
+
+                    {/* Live State Badge */}
                     <span className={`px-2 py-0.5 rounded font-semibold border ${
                         isAiSpeaking 
                             ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 animate-pulse' 
-                            : isMicActive 
-                                ? 'bg-red-500/15 text-red-300 border-red-500/40 animate-pulse'
-                                : isWaitingForAi
-                                    ? 'bg-purple-500/15 text-purple-300 border-purple-500/40'
-                                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : isAwakened
+                                ? 'bg-cyan-500/25 text-cyan-200 border-cyan-400 shadow-neon animate-bounce'
+                                : isMicActive 
+                                    ? 'bg-red-500/15 text-red-300 border-red-500/40 animate-pulse'
+                                    : isWaitingForAi
+                                        ? 'bg-purple-500/15 text-purple-300 border-purple-500/40'
+                                        : isWakeWordEnabled
+                                            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                     }`}>
-                        {isAiSpeaking ? 'Speaking' : isMicActive ? 'Listening' : isWaitingForAi ? 'Thinking' : 'Online'}
+                        {isAiSpeaking ? 'Speaking' : isAwakened ? 'Awakened' : isMicActive ? 'Listening' : isWaitingForAi ? 'Thinking' : isWakeWordEnabled ? 'Standby' : 'Online'}
                     </span>
+
+                    {/* Voice Output Mute/Unmute */}
                     <button
                         onClick={() => {
                             if (isAiSpeaking) stopSpeaking();
@@ -424,12 +694,14 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Dynamic Live Audio Indicator Banner (When Speaking or Listening) */}
-            {(isAiSpeaking || isMicActive) && (
+            {/* Dynamic Live Audio Indicator Banner (When Speaking, Listening, or Awakened) */}
+            {(isAiSpeaking || isMicActive || isAwakened) && (
                 <div className={`w-full px-3 py-1.5 rounded-xl mb-1.5 flex items-center justify-between border backdrop-blur-md transition-all flex-shrink-0 ${
                     isAiSpeaking 
                         ? 'bg-cyan-950/40 border-cyan-500/40 shadow-[0_0_15px_rgba(0,210,255,0.2)]' 
-                        : 'bg-red-950/40 border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                        : isAwakened
+                            ? 'bg-cyan-950/60 border-cyan-400 shadow-[0_0_20px_rgba(0,210,255,0.35)] animate-pulse'
+                            : 'bg-red-950/40 border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
                 }`}>
                     <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
                         {isAiSpeaking ? (
@@ -441,15 +713,17 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                             </div>
                         ) : (
                             <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <AudioOutlined className="text-red-400 text-xs animate-pulse" />
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                                <AudioOutlined className={`${isAwakened ? 'text-cyan-300' : 'text-red-400'} text-xs animate-pulse`} />
+                                <span className={`w-1.5 h-1.5 rounded-full ${isAwakened ? 'bg-cyan-400 animate-ping' : 'bg-red-500 animate-ping'}`} />
                             </div>
                         )}
 
                         <span className="text-[11px] font-mono truncate text-gray-200">
                             {isAiSpeaking 
                                 ? 'Voicing response...' 
-                                : listeningInterim || 'Listening to your command...'}
+                                : isAwakened && !listeningInterim
+                                    ? 'Awakened by "Hello Aegis"... listening'
+                                    : listeningInterim || 'Listening to your command...'}
                         </span>
                     </div>
 
@@ -473,31 +747,57 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
             {/* Unified Command Input Dock (Bottom) */}
             <form onSubmit={handleFormSubmit} className="pt-1 flex-shrink-0">
-                <div className="w-full bg-[#070b14] border border-white/10 focus-within:border-cyan-500/50 rounded-2xl p-1.5 flex items-center gap-1.5 transition-all shadow-inner">
-                    {/* Glowing Mic Toggle Button */}
-                    <button
-                        type="button"
-                        onClick={toggleMic}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
-                            isMicActive 
-                                ? 'bg-red-500 text-white border border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.7)] animate-pulse' 
-                                : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/10 border border-white/5'
-                        }`}
-                        title={isMicActive ? "Stop Voice Input" : "Tap to Speak"}
-                    >
-                        {isMicActive ? (
-                            <AudioOutlined className="text-sm animate-bounce" />
-                        ) : (
-                            <AudioOutlined className="text-sm" />
+                <div className={`w-full bg-[#070b14] border rounded-2xl p-1.5 flex items-center gap-1.5 transition-all shadow-inner ${
+                    isAwakened 
+                        ? 'border-cyan-400 shadow-[0_0_20px_rgba(0,210,255,0.3)]' 
+                        : 'border-white/10 focus-within:border-cyan-500/50'
+                }`}>
+                    {/* Glowing Mic Toggle Button with Wake-Word Halo */}
+                    <div className="relative flex-shrink-0">
+                        <button
+                            type="button"
+                            onClick={toggleMic}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
+                                isMicActive 
+                                    ? 'bg-red-500 text-white border border-red-400 shadow-[0_0_20px_rgba(239,68,68,0.8)] animate-pulse' 
+                                    : isWakeWordEnabled
+                                        ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-500/20 shadow-[0_0_12px_rgba(0,210,255,0.2)]'
+                                        : 'text-gray-400 hover:text-cyan-300 hover:bg-cyan-500/10 border border-white/5'
+                            }`}
+                            title={
+                                isMicActive 
+                                    ? "Stop Voice Input" 
+                                    : isWakeWordEnabled 
+                                        ? 'Wake Word Active: Say "Hello Aegis" or tap to speak' 
+                                        : "Tap to Speak"
+                            }
+                        >
+                            {isMicActive ? (
+                                <AudioOutlined className="text-sm animate-bounce" />
+                            ) : (
+                                <AudioOutlined className="text-sm" />
+                            )}
+                        </button>
+                        {isWakeWordEnabled && !isMicActive && (
+                            <span 
+                                className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-cyan-400 shadow-neon animate-ping pointer-events-none" 
+                                title="Wake Word Listening"
+                            />
                         )}
-                    </button>
+                    </div>
 
                     {/* Single Unified Text Input */}
                     <input
                         type="text"
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder={isMicActive ? "Listening to voice..." : "Directive or speak command..."}
+                        placeholder={
+                            isMicActive 
+                                ? "Listening to voice..." 
+                                : isWakeWordEnabled 
+                                    ? 'Say "Hello Aegis" or type directive...' 
+                                    : "Directive or speak command..."
+                        }
                         className="flex-1 bg-transparent border-none text-xs text-white placeholder-gray-500 focus:outline-none px-2 font-sans"
                         disabled={isWaitingForAi}
                     />
