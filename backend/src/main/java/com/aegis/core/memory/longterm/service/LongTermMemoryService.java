@@ -33,6 +33,32 @@ public class LongTermMemoryService {
         return repository.findByContentContainingIgnoreCase(keyword);
     }
 
+    public MemoryNode saveOrUpdateMemory(String category, String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return null;
+        }
+        String cleanContent = content.trim();
+        String cleanCategory = category != null ? category.trim().toUpperCase() : "GENERAL";
+        
+        List<MemoryNode> existing = repository.findByContentContainingIgnoreCase(cleanContent);
+        if (!existing.isEmpty()) {
+            MemoryNode node = existing.get(0);
+            node.setCategory(cleanCategory);
+            node.setConfidenceScore(1.0);
+            return repository.save(node);
+        }
+
+        MemoryNode node = new MemoryNode();
+        node.setCategory(cleanCategory);
+        node.setContent(cleanContent);
+        node.setConfidenceScore(1.0);
+        return repository.save(node);
+    }
+
+    public List<MemoryNode> getMemoriesByCategory(String category) {
+        return repository.findByCategory(category);
+    }
+
     public void deleteMemory(UUID id) {
         repository.deleteById(id);
     }

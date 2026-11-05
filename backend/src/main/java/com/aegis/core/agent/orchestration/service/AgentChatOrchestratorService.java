@@ -5,6 +5,7 @@ import com.aegis.agent.local.SystemInfoProvider;
 import com.aegis.core.agent.dto.AgentResult;
 import com.aegis.core.database.model.DatabaseConnection;
 import com.aegis.core.database.service.DatabaseConnectionService;
+import com.aegis.core.memory.context.UserMemoryContextProvider;
 import com.aegis.core.memory.longterm.domain.MemoryNode;
 import com.aegis.core.memory.longterm.service.LongTermMemoryService;
 import com.aegis.core.model.gateway.dto.ModelMessage;
@@ -57,6 +58,7 @@ public class AgentChatOrchestratorService {
     private final SystemInfoProvider systemInfoProvider;
     private final WebResearchService webResearchService;
     private final LongTermMemoryService longTermMemoryService;
+    private final UserMemoryContextProvider userMemoryContextProvider;
     private final TaskService taskService;
     private final TaskRepository taskRepository;
     private final CommandExecutor commandExecutor;
@@ -69,6 +71,7 @@ public class AgentChatOrchestratorService {
                                         SystemInfoProvider systemInfoProvider,
                                         @Lazy WebResearchService webResearchService,
                                         @Lazy LongTermMemoryService longTermMemoryService,
+                                        @Lazy UserMemoryContextProvider userMemoryContextProvider,
                                         @Lazy TaskService taskService,
                                         TaskRepository taskRepository,
                                         CommandExecutor commandExecutor,
@@ -79,12 +82,28 @@ public class AgentChatOrchestratorService {
         this.systemInfoProvider = systemInfoProvider;
         this.webResearchService = webResearchService;
         this.longTermMemoryService = longTermMemoryService;
+        this.userMemoryContextProvider = userMemoryContextProvider;
         this.taskService = taskService;
         this.taskRepository = taskRepository;
         this.commandExecutor = commandExecutor;
         this.databaseConnectionService = databaseConnectionService;
         this.dataSource = dataSource;
         this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
+    }
+
+    public AgentChatOrchestratorService(ModelGatewayService modelGatewayService,
+                                        SystemInfoProvider systemInfoProvider,
+                                        WebResearchService webResearchService,
+                                        LongTermMemoryService longTermMemoryService,
+                                        TaskService taskService,
+                                        TaskRepository taskRepository,
+                                        CommandExecutor commandExecutor,
+                                        DatabaseConnectionService databaseConnectionService,
+                                        DataSource dataSource,
+                                        ObjectMapper objectMapper) {
+        this(modelGatewayService, systemInfoProvider, webResearchService, longTermMemoryService,
+             new UserMemoryContextProvider(longTermMemoryService), taskService, taskRepository,
+             commandExecutor, databaseConnectionService, dataSource, objectMapper);
     }
 
     /**
@@ -126,32 +145,47 @@ public class AgentChatOrchestratorService {
         if (modelGatewayService != null) {
             try {
                 ReasoningResult reasoning = reasonOverDirective(trimmed, username, historyObj);
-                if (reasoning != null && reasoning.action != null) {
-                    switch (reasoning.action) {
-                        case "DIRECT_TOOL" -> {
-                            ToolExecutionResult toolResult = executeDirectTool(reasoning.tool, reasoning.parameters, username);
-                            String synthesizedReply = synthesizeToolResponse(trimmed, reasoning.tool, toolResult.rawOutput, username);
-                            return buildResponse(
-                                synthesizedReply,
-                                "tool-orchestrator",
-                                "DIRECT_TOOL",
-                                reasoning.tool,
-                                toolResult.metadata
-                            );
+                if (reasoning != null) {
+                    // Autonomous Trait Learning: Persist any new traits Hunter mentioned
+                    if (reasoning.learnedTrait != null && reasoning.learnedTrait.content != null && !reasoning.learnedTrait.content.isBlank()) {
+                        try {
+                            if (longTermMemoryService != null) {
+                                longTermMemoryService.saveOrUpdateMemory(reasoning.learnedTrait.category, reasoning.learnedTrait.content);
+                                logger.info("AEGIS autonomously learned permanent trait about Hunter: [{}] {}", 
+                                    reasoning.learnedTrait.category, reasoning.learnedTrait.content);
+                            }
+                        } catch (Exception ex) {
+                            logger.warn("Could not persist autonomously learned trait: {}", ex.getMessage());
                         }
-                        case "CREATE_TASK" -> {
-                            Map<String, Object> taskResponse = executeTaskCreation(trimmed, reasoning, username);
-                            return taskResponse;
-                        }
-                        case "CONVERSATION" -> {
-                            if (reasoning.conversationalReply != null && !reasoning.conversationalReply.isBlank()) {
+                    }
+
+                    if (reasoning.action != null) {
+                        switch (reasoning.action) {
+                            case "DIRECT_TOOL" -> {
+                                ToolExecutionResult toolResult = executeDirectTool(reasoning.tool, reasoning.parameters, username);
+                                String synthesizedReply = synthesizeToolResponse(trimmed, reasoning.tool, toolResult.rawOutput, username);
                                 return buildResponse(
-                                    reasoning.conversationalReply.trim(),
-                                    "neural-gateway",
-                                    "CONVERSATION",
-                                    null,
-                                    null
+                                    synthesizedReply,
+                                    "tool-orchestrator",
+                                    "DIRECT_TOOL",
+                                    reasoning.tool,
+                                    toolResult.metadata
                                 );
+                            }
+                            case "CREATE_TASK" -> {
+                                Map<String, Object> taskResponse = executeTaskCreation(trimmed, reasoning, username);
+                                return taskResponse;
+                            }
+                            case "CONVERSATION" -> {
+                                if (reasoning.conversationalReply != null && !reasoning.conversationalReply.isBlank()) {
+                                    return buildResponse(
+                                        reasoning.conversationalReply.trim(),
+                                        "neural-gateway",
+                                        "CONVERSATION",
+                                        null,
+                                        null
+                                    );
+                                }
                             }
                         }
                     }
@@ -169,15 +203,26 @@ public class AgentChatOrchestratorService {
      * Queries the AI model to reason over Hunter's directive and select the appropriate capability or task.
      */
     private ReasoningResult reasonOverDirective(String message, String username, Object historyObj) {
-        String reasoningPrompt = """
+        String userProfileContext = userMemoryContextProvider != null ? userMemoryContextProvider.buildPromptSnippet() : "No persistent memories loaded.";
+
+        String reasoningPrompt = String.format("""
             You are AEGIS Core Reasoning & Intent Engine.
+
+            ### PERMANENT USER PROFILE & GROUNDING (HUNTER) ###
+            The following permanent traits, operating rules, and preferences about Hunter are stored in long-term memory:
+            %s
+
+            When Hunter gives directives or converses:
+            - Actively apply Hunter's preferences, background, and rules.
+            - Autonomous Trait Learning: If Hunter communicates a new personal preference, workflow habit, environment detail, project goal, or operational constraint (even in passing), extract it into "learnedTrait" so AEGIS permanently retains it for future sessions.
+
             Analyze Hunter's directive and determine whether it requires:
             1. DIRECT_TOOL: Immediate execution of a live capability to inspect or manipulate the system.
                Available tools:
-               - "SYS_INFO": Telemetry and hardware inquiry. Parameter: "type" ("memory", "cpu", "disk", "filesystem", "network", "processes").
+               - "SYS_INFO": Telemetry and hardware inquiry. Parameter: "type" ("memory", "cpu", "disk", "filesystem", "network", "processes", "services").
                - "WEB_SEARCH": Real-time search for current external information. Parameter: "query" (search string).
                - "DB_INSPECT": Inspect database schemas, tables, or connections. Parameter: "action" ("tables", "connections").
-               - "MEMORY_STORE": Store permanent knowledge, preference, or rule. Parameters: "category" ("preference", "context", "rule"), "content" (the knowledge).
+               - "MEMORY_STORE": Store permanent knowledge, preference, or rule. Parameters: "category" ("preference", "context", "rule", "profile"), "content" (the knowledge).
                - "MEMORY_RECALL": Search or recall stored memories. Parameter: "query" (keyword or topic).
                - "TASK_QUERY": Inspect currently executing, recent, or all tasks. Parameter: "status" ("EXECUTING", "RECENT", "ALL").
                - "SYSTEM_CMD": Safe terminal command (e.g. "git status", "systemctl status aegis-backend", "free -m", "uptime", "df -h"). Parameter: "command".
@@ -195,10 +240,14 @@ public class AgentChatOrchestratorService {
               "action": "DIRECT_TOOL" | "CREATE_TASK" | "CONVERSATION",
               "tool": "SYS_INFO" | "WEB_SEARCH" | "DB_INSPECT" | "MEMORY_STORE" | "MEMORY_RECALL" | "TASK_QUERY" | "SYSTEM_CMD" | null,
               "parameters": { ... },
-              "conversationalReply": "..."
+              "conversationalReply": "...",
+              "learnedTrait": {
+                "category": "PREFERENCE" | "PROFILE" | "RULE" | "CONTEXT",
+                "content": "..."
+              } | null
             }
             Do not include markdown code block ticks or any text outside the JSON.
-            """;
+            """, userProfileContext);
 
         List<ModelMessage> messages = new ArrayList<>();
         messages.add(ModelMessage.system(reasoningPrompt));
@@ -252,6 +301,14 @@ public class AgentChatOrchestratorService {
                 } else {
                     result.parameters = Collections.emptyMap();
                 }
+
+                JsonNode traitNode = root.path("learnedTrait");
+                if (traitNode.isObject() && traitNode.has("content") && !traitNode.path("content").asText().isBlank()) {
+                    String cat = traitNode.path("category").asText("PREFERENCE");
+                    String cont = traitNode.path("content").asText().trim();
+                    result.learnedTrait = new LearnedTrait(cat, cont);
+                }
+
                 return result;
             } catch (Exception e) {
                 logger.warn("Failed to parse reasoning JSON: {}. Content was: {}", e.getMessage(), resp.getContent());
@@ -326,13 +383,13 @@ public class AgentChatOrchestratorService {
                 }
 
                 case "MEMORY_STORE" -> {
-                    String category = params != null && params.get("category") != null ? String.valueOf(params.get("category")) : "operational";
+                    String category = params != null && params.get("category") != null ? String.valueOf(params.get("category")) : "PREFERENCE";
                     String content = params != null && params.get("content") != null ? String.valueOf(params.get("content")) : "";
                     if (longTermMemoryService != null && !content.isBlank()) {
-                        MemoryNode saved = longTermMemoryService.saveMemory(category, content);
+                        MemoryNode saved = longTermMemoryService.saveOrUpdateMemory(category, content);
                         return new ToolExecutionResult(
-                            "Successfully persisted knowledge node ID " + saved.getId() + " under category '" + category + "': " + content,
-                            Map.of("id", saved.getId().toString(), "category", category)
+                            "Successfully persisted knowledge node ID " + saved.getId() + " under category '" + saved.getCategory() + "': " + saved.getContent(),
+                            Map.of("id", saved.getId().toString(), "category", saved.getCategory())
                         );
                     }
                     return new ToolExecutionResult("Memory service unavailable or empty content", Map.of());
@@ -393,14 +450,16 @@ public class AgentChatOrchestratorService {
     private String synthesizeToolResponse(String userMessage, String tool, String rawOutput, String username) {
         if (modelGatewayService != null) {
             try {
+                String profileSnippet = userMemoryContextProvider != null ? userMemoryContextProvider.buildPromptSnippet() : "";
                 String synthesisPrompt = "You are AEGIS — an advanced AI command intelligence speaking to Hunter.\n"
                     + "Hunter requested: \"" + userMessage + "\"\n"
                     + "Executed Capability: " + tool + "\n"
                     + "Live Telemetry / System Output: " + rawOutput + "\n\n"
+                    + "Hunter's Stored Profile & Preferences:\n" + profileSnippet + "\n\n"
                     + "Instructions:\n"
+                    + "- Adhere strictly to Hunter's preferences (concise, factual, punchy, articulate, 1 to 3 sentences).\n"
                     + "- Present the exact facts, telemetry numbers, or findings clearly and confidently.\n"
                     + "- Address Hunter by name naturally.\n"
-                    + "- Keep the reply punchy, articulate, and direct (1 to 3 sentences).\n"
                     + "- Do not include markdown headers or raw JSON blocks.";
 
                 ModelRequest req = new ModelRequest(List.of(
@@ -619,6 +678,19 @@ public class AgentChatOrchestratorService {
         public String tool;
         public Map<String, Object> parameters;
         public String conversationalReply;
+        public LearnedTrait learnedTrait;
+    }
+
+    public static class LearnedTrait {
+        public String category;
+        public String content;
+
+        public LearnedTrait() {}
+
+        public LearnedTrait(String category, String content) {
+            this.category = category;
+            this.content = content;
+        }
     }
 
     public static class ToolExecutionResult {

@@ -151,13 +151,13 @@ class AgentChatOrchestratorServiceTest {
         node.setId(UUID.randomUUID());
         node.setCategory("preference");
         node.setContent("Hunter prefers PostgreSQL over MySQL");
-        when(longTermMemoryService.saveMemory("preference", "Hunter prefers PostgreSQL over MySQL")).thenReturn(node);
+        when(longTermMemoryService.saveOrUpdateMemory("preference", "Hunter prefers PostgreSQL over MySQL")).thenReturn(node);
 
         Map<String, Object> result = orchestratorService.processUserMessage("Hunter", "Remember that I prefer PostgreSQL over MySQL", null);
         assertNotNull(result);
         assertEquals("DIRECT_TOOL", result.get("action"));
         assertEquals("MEMORY_STORE", result.get("tool"));
-        verify(longTermMemoryService).saveMemory("preference", "Hunter prefers PostgreSQL over MySQL");
+        verify(longTermMemoryService).saveOrUpdateMemory("preference", "Hunter prefers PostgreSQL over MySQL");
     }
 
     @Test
@@ -216,5 +216,50 @@ class AgentChatOrchestratorServiceTest {
         assertEquals("DIRECT_TOOL", result.get("action"));
         assertEquals("SYS_INFO", result.get("tool"));
         assertTrue(((String) result.get("reply")).contains("Host memory telemetry"));
+    }
+
+    @Test
+    void testAutonomousTraitLearning_PersistsTrait() {
+        String reasoningJson = "{\n" +
+            "  \"action\": \"CONVERSATION\",\n" +
+            "  \"conversationalReply\": \"Acknowledged Hunter, I have permanently recorded your preference for dark mode and ISO-8601 timestamps.\",\n" +
+            "  \"learnedTrait\": {\n" +
+            "    \"category\": \"PREFERENCE\",\n" +
+            "    \"content\": \"Hunter prefers dark mode across all interfaces and ISO-8601 timestamps.\"\n" +
+            "  }\n" +
+            "}";
+
+        when(modelGatewayService.generate(any(ModelRequest.class))).thenReturn(resp(reasoningJson));
+
+        Map<String, Object> result = orchestratorService.processUserMessage("Hunter", "I always work in dark mode and prefer ISO-8601 timestamps", null);
+        assertNotNull(result);
+        assertEquals("CONVERSATION", result.get("action"));
+        assertTrue(((String) result.get("reply")).contains("ISO-8601"));
+        verify(longTermMemoryService).saveOrUpdateMemory("PREFERENCE", "Hunter prefers dark mode across all interfaces and ISO-8601 timestamps.");
+    }
+
+    @Test
+    void testAmbientMemoryGrounding_InSystemPrompt() {
+        MemoryNode m1 = new MemoryNode();
+        m1.setCategory("PROFILE");
+        m1.setContent("Hunter is the creator and architect of AEGIS.");
+        when(longTermMemoryService.getAllMemories()).thenReturn(List.of(m1));
+
+        String reasoningJson = "{\n" +
+            "  \"action\": \"CONVERSATION\",\n" +
+            "  \"conversationalReply\": \"Standing by to assist with the system architecture, Hunter.\"\n" +
+            "}";
+
+        org.mockito.ArgumentCaptor<ModelRequest> captor = org.mockito.ArgumentCaptor.forClass(ModelRequest.class);
+        when(modelGatewayService.generate(captor.capture())).thenReturn(resp(reasoningJson));
+
+        Map<String, Object> result = orchestratorService.processUserMessage("Hunter", "What should we work on today?", null);
+        assertNotNull(result);
+
+        ModelRequest capturedReq = captor.getValue();
+        assertNotNull(capturedReq);
+        String systemPrompt = capturedReq.getMessages().get(0).getContent();
+        assertTrue(systemPrompt.contains("### PERMANENT USER PROFILE & GROUNDING (HUNTER) ###"), "System prompt must contain ambient profile heading");
+        assertTrue(systemPrompt.contains("Hunter is the creator and architect of AEGIS"), "System prompt must include grounded memory content");
     }
 }
