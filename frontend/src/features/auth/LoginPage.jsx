@@ -40,13 +40,13 @@ const LoginPage = () => {
             {/* Animated Logo */}
             <div className="relative mb-6 flex items-center justify-center">
                 <div className="absolute w-40 h-40 bg-[#00d2ff] rounded-full blur-[45px] opacity-25 pointer-events-none"></div>
-                <img 
-                    src="/apple-touch-icon.png" 
-                    alt="AEGIS Logo" 
+                <img
+                    src="/apple-touch-icon.png"
+                    alt="AEGIS Logo"
                     className="w-36 h-36 object-contain relative z-10 drop-shadow-[0_0_30px_rgba(0,210,255,0.7)] select-none pointer-events-none transition-transform duration-500 hover:scale-105"
                 />
             </div>
-            
+
             <Title level={3} className="!mt-0 !mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold tracking-widest text-center uppercase">
                 Command Center
             </Title>

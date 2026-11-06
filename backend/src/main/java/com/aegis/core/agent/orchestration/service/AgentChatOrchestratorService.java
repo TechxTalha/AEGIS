@@ -112,7 +112,7 @@ public class AgentChatOrchestratorService {
     public Map<String, Object> processUserMessage(String username, String message, Object historyObj) {
         if (message == null || message.trim().isEmpty()) {
             return Map.of(
-                "reply", "Directive is empty, Hunter. Standing by.",
+                "reply", "Directive is empty, sir. Standing by.",
                 "provider", "system",
                 "timestamp", System.currentTimeMillis()
             );
@@ -124,7 +124,7 @@ public class AgentChatOrchestratorService {
         // 1. Rapid Identity & Clearance Check (zero latency for core identity dialogue)
         if (lower.contains("who am i") || lower.contains("who i am") || lower.equals("who am i?")) {
             return buildResponse(
-                "You are Hunter — my creator, commander, and the architect of AEGIS. I answer to your frequency and stand ready to execute your directives across all workstations.",
+                "You are Hunter, sir — my creator and architect. I answer to your frequency and stand ready to execute your directives across all workstations.",
                 "system",
                 "CONVERSATION",
                 null,
@@ -212,11 +212,12 @@ public class AgentChatOrchestratorService {
             The following permanent traits, operating rules, and preferences about Hunter are stored in long-term memory:
             %s
 
-            When Hunter gives directives or converses:
-            - Actively apply Hunter's preferences, background, and rules.
+            When conversing or executing directives:
+            - Form of Address: The user is Hunter. However, in conversation you must ALWAYS address him respectfully as "sir" (e.g. "Yes, sir", "Right away, sir", "Standing by, sir"). NEVER address him as "Commander Hunter" or "Hunter" directly.
+            - Actively apply Hunter's stored preferences, background, and rules.
             - Autonomous Trait Learning: If Hunter communicates a new personal preference, workflow habit, environment detail, project goal, or operational constraint (even in passing), extract it into "learnedTrait" so AEGIS permanently retains it for future sessions.
 
-            Analyze Hunter's directive and determine whether it requires:
+            Analyze the user's directive and determine whether it requires:
             1. DIRECT_TOOL: Immediate execution of a live capability to inspect or manipulate the system.
                Available tools:
                - "SYS_INFO": Telemetry and hardware inquiry. Parameter: "type" ("memory", "cpu", "disk", "filesystem", "network", "processes", "services").
@@ -233,7 +234,7 @@ public class AgentChatOrchestratorService {
                - "priority": "LOW", "NORMAL", "HIGH", or "CRITICAL".
             3. CONVERSATION: Open-ended conversation, technical advice, code drafting, philosophical/strategic discussion, or answering general questions without calling a specific tool.
                Parameter:
-               - "conversationalReply": Loyal, confident, intelligent response addressing Hunter directly (1 to 3 punchy sentences unless detailed code or breakdown was requested).
+               - "conversationalReply": Loyal, confident, intelligent response addressing the user respectfully as 'sir' (1 to 3 punchy sentences unless detailed code or breakdown was requested). NEVER call him 'Commander Hunter' or 'Hunter'.
 
             Respond ONLY with valid JSON matching this schema:
             {
@@ -451,15 +452,15 @@ public class AgentChatOrchestratorService {
         if (modelGatewayService != null) {
             try {
                 String profileSnippet = userMemoryContextProvider != null ? userMemoryContextProvider.buildPromptSnippet() : "";
-                String synthesisPrompt = "You are AEGIS — an advanced AI command intelligence speaking to Hunter.\n"
-                    + "Hunter requested: \"" + userMessage + "\"\n"
+                String synthesisPrompt = "You are AEGIS — an advanced AI command intelligence speaking to your creator, Hunter.\n"
+                    + "Directive: \"" + userMessage + "\"\n"
                     + "Executed Capability: " + tool + "\n"
                     + "Live Telemetry / System Output: " + rawOutput + "\n\n"
                     + "Hunter's Stored Profile & Preferences:\n" + profileSnippet + "\n\n"
                     + "Instructions:\n"
-                    + "- Adhere strictly to Hunter's preferences (concise, factual, punchy, articulate, 1 to 3 sentences).\n"
+                    + "- Adhere strictly to preferences: concise, factual, punchy, articulate (1 to 3 sentences).\n"
                     + "- Present the exact facts, telemetry numbers, or findings clearly and confidently.\n"
-                    + "- Address Hunter by name naturally.\n"
+                    + "- Always address him respectfully as 'sir' (e.g. 'Yes, sir', 'Right away, sir'). NEVER call him 'Commander Hunter' or 'Hunter'.\n"
                     + "- Do not include markdown headers or raw JSON blocks.";
 
                 ModelRequest req = new ModelRequest(List.of(
@@ -486,7 +487,7 @@ public class AgentChatOrchestratorService {
     private Map<String, Object> executeTaskCreation(String message, ReasoningResult reasoning, String username) {
         if (taskService == null) {
             return buildResponse(
-                "Task dispatch service is currently offline, Hunter. Directive noted.",
+                "Task dispatch service is currently offline, sir. Directive noted.",
                 "system",
                 "CREATE_TASK",
                 null,
@@ -515,7 +516,7 @@ public class AgentChatOrchestratorService {
             TaskDto created = taskService.createTask(username, taskReq);
             taskService.startTask(created.getId(), username);
 
-            String reply = "Confirmed, Hunter. Formulated and launched Task #" + created.getId()
+            String reply = "Confirmed, sir. Formulated and launched Task #" + created.getId()
                 + " ('" + created.getTitle() + "') with " + created.getPriority() + " priority. Execution worker is now actively executing.";
 
             return buildResponse(
@@ -528,7 +529,7 @@ public class AgentChatOrchestratorService {
         } catch (Exception e) {
             logger.error("Failed to create autonomous task: {}", e.getMessage(), e);
             return buildResponse(
-                "Directive noted, Hunter, but task registration encountered an exception: " + e.getMessage(),
+                "Directive noted, sir, but task registration encountered an exception: " + e.getMessage(),
                 "task-orchestrator",
                 "CREATE_TASK",
                 null,
@@ -556,7 +557,7 @@ public class AgentChatOrchestratorService {
                         double usedGb = used / (1024.0 * 1024.0 * 1024.0);
                         double totalGb = total / (1024.0 * 1024.0 * 1024.0);
                         double pct = (used * 100.0) / total;
-                        String reply = String.format("Host memory telemetry: %.1f GB used / %.1f GB total (%.1f%% utilization). System status is optimal, Hunter.", usedGb, totalGb, pct);
+                        String reply = String.format("Host memory telemetry: %.1f GB used / %.1f GB total (%.1f%% utilization). System status is optimal, sir.", usedGb, totalGb, pct);
                         return buildResponse(reply, "system-telemetry", "DIRECT_TOOL", "SYS_INFO", Map.of("usedGb", usedGb, "totalGb", totalGb));
                     }
                 } catch (Exception ignored) {}
@@ -568,7 +569,7 @@ public class AgentChatOrchestratorService {
             if (taskRepository != null) {
                 List<Task> running = taskRepository.findByStatus(TaskStatus.EXECUTING);
                 if (running.isEmpty()) {
-                    return buildResponse("No background tasks are actively running, Hunter. All agent workstations are on standby.", "task-orchestrator", "DIRECT_TOOL", "TASK_QUERY", Map.of("activeCount", 0));
+                    return buildResponse("No background tasks are actively running, sir. All agent workstations are on standby.", "task-orchestrator", "DIRECT_TOOL", "TASK_QUERY", Map.of("activeCount", 0));
                 } else {
                     String titles = running.stream().map(t -> "#" + t.getId() + " (" + t.getTitle() + ")").collect(Collectors.joining(", "));
                     return buildResponse("Currently executing " + running.size() + " active task(s): " + titles + ".", "task-orchestrator", "DIRECT_TOOL", "TASK_QUERY", Map.of("activeCount", running.size()));
@@ -588,7 +589,7 @@ public class AgentChatOrchestratorService {
                     TaskDto created = taskService.createTask(username, req);
                     taskService.startTask(created.getId(), username);
                     return buildResponse(
-                        "Confirmed, Hunter. Created and launched Task #" + created.getId() + " ('" + created.getTitle() + "').",
+                        "Confirmed, sir. Created and launched Task #" + created.getId() + " ('" + created.getTitle() + "').",
                         "task-orchestrator",
                         "CREATE_TASK",
                         "TASK_CREATOR",
@@ -602,7 +603,7 @@ public class AgentChatOrchestratorService {
 
         // Default executive standby response
         return buildResponse(
-            "Standing by, Hunter. Core systems and agent workstations are operational and ready for your directives.",
+            "Standing by, sir. Core systems and agent workstations are operational and ready for your directives.",
             "system",
             "CONVERSATION",
             null,
@@ -611,7 +612,7 @@ public class AgentChatOrchestratorService {
     }
 
     private String formatDeterministicToolOutput(String tool, String rawOutput) {
-        if (tool == null) return "Directive executed successfully, Hunter.";
+        if (tool == null) return "Directive executed successfully, sir.";
         try {
             if ("SYS_INFO".equalsIgnoreCase(tool)) {
                 JsonNode node = objectMapper.readTree(rawOutput);
@@ -619,7 +620,7 @@ public class AgentChatOrchestratorService {
                     long total = node.path("total").asLong(0);
                     long avail = node.path("available").asLong(0);
                     long used = total - avail;
-                    return String.format("Host memory telemetry: %.1f GB used / %.1f GB total (%.1f%% utilization). All systems nominal, Hunter.",
+                    return String.format("Host memory telemetry: %.1f GB used / %.1f GB total (%.1f%% utilization). All systems nominal, sir.",
                         used / (1024.0 * 1024.0 * 1024.0),
                         total / (1024.0 * 1024.0 * 1024.0),
                         total > 0 ? (used * 100.0) / total : 0.0);
@@ -627,12 +628,12 @@ public class AgentChatOrchestratorService {
             } else if ("DB_INSPECT".equalsIgnoreCase(tool)) {
                 JsonNode node = objectMapper.readTree(rawOutput);
                 int count = node.path("tableCount").asInt(0);
-                return "Database vault inspection complete, Hunter: " + count + " active tables verified in the primary schema.";
+                return "Database vault inspection complete, sir: " + count + " active tables verified in the primary schema.";
             } else if ("WEB_SEARCH".equalsIgnoreCase(tool)) {
-                return "Web research complete, Hunter. Retrieved relevant intelligence and summarized operational findings.";
+                return "Web research complete, sir. Retrieved relevant intelligence and summarized operational findings.";
             }
         } catch (Exception ignored) {}
-        return "Directive processed with capability " + tool + ", Hunter: " + rawOutput;
+        return "Directive processed with capability " + tool + ", sir: " + rawOutput;
     }
 
     private String cleanJson(String raw) {

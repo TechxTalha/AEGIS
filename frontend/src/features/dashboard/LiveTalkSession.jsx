@@ -20,7 +20,7 @@ const switchToHttps = () => {
     window.location.href = `https://${window.location.hostname}${portPart}${window.location.pathname}${window.location.search}`;
 };
 
-// Wake word matcher: "Hello Aegis", "Hey Aegis", "Hi Aegis", "OK Aegis", "Aegis" (including common phonetics)
+// Wake word matcher: Supports "Aegis", "Hello Aegis", "Hey Aegis", "Hi Aegis", "OK Aegis" and common phonetics
 const WAKE_WORD_REGEX = /(?:hello|hey|hi|ok|okay)?\s*(?:aegis|egis|agis|ages|aigis)\b/i;
 
 // Futuristic ascending dual-tone chime (Web Audio API)
@@ -56,10 +56,33 @@ const playWakeChime = () => {
     }
 };
 
+// Clean text for fluid, natural human speech synthesis (removes markdown tables, code, asterisks, URLs)
+const cleanTextForSpeech = (rawText) => {
+    if (!rawText) return '';
+    return rawText
+        // Replace markdown tables with a smooth spoken transition
+        .replace(/\|[^\n]+\|\n\|[-:| ]+\|\n(?:\|[^\n]+\|\n?)+/g, 'Here is the requested telemetry table, sir. ')
+        // Remove markdown headers (#, ##, ###)
+        .replace(/^#{1,6}\s+/gm, '')
+        // Remove bold / italic markup
+        .replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, '$1')
+        // Remove inline code ticks
+        .replace(/`([^`]+)`/g, '$1')
+        // Remove multi-line code blocks
+        .replace(/```[\s\S]*?```/g, '')
+        // Remove URLs
+        .replace(/https?:\/\/\S+/g, '')
+        // Remove rogue JSON braces or quotes
+        .replace(/[{}[\]"]/g, '')
+        // Collapse multiple whitespace
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
 /**
  * LiveTalkSession (Left Column Command Assistant)
- * Unified single-surface voice and text interface with Hands-Free "Hello Aegis" Wake Word.
- * Clean, consistent executive command aesthetic.
+ * Unified single-surface voice and text interface with Hands-Free "Aegis" Wake Word.
+ * High-fidelity neural voice synthesis and executive command aesthetic.
  */
 const LiveTalkSession = ({ onSpeakingChange }) => {
     const [isMicActive, setIsMicActive] = useState(false);
@@ -70,7 +93,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     const [inputMessage, setInputMessage] = useState('');
     const [showHttpsBanner, setShowHttpsBanner] = useState(false);
 
-    // Hands-Free Wake Word State ("Hello Aegis")
+    // Hands-Free Wake Word State
     const [isWakeWordEnabled, setIsWakeWordEnabled] = useState(() => {
         try {
             const stored = localStorage.getItem('aegis_wake_word_enabled');
@@ -79,13 +102,23 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             return true;
         }
     });
+
+    // Tracks if user has awakened Aegis at least once (evolves prompt to just "Aegis")
+    const [hasAwakenedOnce, setHasAwakenedOnce] = useState(() => {
+        try {
+            return localStorage.getItem('aegis_awakened_once') === 'true';
+        } catch (e) {
+            return false;
+        }
+    });
+
     const [isAwakened, setIsAwakened] = useState(false);
 
     const [messages, setMessages] = useState([
         {
             id: 1,
             sender: 'ai',
-            text: 'AEGIS Core is online. Say "Hello Aegis" or speak/type directives, Hunter.',
+            text: 'AEGIS Core is online. Say "Aegis" or speak/type directives, sir.',
             time: '00:00'
         }
     ]);
@@ -96,6 +129,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
     const wakeRestartTimeoutRef = useRef(null);
     const awakenedTimerRef = useRef(null);
     const activeUtteranceRef = useRef(null);
+    const availableVoicesRef = useRef([]);
 
     // State refs to prevent stale closures in recognition event handlers
     const isWakeWordEnabledRef = useRef(isWakeWordEnabled);
@@ -122,23 +156,70 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         isWaitingForAiRef.current = isWaitingForAi;
     }, [isWaitingForAi]);
 
+    // Preload & listen for browser speech synthesis voices
+    useEffect(() => {
+        if (!('speechSynthesis' in window)) return;
+        const updateVoices = () => {
+            const v = window.speechSynthesis.getVoices();
+            if (v && v.length > 0) {
+                availableVoicesRef.current = v;
+            }
+        };
+        updateVoices();
+        window.speechSynthesis.onvoiceschanged = updateVoices;
+        return () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = null;
+            }
+        };
+    }, []);
+
     // Auto-scroll on new messages or state changes
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isWaitingForAi, listeningInterim]);
 
-    // Priority voice selector
+    // High-fidelity natural neural voice selector (prioritizes modern neural voices over robotic SAPI Desktop synths)
     const getBestVoice = () => {
         if (!('speechSynthesis' in window)) return null;
-        const voices = window.speechSynthesis.getVoices();
+        const voices = availableVoicesRef.current.length > 0 
+            ? availableVoicesRef.current 
+            : window.speechSynthesis.getVoices();
+
         if (!voices || voices.length === 0) return null;
-        const localEn = voices.find(v => v.lang.startsWith('en') && v.localService === true);
-        const naturalEn = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Online')));
+
+        // 1. High priority: Microsoft Natural / Online voices (Edge/Chrome on Windows)
+        // e.g. "Microsoft Jenny Online (Natural) - English (United States)", "Microsoft Guy Online (Natural)", "Microsoft Aria Online (Natural)"
+        const naturalOnline = voices.find(v => 
+            v.lang.startsWith('en') && 
+            (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Neural'))
+        );
+        if (naturalOnline) return naturalOnline;
+
+        // 2. High priority: Google Natural / US English voices (Chrome)
+        const googleNatural = voices.find(v => 
+            v.lang.startsWith('en') && 
+            (v.name.includes('Google US English') || v.name.includes('Google UK English Female') || v.name.includes('Google'))
+        );
+        if (googleNatural) return googleNatural;
+
+        // 3. Apple / Modern OS fluid voices (Samantha, Daniel, Aria, Jenny, Guy, Ava)
+        const preferredModern = ['Jenny', 'Guy', 'Aria', 'Samantha', 'Daniel', 'Ava', 'Karen', 'Oliver'];
+        for (const name of preferredModern) {
+            const found = voices.find(v => v.lang.startsWith('en') && v.name.includes(name) && !v.name.includes('Desktop'));
+            if (found) return found;
+        }
+
+        // 4. Any English voice that is NOT an old desktop robotic synth (Desktop / eSpeak)
+        const nonRoboticEn = voices.find(v => v.lang.startsWith('en') && !v.name.includes('Desktop') && !v.name.includes('eSpeak'));
+        if (nonRoboticEn) return nonRoboticEn;
+
+        // 5. Fallback English
         const anyEn = voices.find(v => v.lang.startsWith('en'));
-        return localEn || naturalEn || anyEn || voices[0];
+        return anyEn || voices[0];
     };
 
-    // Voice synthesis with GC protection
+    // Voice synthesis with GC protection, natural cadence, and text cleaning
     const speakText = (text) => {
         if (!isVoiceOutputEnabled) {
             scheduleWakeWordRestart(500);
@@ -156,9 +237,16 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             console.warn(e);
         }
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
+        const spokenContent = cleanTextForSpeech(text);
+        if (!spokenContent) {
+            scheduleWakeWordRestart(500);
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(spokenContent);
+        // Slightly faster, articulate cadence with subtle warmth for a human command co-pilot feel
+        utterance.rate = 1.02;
+        utterance.pitch = 0.98;
 
         const bestVoice = getBestVoice();
         if (bestVoice) utterance.voice = bestVoice;
@@ -252,7 +340,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         }
     };
 
-    // Ambient Wake Word Listener ("Hello Aegis")
+    // Ambient Wake Word Listener (Detects "Aegis" or "Hello Aegis")
     const startWakeWordListener = () => {
         if (!isSecureOrigin || !isWakeWordEnabledRef.current) return;
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -280,7 +368,13 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                     if (match) {
                         playWakeChime();
 
-                        // Flash awakened indicator
+                        // Evolve state: Hunter has triggered Aegis
+                        setHasAwakenedOnce(true);
+                        try {
+                            localStorage.setItem('aegis_awakened_once', 'true');
+                        } catch (e) {}
+
+                        // Flash awakened visual indicator
                         setIsAwakened(true);
                         if (awakenedTimerRef.current) clearTimeout(awakenedTimerRef.current);
                         awakenedTimerRef.current = setTimeout(() => setIsAwakened(false), 3500);
@@ -295,10 +389,10 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                         stopWakeWordListener();
 
                         if (remainder.length > 2 && isFinal) {
-                            // Directive spoken in one breath: "Hello Aegis, check memory status"
+                            // Directive spoken in one breath: "Aegis, check memory status"
                             handleSendMessage(remainder, true);
                         } else {
-                            // Standalone wake word: "Hello Aegis" -> start active command recording
+                            // Standalone wake word: "Aegis" -> start active command recording
                             startActiveListening(remainder);
                         }
                         return;
@@ -375,7 +469,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
 
             recognition.onstart = () => {
                 setIsMicActive(true);
-                setListeningInterim(prefilledText || 'Awakened. Listening, Hunter...');
+                setListeningInterim(prefilledText || 'Awakened. Listening, sir...');
             };
 
             recognition.onresult = (event) => {
@@ -440,17 +534,18 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             }
         }
 
+        setHasAwakenedOnce(true);
         startActiveListening();
     };
 
-    // Toggle Hands-Free Wake Word Mode ("Hello Aegis")
+    // Toggle Hands-Free Wake Word Mode
     const toggleWakeWord = async () => {
         if (isWakeWordEnabled) {
             stopWakeWordListener();
             setIsWakeWordEnabled(false);
             notification.info({
                 message: 'Wake Word Standby Disabled',
-                description: 'Hands-free "Hello Aegis" detection is paused. You can still use the mic button anytime.',
+                description: 'Hands-free "Aegis" detection is paused. You can still use the mic button anytime.',
                 duration: 3
             });
         } else {
@@ -465,7 +560,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             }
             notification.success({
                 message: 'Wake Word Standby Active',
-                description: 'Say "Hello Aegis" anytime to command hands-free.',
+                description: hasAwakenedOnce ? 'Say "Aegis" anytime to command hands-free.' : 'Say "Aegis" or "Hello Aegis" to command hands-free.',
                 duration: 4
             });
             scheduleWakeWordRestart(300);
@@ -511,7 +606,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                 message: text,
                 history: history 
             });
-            const aiReply = res.data?.reply || "Directive received, Hunter. Standing by.";
+            const aiReply = res.data?.reply || "Directive received, sir. Standing by.";
 
             const aiMsg = {
                 id: Date.now() + 1,
@@ -525,7 +620,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
             console.error('Chat error:', err);
             let aiReply;
             if (err.response?.status === 401 || err.response?.status === 403) {
-                aiReply = "Session expired, Hunter. Please sign in again to refresh command clearance.";
+                aiReply = "Session expired, sir. Please sign in again to refresh command clearance.";
             } else if (err.response?.data?.message) {
                 aiReply = `AEGIS advisory: ${err.response.data.message}`;
             } else {
@@ -550,6 +645,11 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
         e?.preventDefault();
         handleSendMessage();
     };
+
+    const wakeLabel = hasAwakenedOnce ? 'Wake: "Aegis"' : 'Wake: "Hello Aegis"';
+    const wakePlaceholder = hasAwakenedOnce 
+        ? 'Say "Aegis" or type directive...' 
+        : 'Say "Hello Aegis" or type directive...';
 
     return (
         <div className={`w-full h-[650px] rounded-3xl bg-gradient-to-b from-[#0a0f1b] via-[#080d16] to-[#060a11] border p-3 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.85)] overflow-hidden select-none transition-all duration-300 ${
@@ -581,10 +681,10 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                 ? 'bg-cyan-500/15 border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(0,210,255,0.2)]'
                                 : 'bg-white/5 border-white/10 text-gray-500 hover:text-gray-300'
                         }`}
-                        title={isWakeWordEnabled ? 'Wake Word Active: Say "Hello Aegis" to trigger' : 'Enable Hands-Free Wake Word ("Hello Aegis")'}
+                        title={isWakeWordEnabled ? `${wakeLabel} Active. Say "Aegis" to trigger` : 'Enable Hands-Free Wake Word ("Aegis")'}
                     >
                         <ThunderboltOutlined className={isWakeWordEnabled ? 'text-cyan-400 animate-pulse' : 'text-gray-500'} />
-                        <span className="hidden sm:inline">{isWakeWordEnabled ? 'Wake: ON' : 'Wake: OFF'}</span>
+                        <span className="hidden sm:inline">{isWakeWordEnabled ? (hasAwakenedOnce ? 'Wake: "Aegis"' : 'Wake: ON') : 'Wake: OFF'}</span>
                     </button>
 
                     {/* Live State Badge */}
@@ -722,8 +822,8 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                             {isAiSpeaking 
                                 ? 'Voicing response...' 
                                 : isAwakened && !listeningInterim
-                                    ? 'Awakened by "Hello Aegis"... listening'
-                                    : listeningInterim || 'Listening to your command...'}
+                                    ? 'Awakened... listening, sir'
+                                    : listeningInterim || 'Listening for directive, sir...'}
                         </span>
                     </div>
 
@@ -768,7 +868,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                                 isMicActive 
                                     ? "Stop Voice Input" 
                                     : isWakeWordEnabled 
-                                        ? 'Wake Word Active: Say "Hello Aegis" or tap to speak' 
+                                        ? `Wake Word Active: Say "${hasAwakenedOnce ? 'Aegis' : 'Hello Aegis'}" or tap to speak` 
                                         : "Tap to Speak"
                             }
                         >
@@ -795,7 +895,7 @@ const LiveTalkSession = ({ onSpeakingChange }) => {
                             isMicActive 
                                 ? "Listening to voice..." 
                                 : isWakeWordEnabled 
-                                    ? 'Say "Hello Aegis" or type directive...' 
+                                    ? wakePlaceholder
                                     : "Directive or speak command..."
                         }
                         className="flex-1 bg-transparent border-none text-xs text-white placeholder-gray-500 focus:outline-none px-2 font-sans"

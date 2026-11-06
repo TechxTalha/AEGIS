@@ -228,7 +228,7 @@ public class AgentRestController {
         }
 
         Map<String, Object> fallback = new HashMap<>();
-        fallback.put("reply", "Standing by, Hunter. Core systems operational.");
+        fallback.put("reply", "Standing by, sir. Core systems operational.");
         fallback.put("provider", "system");
         fallback.put("timestamp", System.currentTimeMillis());
         return ResponseEntity.ok(fallback);
