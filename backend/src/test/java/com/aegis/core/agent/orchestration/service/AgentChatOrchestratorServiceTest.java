@@ -261,5 +261,19 @@ class AgentChatOrchestratorServiceTest {
         String systemPrompt = capturedReq.getMessages().get(0).getContent();
         assertTrue(systemPrompt.contains("### PERMANENT USER PROFILE & GROUNDING (HUNTER) ###"), "System prompt must contain ambient profile heading");
         assertTrue(systemPrompt.contains("Hunter is the creator and architect of AEGIS"), "System prompt must include grounded memory content");
+        assertTrue(systemPrompt.contains("### LIVE SYSTEM TIME & TEMPORAL GROUNDING ###"), "System prompt must include live temporal grounding");
+    }
+
+    @Test
+    void testTemporalQuery_RawalpindiTime() {
+        Map<String, Object> result = orchestratorService.processUserMessage("Hunter", "what's the time currently in Rawalpindi", null);
+        assertNotNull(result);
+        assertEquals("CONVERSATION", result.get("action"));
+        assertEquals("temporal-engine", result.get("provider"));
+        String reply = (String) result.get("reply");
+        assertNotNull(reply);
+        assertTrue(reply.contains("Rawalpindi (PKT)"), "Reply must include Rawalpindi PKT timezone");
+        assertTrue(reply.contains(", sir."), "Reply must address user as sir");
+        verifyNoInteractions(modelGatewayService);
     }
 }

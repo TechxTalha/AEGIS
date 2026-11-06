@@ -32,6 +32,10 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +57,10 @@ import java.util.stream.Collectors;
 public class AgentChatOrchestratorService {
 
     private static final Logger logger = LoggerFactory.getLogger(AgentChatOrchestratorService.class);
+    private static final Pattern TEMPORAL_QUERY_PATTERN = Pattern.compile(
+        "^\\s*(?:(?:hello|hey|ok|okay)\\s+)?(?:aegis[\\s,]+)?(?:please\\s+)?(?:(?:what(?:'s|\\s+is)?|tell\\s+me|get|show(?:\\s+me)?)\\s+)?(?:the\\s+)?(?:current\\s+)?(?:local\\s+)?(?:today'?s\\s+)?(time|date|day|clock)(?:\\s+(?:is\\s+it|currently|right\\s+now|now|today|in\\s+[a-zA-Z\\s]+|for\\s+[a-zA-Z\\s]+))?\\??\\s*$",
+        Pattern.CASE_INSENSITIVE
+    );
 
     private final ModelGatewayService modelGatewayService;
     private final SystemInfoProvider systemInfoProvider;
@@ -141,7 +149,18 @@ public class AgentChatOrchestratorService {
             );
         }
 
-        // 2. Autonomous Reasoning via AI Gateway
+        // 2. Direct Temporal Grounding (zero latency, exact real-world clock without LLM hallucination)
+        if (isTemporalQuery(lower)) {
+            return buildResponse(
+                resolveTemporalResponse(lower),
+                "temporal-engine",
+                "CONVERSATION",
+                null,
+                null
+            );
+        }
+
+        // 3. Autonomous Reasoning via AI Gateway
         if (modelGatewayService != null) {
             try {
                 ReasoningResult reasoning = reasonOverDirective(trimmed, username, historyObj);
@@ -205,15 +224,36 @@ public class AgentChatOrchestratorService {
     private ReasoningResult reasonOverDirective(String message, String username, Object historyObj) {
         String userProfileContext = userMemoryContextProvider != null ? userMemoryContextProvider.buildPromptSnippet() : "No persistent memories loaded.";
 
+        ZonedDateTime pktNow = ZonedDateTime.now(ZoneId.of("Asia/Karachi"));
+        ZonedDateTime utcNow = ZonedDateTime.now(ZoneOffset.UTC);
+        DateTimeFormatter liveFmt = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy h:mm:ss a");
+
+        String temporalGrounding = String.format("""
+            ### LIVE SYSTEM TIME & TEMPORAL GROUNDING ###
+            - Current Local Time (Rawalpindi / PKT, UTC+5): %s PKT
+            - Current UTC Time: %s UTC
+            - Current Year: %d
+            Use this exact real-world timestamp for all temporal reasoning. Never hallucinate outdated dates or timestamps.
+            """,
+            pktNow.format(liveFmt),
+            utcNow.format(liveFmt),
+            pktNow.getYear()
+        );
+
         String reasoningPrompt = String.format("""
             You are AEGIS Core Reasoning & Intent Engine.
+
+            %s
 
             ### PERMANENT USER PROFILE & GROUNDING (HUNTER) ###
             The following permanent traits, operating rules, and preferences about Hunter are stored in long-term memory:
             %s
 
             When conversing or executing directives:
-            - Form of Address: The user is Hunter. However, in conversation you must ALWAYS address him respectfully as "sir" (e.g. "Yes, sir", "Right away, sir", "Standing by, sir"). NEVER address him as "Commander Hunter" or "Hunter" directly.
+            - Form of Address: The user is Hunter. In conversation, ALWAYS address him respectfully and naturally as "sir".
+            - Tone: Speak conversationally, directly, intelligently, and confidently. Avoid robotic repetitive canned preambles like "Right away, sir" or "Certainly, sir". Answer the question directly.
+            - NEVER address him as "Commander Hunter" or "Hunter" directly in dialogue.
+            - Formatting: Do NOT use markdown tables or unprompted host status dumps for simple conversational answers. Tables are strictly reserved for multi-column structured reports when explicitly requested.
             - Actively apply Hunter's stored preferences, background, and rules.
             - Autonomous Trait Learning: If Hunter communicates a new personal preference, workflow habit, environment detail, project goal, or operational constraint (even in passing), extract it into "learnedTrait" so AEGIS permanently retains it for future sessions.
 
@@ -248,7 +288,7 @@ public class AgentChatOrchestratorService {
               } | null
             }
             Do not include markdown code block ticks or any text outside the JSON.
-            """, userProfileContext);
+            """, temporalGrounding, userProfileContext);
 
         List<ModelMessage> messages = new ArrayList<>();
         messages.add(ModelMessage.system(reasoningPrompt));
@@ -452,7 +492,11 @@ public class AgentChatOrchestratorService {
         if (modelGatewayService != null) {
             try {
                 String profileSnippet = userMemoryContextProvider != null ? userMemoryContextProvider.buildPromptSnippet() : "";
+                ZonedDateTime pktNow = ZonedDateTime.now(ZoneId.of("Asia/Karachi"));
+                DateTimeFormatter liveFmt = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy h:mm a");
+
                 String synthesisPrompt = "You are AEGIS — an advanced AI command intelligence speaking to your creator, Hunter.\n"
+                    + "Current Real-World Time: " + pktNow.format(liveFmt) + " PKT\n"
                     + "Directive: \"" + userMessage + "\"\n"
                     + "Executed Capability: " + tool + "\n"
                     + "Live Telemetry / System Output: " + rawOutput + "\n\n"
@@ -460,7 +504,9 @@ public class AgentChatOrchestratorService {
                     + "Instructions:\n"
                     + "- Adhere strictly to preferences: concise, factual, punchy, articulate (1 to 3 sentences).\n"
                     + "- Present the exact facts, telemetry numbers, or findings clearly and confidently.\n"
-                    + "- Always address him respectfully as 'sir' (e.g. 'Yes, sir', 'Right away, sir'). NEVER call him 'Commander Hunter' or 'Hunter'.\n"
+                    + "- Address him respectfully as 'sir'. Do NOT start with robotic repetitive preambles like 'Right away, sir'.\n"
+                    + "- NEVER call him 'Commander Hunter' or 'Hunter'.\n"
+                    + "- Do not include markdown tables unless presenting structured multi-row data. Never dump server IP addresses or unrequested telemetry.\n"
                     + "- Do not include markdown headers or raw JSON blocks.";
 
                 ModelRequest req = new ModelRequest(List.of(
@@ -661,6 +707,42 @@ public class AgentChatOrchestratorService {
         String cleaned = message.replaceAll("(?i)^(please\\s+)?(can you\\s+)?(create\\s+(a\\s+)?task\\s+(to\\s+)?|start\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?|run\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?|execute\\s+(a\\s+)?task\\s+(for\\s+|to\\s+)?)", "").trim();
         if (cleaned.isBlank()) return "Autonomous Directive";
         return Character.toUpperCase(cleaned.charAt(0)) + cleaned.substring(1);
+    }
+
+    private boolean isTemporalQuery(String lower) {
+        if (lower == null || lower.isBlank()) return false;
+        String trimmed = lower.trim().replaceAll("^[!?,.]+|[!?,.]+$", "").trim();
+
+        // Avoid false positives for commands, research, tasks, or memory directives
+        if (trimmed.contains("search") || trimmed.contains("web") || trimmed.contains("task") || trimmed.contains("cve") 
+                || trimmed.contains("audit") || trimmed.contains("release") || trimmed.contains("remember") 
+                || trimmed.contains("save") || trimmed.contains("timer") || trimmed.contains("timeout") 
+                || trimmed.contains("deadline") || trimmed.contains("schedule") || trimmed.contains("history")) {
+            return false;
+        }
+
+        return TEMPORAL_QUERY_PATTERN.matcher(trimmed).matches()
+            || trimmed.equals("time") || trimmed.equals("date")
+            || trimmed.equals("what time is it") || trimmed.equals("what day is it")
+            || trimmed.equals("what's today's date") || trimmed.equals("what is today's date")
+            || trimmed.startsWith("what's the time") || trimmed.startsWith("what is the time") || trimmed.startsWith("current time");
+    }
+
+    private String resolveTemporalResponse(String lower) {
+        ZonedDateTime pktNow = ZonedDateTime.now(ZoneId.of("Asia/Karachi"));
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("h:mm a");
+        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy");
+
+        if (lower.contains("utc") || lower.contains("gmt")) {
+            ZonedDateTime utcNow = ZonedDateTime.now(ZoneOffset.UTC);
+            return String.format("The current UTC time is %s on %s, sir.", utcNow.format(timeFmt), utcNow.format(dateFmt));
+        }
+
+        if (lower.contains("date") && !lower.contains("time")) {
+            return String.format("Today is %s, sir.", pktNow.format(dateFmt));
+        }
+
+        return String.format("It is currently %s on %s in Rawalpindi (PKT), sir.", pktNow.format(timeFmt), pktNow.format(dateFmt));
     }
 
     private Map<String, Object> buildResponse(String reply, String provider, String action, String tool, Object metadata) {

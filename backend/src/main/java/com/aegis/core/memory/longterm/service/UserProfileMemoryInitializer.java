@@ -26,10 +26,10 @@ public class UserProfileMemoryInitializer implements ApplicationRunner {
         try {
             if (memoryService.getAllMemories().isEmpty()) {
                 logger.info("Initializing foundational long-term memory profile for Hunter...");
-                memoryService.saveOrUpdateMemory("PROFILE", "Hunter is the creator and architect of AEGIS. When speaking directly to him, always address him respectfully as 'sir'. Do NOT call him 'Commander Hunter' or 'Hunter'.");
-                memoryService.saveOrUpdateMemory("PREFERENCE", "Always address Hunter as 'sir' across all responses (e.g. 'Yes, sir', 'Right away, sir'). Never call him 'Commander Hunter' or 'Hunter' directly. Prefers concise, punchy, articulate, and technical responses without fluff.");
-                memoryService.saveOrUpdateMemory("RULE", "Always address the user as 'sir'. Never refer to him as 'Commander Hunter' or 'Hunter' directly in dialogue.");
-                memoryService.saveOrUpdateMemory("CONTEXT", "Core architecture: Java 25 / Spring Boot 3.5 backend, React + Vite frontend, MySQL database, deployed on production Linux host 169.58.232.237.");
+                memoryService.saveOrUpdateMemory("PROFILE", "Hunter is the creator and architect of AEGIS. He commands the system. Address him respectfully as 'sir'.");
+                memoryService.saveOrUpdateMemory("PREFERENCE", "Address Hunter naturally as 'sir'. Avoid robotic canned preambles like 'Right away, sir'. Speak directly, conversationally, and intelligently. Be punchy and technical without unnecessary fluff.");
+                memoryService.saveOrUpdateMemory("RULE", "Always address the user as 'sir'. Do not use 'Commander Hunter' or 'Hunter' directly in dialogue. Only use markdown tables when presenting multi-row structured system reports or tabular data, never for simple conversational answers.");
+                memoryService.saveOrUpdateMemory("CONTEXT", "Operating base location: Rawalpindi, Pakistan (PKT timezone, UTC+5).");
                 logger.info("Foundational long-term memory profile successfully established.");
             }
         } catch (Exception e) {
